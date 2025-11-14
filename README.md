@@ -52,10 +52,8 @@
 - Složitější křivka učení a „těžší“ UI (víc panelů a voleb, někdy těžkopádné).
 - Dualita verzí (základ vs. rozšířená/placená), takže některé funkce jsou mimo čistě „stock“ Blender.
 - Smíšené dojmy komunity — část uživatelů jej miluje, část volí ruční modelování kvůli jednoduchosti/robustnosti.
-
-#### Vyvození závěru z výhod/nevýhod současných řešení
-FloorPlanMaster bude klást důraz na kreslení „tužkou“ v top-view (SketchUp/ArchiCAD pocit), precizní jednotky a parametry stěn, oddělení do místností, barvy materiálů, booleany oken/dveří se snapem a posuvem po normále, a výpočty ploch/objemů. 
-#### Mezery současných řešení, které lze vylepší a nabídnout tak konkureční addon:
+ 
+#### Mezery současných řešení, které lze vylepší a nabídnout tak konkurenční addon:
 - „SketchUp-like“ kreslení zdí - Archipack sice umí stěny z křivky a grease-pencil, ale UX není vyloženě „tužka v půdorysu“ jako v SU/ArchiCAD.
 - Robustní a srozumitelné vkládání otvorů se snapem na stěnu + auto-boolean + parametry (šířka, výška, odskoky od hran) – u Archimeshe jsou s „auto-holes“ hlášené slabiny; u Archipacku je to silné, ale UI je těžší. FloorPlanMaster může nabídnout štíhlé, specializované UX.
 - Jednoduchý analytický modul (výměry/objemy) přímo navázaný na místnosti vytvořené kreslením — v obou add-onech to není centrální, „na jedno kliknutí“. Tyto detaily a analytiky jsou často uživately schované za náročným UI
