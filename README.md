@@ -1,93 +1,64 @@
-# FloorPlanMaster
+# FloorPlanMaster - návrh zadání pro bakalářskou práci z oboru Počítačová Grafika na FIT ČVUT
 
+**Autor:** Oskar Wladař (username: wladaosk)        
+**Název:** Vývoj add-on modulu pro Blender pro architektonickou dispozici: rychlé kreslení půdorysu, generování místností a vkládání otvorů     
+**Cíl práce:** Vytvořit rozšiřující modul (add-on) pro software Blender, zaměřený na architektonické použití, který umožní uživateli v top-view (pohled shora) kreslit dispozice „tužkou“, definovat parametry stěn (délka, šířka, výška) v uživatelsky zvolených jednotkách, poté je rozdělit do jednotlivých místností, volit barvy/stěny/podlahy/stropu, a dále vkládat okna a dveře s přesným snapováním ke stěně, včetně tvorby otvoru pomocí boolean operace. Add-on také vypočítá výměry (plocha) a objem každé místnosti.
 
+## Funkční požadavky:       
+#### 1. "Kreslení" stěn v top-view
+- Uživatel v pohledu shora („top view“) spustí nástroj „kresli stěnu“ (tužkou) a nakreslí tvar místnosti či dispozice jako polylinku či segmenty.
+- Po dokončení kresby je možno definovat výšku stěn (např. 2,8 m) nebo jinou hodnotu
+- Stěny mají parametry: délka, šířka (tloušťka stěny), výška. Jednotky jsou zvolitelné (metry, milimetry, jednotky Blenderu).
+#### 2. Generování místností a rozdělení podle objektů
+- Na základě uzavřených smyček stěn add-on identifikuje místnosti.
+- Uživatel může pojmenovat každou místnost (např. „Kuchyň“, „Koupelna“).
+- Uživatel může volit barvu / materiál pro stěny, podlahu i strop pro každou místnost.
+- Možnost zapnout/vypnout viditelnost stěn/podlahy/stropu pro každou místnost (např. skrýt strop pro pohled shora).
+#### 3. Výpočty a analytika
+- Pro každou místnost vypočítat a zobrazit: plocha v m², objem v m³.
+- U jednotlivých stěn zobrazit jejich aktuální šířku, délku a výšku(případně další informace).
+#### 4. Vkládání oken a dveří
+- Uživatel vybere typ prvku (Okno / Dveře) z knihovny objektů (přednastavené typy: jednokřídlé dveře, posuvné dveře; okna různé rozměry).
+- Nástroj „vložit otvor“ umožní kliknout na stěnu, prvek se „snapne“ na plochu stěny (např. stěna je mesh, prvek je child objekt).
+- Po vložení se stěna automaticky upraví — provede se boolean operace (výřez) pro vytvoření otvoru.
+- Uživatel může upravovat parametry otvoru: šířku, výšku, vzdálenost od horního okraje/stěny, vzdálenost od bočních hran.
+- Prvky lze přesouvat po normále stěny (tzn. změnit hloubku umístění, pokud relevantní).
+- Možnost změnit typ dveří/okna nebo jejich velikost z UI.
+#### 5. Uživatelské rozhraní
+- Panel v Blenderu (např. v N-panelu) s kategoriemi: „Kreslení stěn“, „Definice místností“, „Barvy a materiály“, „Okna a dveře“, „Výpočty“.
+- Každá operace dostupná jako operator s klávesovou zkratkou.
+- Dialogy pro vstup parametrů stěn/místností/otvorů.
+#### 6. Technické požadavky
+- Implementováno v Python 3 pomocí API Blenderu (bpy).
+- Datové struktury pro reprezentaci stěny, místnosti, otvoru (např. vlastní PropertyGroup).
+- Boolean operace pro výřez otvorem musí být robustní (míněno řešit průnik/vedlejší hrany).
+## Ukázka existujících řešení, jejich porovnání a jejich výhody/nevýhody
+#### Archimesh - add-on pro Blender, který umožňuje generovat místnosti, okna, dveře a další architektonické prvky. [Archimesh stránka](https://extensions.blender.org/add-ons/archimesh/)
+##### Výhody:
+- Jednoduchost a dostupnost (rychlé „naklikání“ místnosti/okna/dveří).
+- Rychlé generování základních prvků – místnost i s otvory bez většího nastavování.
+- Nízká bariéra pro začátečníky; hodí se na „blockout“ a hrubé dispozice. (Souhrny a tutoriály to takto používají.)
+##### Nevýhody:
+- Parametrika je omezenější (po vygenerování už není vše pohodlně „živě“ upravitelné on-screen jako u Archipacku).
+- Údržba/robustnost některých nástrojů – uživatelé zmiňují potřebu větších update a občasné potíže (např. auto-holes u dveří/oken).
+- Méně „BIM-like“ (Building Information Modeling) workflow (spíš generátor prvků než kompletní systém s rozšířenou 2D→3D, kótami apod.)
+#### Archipack - robustní framework pro Blender, zaměřený na architektonické modelování (parametrické stěny, okna, schodiště…). [Archipack stránka](https://blender-archipack.org/)
+##### Výhody:
+- Parametrické objekty s bohatými vlastnostmi (zdi, okna/dveře, schody, střechy, stropy, podlahy…).
+- Realtime on-screen editace (manipulátory, rychlé úpravy na scéně).
+- Širší nástroje/workflow: 2D→3D, auto-boolean, podpora BlenderBIM kót, import z křivek/grease-pencil jako stěny.
+- Aktivnější vývoj a dokumentace mimo Blender manuál (changelog, nové funkce).
+##### Nevýhody:
+- Složitější křivka učení a „těžší“ UI (víc panelů a voleb, někdy těžkopádné).
+- Dualita verzí (základ vs. rozšířená/placená), takže některé funkce jsou mimo čistě „stock“ Blender.
+- Smíšené dojmy komunity — část uživatelů jej miluje, část volí ruční modelování kvůli jednoduchosti/robustnosti.
 
-## Getting started
+#### Vyvození závěru z výhod/nevýhod současných řešení
+FloorPlanMaster bude klást důraz na kreslení „tužkou“ v top-view (SketchUp/ArchiCAD pocit), precizní jednotky a parametry stěn, oddělení do místností, barvy materiálů, booleany oken/dveří se snapem a posuvem po normále, a výpočty ploch/objemů. 
+#### Mezery současných řešení, které lze vylepší a nabídnout tak konkureční addon:
+- „SketchUp-like“ kreslení zdí - Archipack sice umí stěny z křivky a grease-pencil, ale UX není vyloženě „tužka v půdorysu“ jako v SU/ArchiCAD.
+- Robustní a srozumitelné vkládání otvorů se snapem na stěnu + auto-boolean + parametry (šířka, výška, odskoky od hran) – u Archimeshe jsou s „auto-holes“ hlášené slabiny; u Archipacku je to silné, ale UI je těžší. FloorPlanMaster může nabídnout štíhlé, specializované UX.
+- Jednoduchý analytický modul (výměry/objemy) přímo navázaný na místnosti vytvořené kreslením — v obou add-onech to není centrální, „na jedno kliknutí“. Tyto detaily a analytiky jsou často uživately schované za náročným UI
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.fit.cvut.cz/wladaosk/floorplanmaster.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab.fit.cvut.cz/wladaosk/floorplanmaster/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+## Závěr
+FloorPlanMaster bude klást důraz na „pencil-wall“ nástroj (top-view), snap-based otvory (okna/dveře) s live booleany a jednoduché UI pro rozčlenění na místnosti + výpočty. Tím se jasně odliší od Archimeshe i od Archipacku.
