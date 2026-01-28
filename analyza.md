@@ -1,4 +1,4 @@
-# Analýza: Architectural Sketch Add-on pro Blender
+# Analýza: Architectural Sketch Workflow - from sketch to 3d visualization
 ## 1. Úvod:
 Oblast architektonické vizualizace a digitálního návrhu prochází v posledních letech dynamickým vývojem. Zatímco dříve byl trh dominován, a stále je, drahými komerčními řešeními (často uzavřenými, bez možnosti uživatelského rozšíření), v současnosti roste popularita open-source softwaru, v našem konkrétním případě Blenderu. Ten se díky svému výkonnému renderovacímu jádru a nulovým licenčním poplatkům stává atraktivní alternativou pro profesionální studia i nezávislé tvůrce.
 
@@ -69,4 +69,9 @@ Archicad workflow, vytváření půdorysu - Klikání a výtvor stěn - https://
 Why I switched from SketchUp to Blender - komentáře ohledně architektonických návhrů - https://forums.sketchup.com/t/post-2021-sketchup-layout-petition-why-i-m-transitioning-to-blender-and-seeking-developers/282387/3  
 Blender for 3d printing - komentáře ohledně CAD pluginů - https://www.reddit.com/r/blender/comments/1jvar87/switching_from_sketchup_to_blender_for_3d/  
 Export z archicadu do blender - starý thread - https://community.graphisoft.com/t5/Collaboration-with-other/Export-to-Blender/td-p/265323
+
+
+
+TODO:
+Rozšířit analýzu o další nástroje pro vytváření 3d z půdorysů a samotné vytváření půdorysů. Zaměřit se na workflow jednotlivých person, především pak Persony A, B, C a jejich jednotlivý workflow. Zkoumat různé způsoby zpracování jejich práce a které nástroje se používají. Zda je opravdu potřeba udržet workflow v blenderu, nebo je na místě používat více software nástrojů zároveň. Zkoumat další možné use cases, které by se mohly objevit z porozování těchto procesů
  
