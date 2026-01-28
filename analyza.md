@@ -73,5 +73,5 @@ Export z archicadu do blender - starý thread - https://community.graphisoft.com
 
 
 TODO:
-Rozšířit analýzu o další nástroje pro vytváření 3d z půdorysů a samotné vytváření půdorysů. Zaměřit se na workflow jednotlivých person, především pak Persony A, B, C a jejich jednotlivý workflow. Zkoumat různé způsoby zpracování jejich práce a které nástroje se používají. Zda je opravdu potřeba udržet workflow v blenderu, nebo je na místě používat více software nástrojů zároveň. Zkoumat další možné use cases, které by se mohly objevit z porozování těchto procesů
+Rozšířit analýzu o další nástroje pro vytváření 3d z půdorysů a samotné vytváření půdorysů. Zaměřit se na workflow jednotlivých person, především pak Persony A, B, C a jejich jednotlivý workflow. Zkoumat různé způsoby zpracování jejich práce a které nástroje se používají. Zda je opravdu potřeba udržet workflow v blenderu, nebo je na místě používat více software nástrojů zároveň. Zkoumat další možné use cases, které by se mohly objevit z pozorování těchto procesů
  
