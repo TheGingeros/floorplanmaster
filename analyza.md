@@ -1,6 +1,6 @@
 # Analýza: Architectural Sketch Add-on pro Blender
 ## 1. Úvod:
-Oblast architektonické vizualizace a digitálního návrhu prochází v posledních letech dynamickým vývojem. Zatímco dříve byl trh dominován drahými komerčními řešeními (často uzavřenými, bez možnosti uživatelského rozšíření), v současnosti roste popularita open-source softwaru, v našem konkrétním případě Blenderu. Ten se díky svému výkonnému renderovacímu jádru a nulovým licenčním poplatkům stává atraktivní alternativou pro profesionální studia i nezávislé tvůrce.
+Oblast architektonické vizualizace a digitálního návrhu prochází v posledních letech dynamickým vývojem. Zatímco dříve byl trh dominován, a stále je, drahými komerčními řešeními (často uzavřenými, bez možnosti uživatelského rozšíření), v současnosti roste popularita open-source softwaru, v našem konkrétním případě Blenderu. Ten se díky svému výkonnému renderovacímu jádru a nulovým licenčním poplatkům stává atraktivní alternativou pro profesionální studia i nezávislé tvůrce.
 
 Přestože Blender exceluje v oblasti organického modelování, animace a finálního renderingu, jeho základní nástroje nejsou optimalizovány pro technické a parametrické navrhování, které je pro architekturu klíčové. Uživatelé tak narážejí na technologickou bariéru při snaze vytvořit přesné dispoziční řešení přímo v prostředí programu.
 
@@ -58,3 +58,15 @@ Iterativní změny: Posun stěny o 50 cm. Sousední stěny se natáhnou, podlaha
 2. **Topologie:** Výsledná mesh musí být čistá (pokud možno quads), aby na ni šly aplikovat textury bez artefaktů.
 3. **Kompatibilita:** Blender verze LTS (4.2+).
 4. **Přesnost:** Práce s reálnými jednotkami (Metrický/Imperiální systém) s přesností na mm.
+
+## 5. Zdroje
+CGArchitekt Survey - růst blenderu - https://drive.google.com/file/d/1-jB_xnpSZmc07KFVPD43-JXONG6Pm1YN/view  
+Right-Click Select - Blender komunita - https://blender.community/c/rightclickselect/?sorting=hot  
+Blender workflow z půdorysu - komentáře - https://www.youtube.com/watch?v=Q4rbqUbhYXY  
+Blender workflow z půdorysu - složitost operací - https://youtu.be/94kAIpRnhcY?t=566  
+SketchUp workflow z půdorysu - jednoduchost obkreslení - https://youtu.be/tkLfb-fuMSM?t=1580  
+Archicad workflow, vytváření půdorysu - Klikání a výtvor stěn - https://youtu.be/PZv27GCxrgU?t=144  
+Why I switched from SketchUp to Blender - komentáře ohledně architektonických návhrů - https://forums.sketchup.com/t/post-2021-sketchup-layout-petition-why-i-m-transitioning-to-blender-and-seeking-developers/282387/3  
+Blender for 3d printing - komentáře ohledně CAD pluginů - https://www.reddit.com/r/blender/comments/1jvar87/switching_from_sketchup_to_blender_for_3d/  
+Export z archicadu do blender - starý thread - https://community.graphisoft.com/t5/Collaboration-with-other/Export-to-Blender/td-p/265323
+ 
