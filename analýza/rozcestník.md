@@ -18,15 +18,73 @@
                         - Vector Works Architect
                         - Microstation
                         - Revit
+                        - Space Designer 3D
+                        - Chief Architect
+                        - FreeCAD
+                        - Smart Draw
+                        - DataCAD
+                        - Archicad
+                        - Edificius
+                        - STAAD
+                        - SAFE
+                        - RISA
+                        - SAP2000
+                        - CAD Pro
+                        - MacDraft Professional
+                        - Cedreo
+                        - Rhino3D
 
             - kreslení městských scenérií přímo v terénu
-            - náčrty půdorysů nebo pohledu na budovu, často s přetaženými rohy čar
+            - náčrty půdorysů nebo pohledu na budovu
+                - půdorys
+                    - abstraktní technický diagram a kódovaná mapa prostoru
+                    - v současnosti dynamickým datovým vstupem pro 3D
+                - lidský mozek evolučně přizpůsobem k orientaci a interakci v 3d světě
+                - architekti, inženýři, designéři trénováni k rekonstrukci prostoru na základě 2d dokumentace
+                - Cílové Skupiny
+                    - Architekti, projektantni, stavební inženýři
+                        - neplatí "co není vidět, to neexistuje"
+                        - 3D model
+                            - nositel strukturovaných informací
+                            - nástroj pro ověřování technické proveditelnosti
+                            - centrální databáze projektu v rámci metodiky BIM (Building Information Modeling)
+                            - odhaluje problémy, které by ve 2d výkresech zůstaly skryty
+                        - Priority
+                            - technická přesnost
+                            - soulad s platnými legislativními a technickými normami
+                            - udržení datové integrity a interoperability mezi jednotlivými softwarovými platformami
+                        - Specialisté
+                            - každý může používat jiný software
+                            - schopnosti efektivně sdílet 3d data prostřednictvím otevřených formátů - IFC (Industry Foundation Classes)
+                            - architekt, statik, specialista TZB
+                    - Interiéroví designéři a architekti vnitřních prostor
+                        - něco na půl cesty mezi technickou přesností a estetickou kvalitou
+                        - Priority:
+                            - nástroje, umožňující rychlou iteraci návrhů v reakci na klientovy požadavky
+                            - detaily textury látek, odlesků, chování umělého a přirozeného světla v interiéru
+                            - schopnost prezentovat změny v reálném čase (okamžitá změna vizualizace podlahy z dřeva na beton)
+                            - software nástroje s vysokým výkonem pro real time rendering
+                        - Workflow
+                            - CAD nástroje pro přesné zaměření stávajícího stavu
+                            - specializované modelovací a renderovací programy
+                    - realitní makléři, developeři, marketingové týmy
+                        - 3d primárně prodejní a marketingový nástroj
+                        - důraz na psychologii prodeje než technickou přesnost
+                        - klíčová technologie virtuálního stagingu - vložení 3d skenu do prázdného prostoru fotografie
+                        - Priority:
+                            - WOW efekt a srozumitelnost pro laickou veřejnou
+                            - 3d výstup musí být fotorealistický, atmosférický a idealizovaný
+                            - použítí VR a AR - možnost prohlédnout si nemovitost na dálku
+                            - možnost personalizace - interaktivní konfigurátory
+                        
+                    - vývojáři počítačových her, level designéři
+                    - nadšenci, majitelé nemovitostí, laická veřejnost
 
         - **Konceptuální umění**
             - filmy, videohry, animace
             - character design
             - environment design
-            
+
         - **UX/UI Design**
             - funkční schémata, wireframing
 
