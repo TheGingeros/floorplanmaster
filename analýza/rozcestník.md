@@ -2,7 +2,7 @@
 -- Konrétní postupy u jednotlivých cílových skupin a workflows
 -- Jaký je postup ve Sketchupu
 -- Jaký je postup v Archicadu
--- Jaký je současný postup v Blenderu
+-- Jaký je současný postup v Blenderu v kombinaci s jiným softwarem
 -- Jaké možnosti zlepšení jsou u postupu v blenderu
 
 
