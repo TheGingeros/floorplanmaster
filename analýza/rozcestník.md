@@ -5,7 +5,7 @@
         - Nástroje: Pero, tužka, nebo profesionální markery (Copic)
     
     - **Architektura a Interiérový design**
-        - skicování budov a prostor
+        - **skicování budov a prostor**
             - Zjednodušení scény na základní geometrické tvary
             - Lehký náčrt kompozice, postupné přidávání detailů
             - Software
@@ -33,8 +33,9 @@
                     - Cedreo
                     - Rhino3D
 
-        - kreslení městských scenérií přímo v terénu
-        - náčrty půdorysů nebo pohledu na budovu
+        - **kreslení městských scenérií přímo v terénu**
+        
+        - **náčrty půdorysů nebo pohledu na budovu**
             - půdorys
                 - abstraktní technický diagram a kódovaná mapa prostoru
                 - v současnosti dynamickým datovým vstupem pro 3D
@@ -93,6 +94,7 @@
                         - nízká cena, ideálně zdarma
                         - chtějí nahrát fotku půdorysu a nechat software automaticky vytvořit zdi a následně vkládat nábytek, např. jako v Simíkách
                         - klíčové automatizované nástroje pomocí AI, které přebírají technickou část procesu a nechávají uživateli pouze kreativní rozhodování
+            
             - Workflows
                 - proces převodu 2d informace do 3d prostoru
                 - Tradiční manuální modelování - polygonální a nurbs
@@ -185,7 +187,8 @@
                 - Rhino + Grasshopper
                     - doména parametrického a algoritmického designu
                     - používá se pro složité organické tvary a fasády
-            - herní enginy v architektuře
+            
+            - Herní enginy v architektuře
                 - unreal engine
                     - revoluce díky technologii Lumen - plně dynamické globální osvětlení
                     - Natine - virtualizovaná geometrie
@@ -194,6 +197,7 @@
                 - unity
                     - zaměřený více na průmyslové aplikace
                     - mobilní AR/VR aplikace
+  
     - **Konceptuální umění**
         - filmy, videohry, animace
         - character design
