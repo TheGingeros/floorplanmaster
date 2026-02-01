@@ -96,12 +96,76 @@
             - Workflows
                 - proces převodu 2d informace do 3d prostoru
                 - Tradiční manuální modelování - polygonální a nurbs
+                    - řemeslná cesta tvorby 3D obsahu
+                    - založen na přímé manipulaci s geometrií
+                    - technický proces:
+                        - import 2d pokladu do 3d scény
+                            - vektorový výkres DWG DXF
+                            - rastrový obrázek, reference
+                        - uživatel manuálně vytahuje zdi z půdorysu do požadované výšky
+                        - tvorba otvorů pomocí booleon operací nebo topologického modelování
+                    - výhody:
+                        - absolutní kontrola nad geometrií a topologií
+                        - možnost vytvářet složité organické tvary, klenby, fasády
+                        - preferovaný vizualizačními specialisty pro dosažení maximální vizuální kvality a optimazilaci scény pro render
+                    - nevýhody:
+                        - proces je destruktivní a časově náročný
+                        - většina změn vyžaduje větší úpravu velké části modelu
                 - Informační modelování - BIM
+                    - standard v moderní projekci a inženýrství, kde se 3D model nestává pouhým obrazem ale nositelem informací
+                    - technický proces:
+                        - stavění z virtuálních komponent
+                        - vkládání parametrických objektů
+                        - např. zeď není jen kvádr, ale objekt definovaný s vrstvami, tepelnými vlastnostmi a vazbami na ostatní konstrukce
+                        - např. výška zdi je vázaná s úrovní podlaží, změna se projeví na všech
+                        - půdorys zde není pouhým podkladem, ale jedním z mnoha pohledů na centrální 3d model
+                    - výhody:
+                        - změny se propagují celým projektem v reálném čase
+                        - automaticky lze generovat výkazy výměr, materiálové specifikace a rozpočty
+                    - nevýhody:
+                        - náročné na naučení
+                        - vysoká cena licencí
+                        - 
                 - Scan to BIM a Reality Capture
+                    - rekonstrukce a práce s existujícími objekty, kde původní dokumentace chybí nebo neodpovídá skutečnosti
+                    - technický proces:
+                        - nejdříve sběr dat v terénu pomocí 3d laserových skenů nebo fotogrammetrie - fotky z dronů či pozemních kamer
+                        - výsledkem je point cloud - soubor spousty bodů v prostoru
+                        - následný import do specializovaného softwaru, kde se čistí od šumu
+                        - následně slouží jako šablona bim softwaru - obkreslení bodů parametrickými prvky
+                    - výhody:
+                        - bezkonkurenční přesnost
+                        - odhaluje deformace konstrukcí, nerovnost stěn
+                    - nevýhody:
+                        - extrémní náročnost na hardware
+                        - vyžaduje specifické know-how
                 - umělá inteligence a automatizovaná konverze
+                    - nejvíce se rozvíjející se oblast, slib zrychlení převodu z 2d do 3d
+                    - technický proces:
+                        - využívá algoritmy computer vision a deep learning
+                        - vstup je rastrový obrázek půdorysu
+                        - neuronová síť analyzuje obraz a segmentuje jednotlivé místnosti, detekuje stěny, okna, dveře, ....
+                        - na základě toho vygeneruje 3d geometrii
+                    - výhody:
+                        - rychlost a nulová bariéra vstupu pro uživatele
+                        - ideální pro rychlé vizualizace pro realitní inzerci
+                    - nevýhody:
+                        - přesnost a spolehlivost
+                        - špatná interpretace informací z obrázku
+                        - ai nedokáže garantovat stavební přesnost
                 - greyboxing a modulární design - herní vývoj
-                - 
+                    - odlišené postupy než u architektury
+                    - technický proces:
+                        - greyboxing
+                            - vytvoření hrubé makety úrovně z jednoduchých objektů bez textur
+                            - otestování půdorysu v herním enginu
+                        - modulární design
+                            - rozkládání půdorysu na opakující se modly
+                            - moduly se následně skládají jako stavebnice
+                            - efektivní využití paměti
 
+            - Softwarové ekosystémy
+                - 
     - **Konceptuální umění**
         - filmy, videohry, animace
         - character design
