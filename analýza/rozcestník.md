@@ -165,7 +165,35 @@
                             - efektivní využití paměti
 
             - Softwarové ekosystémy
-                - 
+                - SketchUP Pro
+                    - standard pro rychlé koncepční modelování
+                    - push and pull metoda nepřekonatelná v intuitivnosti
+                    - masivně rozšířený v ČR mezi interiérovými designéry, truhláři a menšími ateliéry
+                    - plnohodnotný vizualizační nástroj
+                    - u velkých modelů trpí výkonostními limity
+                - Blender
+                    - původně outsider, dnes open source gigant
+                    - zdarma s funkcemi srovnatelnými s nejdražšími balíky
+                    - díky cycles a evee spičková vizualizace
+                    - adopce v architektuře roste
+                    - addon BlenderBIM přináší BIM funkcionalitu
+                    - addon Archimesh umožňuje převod půdorysů
+                - 3ds Max
+                    - průmyslový standard pro high end architektonickou vizualizaci
+                    - bezproblémový import DWG souborů z AutoCadu
+                    - ve spojení s V-Ray nebo Corona poskytuje nejvyšší dosažitelnou fotorealistickou kvalitu
+                - Rhino + Grasshopper
+                    - doména parametrického a algoritmického designu
+                    - používá se pro složité organické tvary a fasády
+            - herní enginy v architektuře
+                - unreal engine
+                    - revoluce díky technologii Lumen - plně dynamické globální osvětlení
+                    - Natine - virtualizovaná geometrie
+                    - pro architekty klíčový nástroj Datasmith
+                        - plugin vytvářející most mezi CAD/BIM softwarem a UE
+                - unity
+                    - zaměřený více na průmyslové aplikace
+                    - mobilní AR/VR aplikace
     - **Konceptuální umění**
         - filmy, videohry, animace
         - character design
