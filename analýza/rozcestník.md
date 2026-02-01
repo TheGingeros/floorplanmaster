@@ -1,3 +1,11 @@
+-- TODO
+-- Konrétní postupy u jednotlivých cílových skupin a workflows
+-- Jaký je postup ve Sketchupu
+-- Jaký je postup v Archicadu
+-- Jaký je současný postup v Blenderu
+-- Jaké možnosti zlepšení jsou u postupu v blenderu
+
+
 - od náčrtku po 3D Vizualizaci
     - **Průmyslový a produktový design**
         - Technický styl - skici aut, vysavačů, kávovarů - obecně produktů
@@ -5,7 +13,7 @@
         - Nástroje: Pero, tužka, nebo profesionální markery (Copic)
     
     - **Architektura a Interiérový design**
-        - **skicování budov a prostor**
+        - skicování budov a prostor
             - Zjednodušení scény na základní geometrické tvary
             - Lehký náčrt kompozice, postupné přidávání detailů
             - Software
@@ -33,7 +41,7 @@
                     - Cedreo
                     - Rhino3D
 
-        - **kreslení městských scenérií přímo v terénu**
+        - kreslení městských scenérií přímo v terénu
         
         - **náčrty půdorysů nebo pohledu na budovu**
             - půdorys
@@ -57,6 +65,7 @@
                         - každý může používat jiný software
                         - schopnosti efektivně sdílet 3d data prostřednictvím otevřených formátů - IFC (Industry Foundation Classes)
                         - architekt, statik, specialista TZB
+
                 - Interiéroví designéři a architekti vnitřních prostor
                     - něco na půl cesty mezi technickou přesností a estetickou kvalitou
                     - Priority:
@@ -87,6 +96,7 @@
                         - nejdříve hrubý náčtr pomocí geometrických útvarů bez textur
                         - po ověření funkčnosti designu nastupuje modelování a texturování
                         - architektonická logika ustupuje herní logice
+
                 - nadšenci, majitelé nemovitostí, laická veřejnost
                     - zpravidla postrádá formální vzdělání v oboru a znalost CAD programů
                     - Priority:
@@ -97,6 +107,7 @@
             
             - Workflows
                 - proces převodu 2d informace do 3d prostoru
+
                 - Tradiční manuální modelování - polygonální a nurbs
                     - řemeslná cesta tvorby 3D obsahu
                     - založen na přímé manipulaci s geometrií
@@ -113,6 +124,7 @@
                     - nevýhody:
                         - proces je destruktivní a časově náročný
                         - většina změn vyžaduje větší úpravu velké části modelu
+
                 - Informační modelování - BIM
                     - standard v moderní projekci a inženýrství, kde se 3D model nestává pouhým obrazem ale nositelem informací
                     - technický proces:
@@ -127,7 +139,7 @@
                     - nevýhody:
                         - náročné na naučení
                         - vysoká cena licencí
-                        - 
+
                 - Scan to BIM a Reality Capture
                     - rekonstrukce a práce s existujícími objekty, kde původní dokumentace chybí nebo neodpovídá skutečnosti
                     - technický proces:
@@ -141,6 +153,7 @@
                     - nevýhody:
                         - extrémní náročnost na hardware
                         - vyžaduje specifické know-how
+
                 - umělá inteligence a automatizovaná konverze
                     - nejvíce se rozvíjející se oblast, slib zrychlení převodu z 2d do 3d
                     - technický proces:
@@ -155,6 +168,7 @@
                         - přesnost a spolehlivost
                         - špatná interpretace informací z obrázku
                         - ai nedokáže garantovat stavební přesnost
+
                 - greyboxing a modulární design - herní vývoj
                     - odlišené postupy než u architektury
                     - technický proces:
