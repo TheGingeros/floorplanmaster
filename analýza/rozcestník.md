@@ -5,13 +5,13 @@
 -- Jaké možnosti zlepšení jsou u postupu v blenderu
 
 
-- od náčrtku po 3D Vizualizaci
+- ==od náčrtku po 3D Vizualizaci==
     - **Průmyslový a produktový design**
         - Technický styl - skici aut, vysavačů, kávovarů - obecně produktů
         - Důraz na perfektní perspektivu, křivky, zobrazení materiálů
         - Nástroje: Pero, tužka, nebo profesionální markery (Copic)
     
-    - **Architektura a Interiérový design**
+    - ==**Architektura a Interiérový design**==
         - skicování budov a prostor
             - Zjednodušení scény na základní geometrické tvary
             - Lehký náčrt kompozice, postupné přidávání detailů
@@ -42,13 +42,13 @@
 
         - kreslení městských scenérií přímo v terénu
         
-        - **náčrty půdorysů nebo pohledu na budovu**
-            - půdorys
+        - ==**náčrty půdorysů nebo pohledu na budovu**==
+            - ==půdorys==
                 - abstraktní technický diagram a kódovaná mapa prostoru
                 - v současnosti dynamickým datovým vstupem pro 3D
             - lidský mozek evolučně přizpůsobem k orientaci a interakci v 3d světě
             - architekti, inženýři, designéři trénováni k rekonstrukci prostoru na základě 2d dokumentace
-            - Cílové Skupiny
+            - ==Cílové Skupiny==
                 - Architekti, projektantni, stavební inženýři
                     - neplatí "co není vidět, to neexistuje"
                     - 3D model
@@ -104,10 +104,10 @@
                         - chtějí nahrát fotku půdorysu a nechat software automaticky vytvořit zdi a následně vkládat nábytek, např. jako v Simíkách
                         - klíčové automatizované nástroje pomocí AI, které přebírají technickou část procesu a nechávají uživateli pouze kreativní rozhodování
             
-            - Workflows
+            - ==Workflows==
                 - proces převodu 2d informace do 3d prostoru
 
-                - Tradiční manuální modelování - polygonální a nurbs
+                - ==Tradiční manuální modelování - polygonální a nurbs==
                     - řemeslná cesta tvorby 3D obsahu
                     - založen na přímé manipulaci s geometrií
                     - technický proces:
@@ -121,10 +121,10 @@
                         - možnost vytvářet složité organické tvary, klenby, fasády
                         - preferovaný vizualizačními specialisty pro dosažení maximální vizuální kvality a optimazilaci scény pro render
                     - nevýhody:
-                        - proces je destruktivní a časově náročný
-                        - většina změn vyžaduje větší úpravu velké části modelu
+                        - ==proces je destruktivní a časově náročný==
+                        - ==většina změn vyžaduje větší úpravu velké části modelu==
 
-                - Informační modelování - BIM
+                - ==Informační modelování - BIM==
                     - standard v moderní projekci a inženýrství, kde se 3D model nestává pouhým obrazem ale nositelem informací
                     - technický proces:
                         - stavění z virtuálních komponent
@@ -133,11 +133,11 @@
                         - např. výška zdi je vázaná s úrovní podlaží, změna se projeví na všech
                         - půdorys zde není pouhým podkladem, ale jedním z mnoha pohledů na centrální 3d model
                     - výhody:
-                        - změny se propagují celým projektem v reálném čase
+                        - ==změny se propagují celým projektem v reálném čase==
                         - automaticky lze generovat výkazy výměr, materiálové specifikace a rozpočty
                     - nevýhody:
-                        - náročné na naučení
-                        - vysoká cena licencí
+                        - ==náročné na naučení==
+                        - ==vysoká cena licencí==
 
                 - Scan to BIM a Reality Capture
                     - rekonstrukce a práce s existujícími objekty, kde původní dokumentace chybí nebo neodpovídá skutečnosti
@@ -168,29 +168,29 @@
                         - špatná interpretace informací z obrázku
                         - ai nedokáže garantovat stavební přesnost
 
-                - greyboxing a modulární design - herní vývoj
+                - ==greyboxing a modulární design - herní vývoj==
                     - odlišené postupy než u architektury
                     - technický proces:
                         - greyboxing
-                            - vytvoření hrubé makety úrovně z jednoduchých objektů bez textur
+                            - ==vytvoření hrubé makety úrovně z jednoduchých objektů bez textur==
                             - otestování půdorysu v herním enginu
                         - modulární design
                             - rozkládání půdorysu na opakující se modly
                             - moduly se následně skládají jako stavebnice
                             - efektivní využití paměti
 
-            - Softwarové ekosystémy
-                - SketchUP Pro
+            - ==Softwarové ekosystémy==
+                - ==SketchUP Pro==
                     - standard pro rychlé koncepční modelování
-                    - push and pull metoda nepřekonatelná v intuitivnosti
+                    - ==push and pull metoda nepřekonatelná v intuitivnosti==
                     - masivně rozšířený v ČR mezi interiérovými designéry, truhláři a menšími ateliéry
                     - plnohodnotný vizualizační nástroj
-                    - u velkých modelů trpí výkonostními limity
-                - Blender
-                    - původně outsider, dnes open source gigant
-                    - zdarma s funkcemi srovnatelnými s nejdražšími balíky
+                    - ==u velkých modelů trpí výkonostními limity==
+                - ==Blender==
+                    - ==původně outsider, dnes open source gigant==
+                    - ==zdarma s funkcemi srovnatelnými s nejdražšími balíky==
                     - díky cycles a evee spičková vizualizace
-                    - adopce v architektuře roste
+                    - ==adopce v architektuře roste==
                     - addon BlenderBIM přináší BIM funkcionalitu
                     - addon Archimesh umožňuje převod půdorysů
                 - 3ds Max
