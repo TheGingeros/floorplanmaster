@@ -49,15 +49,15 @@
             - lidský mozek evolučně přizpůsobem k orientaci a interakci v 3d světě
             - architekti, inženýři, designéři trénováni k rekonstrukci prostoru na základě 2d dokumentace
             - ==Cílové Skupiny==
-                - Architekti, projektantni, stavební inženýři
+                - ==Architekti, projektantni, stavební==
                     - neplatí "co není vidět, to neexistuje"
-                    - 3D model
+                    - ==3D model==
                         - nositel strukturovaných informací
                         - nástroj pro ověřování technické proveditelnosti
-                        - centrální databáze projektu v rámci metodiky BIM (Building Information Modeling)
+                        - ==centrální databáze projektu v rámci metodiky BIM (Building Information Modeling)==
                         - odhaluje problémy, které by ve 2d výkresech zůstaly skryty
-                    - Priority
-                        - technická přesnost
+                    - ==Priority==
+                        - ==technická přesnost==
                         - soulad s platnými legislativními a technickými normami
                         - udržení datové integrity a interoperability mezi jednotlivými softwarovými platformami
                     - Specialisté
@@ -65,10 +65,10 @@
                         - schopnosti efektivně sdílet 3d data prostřednictvím otevřených formátů - IFC (Industry Foundation Classes)
                         - architekt, statik, specialista TZB
 
-                - Interiéroví designéři a architekti vnitřních prostor
+                - ==Interiéroví designéři a architekti vnitřních prostor==
                     - něco na půl cesty mezi technickou přesností a estetickou kvalitou
-                    - Priority:
-                        - nástroje, umožňující rychlou iteraci návrhů v reakci na klientovy požadavky
+                    - ==Priority:==
+                        - ==nástroje, umožňující rychlou iteraci návrhů v reakci na klientovy požadavky==
                         - detaily textury látek, odlesků, chování umělého a přirozeného světla v interiéru
                         - schopnost prezentovat změny v reálném čase (okamžitá změna vizualizace podlahy z dřeva na beton)
                         - software nástroje s vysokým výkonem pro real time rendering
@@ -85,22 +85,22 @@
                         - použítí VR a AR - možnost prohlédnout si nemovitost na dálku
                         - možnost personalizace - interaktivní konfigurátory
                     
-                - vývojáři počítačových her, level designéři
+                - ==vývojáři počítačových her, level designéři==
                     - půdorys je podkladem arény pro herní mechaniky
                     - architektura slouží hratelnosti, navigaci hráčů a vyprávění příběhu
-                    - Priority:
+                    - ==Priority:==
                         - klíčové jsou metriky, které neodpovídají realitě, ale potřebám game enginu (např. dveře musí být širší, aby se tam psotava nezasekla)
-                        - zaměření na optimalizaci geometrie, efektivní využití textur a modularita assetů
+                        - ==zaměření na optimalizaci geometrie, efektivní využití textur a modularita assetů==
                     - Greyboxing/Blockout:
                         - nejdříve hrubý náčtr pomocí geometrických útvarů bez textur
                         - po ověření funkčnosti designu nastupuje modelování a texturování
                         - architektonická logika ustupuje herní logice
 
-                - nadšenci, majitelé nemovitostí, laická veřejnost
+                - ==nadšenci, majitelé nemovitostí, laická veřejnost==
                     - zpravidla postrádá formální vzdělání v oboru a znalost CAD programů
                     - Priority:
-                        - uživatelská přívětivost, intuitivní ovládání
-                        - nízká cena, ideálně zdarma
+                        - ==uživatelská přívětivost, intuitivní ovládání==
+                        - ==nízká cena, ideálně zdarma==
                         - chtějí nahrát fotku půdorysu a nechat software automaticky vytvořit zdi a následně vkládat nábytek, např. jako v Simíkách
                         - klíčové automatizované nástroje pomocí AI, které přebírají technickou část procesu a nechávají uživateli pouze kreativní rozhodování
             
