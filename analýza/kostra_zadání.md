@@ -10,5 +10,3 @@ Návrh a implementace nástroje pro intuitivní skicování architektonických d
 4. Realizujte analytický modul, který na základě vzniklé geometrie automaticky vypočítá a vizualizuje metrická data.
 5. Otestujte robustnost nástroje při editaci parametrů a porovnejte efektivitu práce s analyzovanými existujícími řešeními.
 6. Připravte a publikujte výsledný add-on jako open-source projekt s náležitou dokumentací.
-
-
