@@ -18,6 +18,6 @@ Vývoj doplňku pro konceptuální architektonické navrhování v prostředí B
 mindmap
     root(("OpenSource nástroj pro vytváření 3D půdorysů."))
         FreeCad["Inženýrský směr - FreeCad"]
-      )Nejkomplexnější opensource parametrický modelovací software(
-    Blender["Umělecko vizualizační směr - Blender"]
+        )Nejkomplexnější opensource parametrický modelovací software(
+        Blender["Umělecko vizualizační směr - Blender"]
 ```
