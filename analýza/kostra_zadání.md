@@ -14,21 +14,12 @@ Vývoj doplňku pro konceptuální architektonické navrhování v prostředí B
 
 
 
-### Cíl práce
-Cílem práce je návrh a implementace doplňku (add-onu) pro software Blender, který zefektivní proces tvorby architektonických studií. Nástroj propojí intuitivnost skicování (workflow inspirované nástroji typu SketchUp) s možností správy parametrických dat (základy BIM).
-
-**Analýza současných řešení a požadavků**
-    - Rešerše existujících nástrojů pro architektonický koncepční návrh (např. SketchUp, BlenderBIM, Archimesh) a srovnání jejich klíčových vlastností.
-    - Analýza potřeb cílové skupiny (architekti, designéři) se zaměřením na přechod od 2D půdorysu k 3D modelu.
-
-**Návrh řešení (Design & UX)**
-    - Návrh uživatelského rozhraní a ovládání doplňku s důrazem na intuitivnost a rychlou iteraci návrhu.
-    - Definice datového modelu pro architektonické prvky (nositelé informací, nejen geometrie).
-
-**Implementace**
-    - Vývoj doplňku v jazyce Python s využitím Blender API.
-    - Implementace nástrojů pro generování 3D dispozic z 2D podkladů a manipulaci s objekty.
-    
-**Testování a vyhodnocení**
-    - Ověření funkčnosti nástroje na modelovém příkladu (např. studie rodinného domu).
-    - Vyhodnocení efektivity workflow ve srovnání se standardními postupy v Blenderu.
+```mermaid
+mindmap
+    root(("Opensource vytváření 3d půdorysů"))
+    SweetHome3D
+    LibreCAD
+    Blender
+      (("Blender BIM"))
+    FreeCAD
+```
