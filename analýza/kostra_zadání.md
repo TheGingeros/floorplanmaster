@@ -1,23 +1,12 @@
 -- https://projects.fit.cvut.cz/theses/5898
 
 **Název práce:**
-Vývoj doplňku pro konceptuální architektonické navrhování v prostředí Blenderu
+Návrh a implementace nástroje pro intuitivní skicování architektonických dispozic v prostředí Blender
 
 **Možné zadání:**
-1. Proveďte rešerši existujících nástrojů pro architektonický koncepční návrh a porovnejte jejich klíčové vlastnosti
-2. Analyzujte potřeby jednotlivých cílových skupin se zaměřením na přechod od 2D půdorysu k 3D modelu
-3. Navrhněte uživatelské rozhraní a ovládání doplňku s důrazem na intuitivnost a rychlou iteraci návrhu
-4. Implementujte doplňek v jazyce Python s využitím Blender API, který bude řešit problém vytváření 2D půdorysů a generování 3D dispozic
-5. Ověrte funkčnost nástroje na modelovém příkladu - testování
-6. Vyhoďnoťte efektivitu workflow ve vytvořeném doplňku ve srovnání se standardními postupy v Blenderu
-
-
-
-
-```mermaid
-mindmap
-    root(("OpenSource nástroj pro vytváření 3D půdorysů."))
-        FreeCad["Inženýrský směr - FreeCad"]
-            )Nejkomplexnější opensource parametrický modelovací software(
-        Blender["Umělecko vizualizační směr - Blender"]
-```
+1. Proveďte rešerši metod pro interpretaci 2D skic do 3D geometrie a analyzujte současná řešení pro architektonické modelování v Blenderu 
+2. Navrhněte a experimentálně ověřte různé metody procedurálního generování geometrie stěn na základě vektorového vstupu a porovnejte algoritmy pro automatické řešení jejich spojů.
+3. Implementujte nejvhodnější metody do funkčního Blender add-onu, který umožní interaktivní tvorbu stěn, vkládání otvorů pomocí boolean operací a výpočet analytických dat.
+4. Proveďte testování robustnosti implementovaných algoritmů a ověřte správnost generovaných analytických dat.
+5. Porovnejte funkce a použitelnost vytvořeného add-onu se stávajícími řešeními na základě reálných uživatelských scénářů
+6. Připravte a publikujte výsledný add-on jako open-source projekt.
