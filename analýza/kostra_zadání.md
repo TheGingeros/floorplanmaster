@@ -14,12 +14,15 @@ Vývoj doplňku pro konceptuální architektonické navrhování v prostředí B
 
 
 
-```mermaid
+```
+---
+config:
+  layout: tidy-tree
+---
+mermaid
 mindmap
-    root(("Opensource vytváření 3d půdorysů"))
-        SweetHome3D
-        LibreCAD
-        Blender
-        (("Blender BIM"))
-        FreeCAD
+    root(("OpenSource nástroj pro vytváření 3D půdorysů."))
+        inženýrský směr - FreeCad
+            Nejkomplexnější opensource parametrický modelovací software
+        umělecko vizualizační směr - Blender
 ```
