@@ -14,15 +14,10 @@ Vývoj doplňku pro konceptuální architektonické navrhování v prostředí B
 
 
 
-```
----
-config:
-  layout: tidy-tree
----
-mermaid
+```mermaid
 mindmap
     root(("OpenSource nástroj pro vytváření 3D půdorysů."))
-        inženýrský směr - FreeCad
-            Nejkomplexnější opensource parametrický modelovací software
-        umělecko vizualizační směr - Blender
+        FreeCad["Inženýrský směr - FreeCad"]
+      )Nejkomplexnější opensource parametrický modelovací software(
+    Blender["Umělecko vizualizační směr - Blender"]
 ```
