@@ -17,9 +17,9 @@ Vývoj doplňku pro konceptuální architektonické navrhování v prostředí B
 ```mermaid
 mindmap
     root(("Opensource vytváření 3d půdorysů"))
-    SweetHome3D
-    LibreCAD
-    Blender
-      (("Blender BIM"))
-    FreeCAD
+        SweetHome3D
+        LibreCAD
+        Blender
+        (("Blender BIM"))
+        FreeCAD
 ```
