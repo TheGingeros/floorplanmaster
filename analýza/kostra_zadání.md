@@ -1,7 +1,7 @@
 -- https://projects.fit.cvut.cz/theses/5898
 
 **Název práce:**
-Vývoj Blender add-onu pro parametrické modelování architektonických dispozic
+Blender add-on pro parametrické modelování architektonických dispozic
 
 **Možné zadání:**
 1. Proveďte rešerši existujících nástrojů pro tvorbu architektonických dispozic v prostředí Blenderu a analyzujte jejich metody generování geometrie, správu boolean operací a uživatelské rozhraní.
