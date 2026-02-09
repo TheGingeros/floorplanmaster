@@ -1,5 +1,7 @@
 TODO
 - podrobně se podívat na IFC
+- podívat se mimo blender pro větší přehled
+- soustředit se více na přesnosti jednotlivých metod a jak se od sebe liší
 
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
