@@ -1,5 +1,28 @@
+- TODO
+    - BIM - Building Information Modeling
+    - CAD - Computer-Aided Design
+
 # Blender add-on pro parametrické modelování architektonických dispozic
 ## Parametrické modelování
+- způsob vytváření 3D modelů
+- tvar objektu není definován pevně, je definován pomocí parametrů (čís. hodnot) a vztahů
+- čtverec například nadefinujeme takto:
+    - parametr A: šířka - 100mm
+    - parametr B: délka - 50mm
+    - pravidlo: strany jsou na sebe kolmé
+    - později je možné parametry změnit a čtverec se sám překreslí
+- rozdíly oproti klasickému polygonálnímu modelování: polygonální vs parametrické
+    - práce s body, hranami, plochami, táhnutí pro úpravu VS. práce s čísly, funkcemi, historií kroků
+    - obtížné změny vs. snadné změny
+    - využítí pro hry, filmy, animace vs. architektura, strojírenství, design produktů
+- dva typy parametrického modelování:
+    - **Historické** - CAD/BIM
+        - software si pamatuje časovou osu úprav/kroků
+        - např. 1. vytvoř kvádr, 2. zaobli hrany, 3. vytvoř díru 
+        - možnost se vrátit ke kroku 1. a změnit velikost kvádru a software automaticky přepočítá zaoblení a vytvořenou díru
+        - standard ve strojírenství(SolidWorks) a architektuře (Revit)
+    - **Algoritmické** - vizuální skriptování
+        - používané v moderní architektuře, hodně podobné geometry nodes
 ## Architektonické dispozice
 - odborný výraz pro uspořádání vnitřních prostor stavby
 - logický systém, který určuje, kde se nachází jaká místnost, jak jsou velké, jak na sebe navazují a kudy se mezi nimi prochází
@@ -7,6 +30,19 @@
     - rozdělení na zóny/fukční celky - společenská, klidová, hospodářská, technická, vstupní, ...
     - orientace ke světovým stranám - jih (obývací pokoje, dětské pokoje),  východ (ložnice, kuchyně), sever (technické místnosti, koupelny, ...)
     - komunikace - pohyb po domě 
+
+## Building Information Modeling - BIM (Informační modelování staveb)
+- moderní proces vytváření a správy digitálního modelu budovy
+- stavění budovy z virtuálních objektů, které mají skutečné vlastnosti
+- **nejdůležitější na modelu je to, že nese informace**
+- pokud klikneme na objekt okna:
+    - CAD:
+        - 4 čáry, žádná informace o tom, jestli je to okno
+    - BIM:
+        - informace o tom, že objekt je okno, má nějaká uložená data
+            - rozměry, materiál, tepelná izolace, cena, výrobce, datum montáže, ...
+- hlavní principy:
+    - 
 
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
