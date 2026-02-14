@@ -30,7 +30,44 @@
     - orientace ke světovým stranám - jih (obývací pokoje, dětské pokoje),  východ (ložnice, kuchyně), sever (technické místnosti, koupelny, ...)
     - komunikace - pohyb po domě 
 
-## Computer-Aided Design - CAD ()
+## Computer-Aided Design - CAD (počítačem podporované projektování)
+- technologie, která nahradila rýsovací prkna, tužky a pravítka
+- využití počítačového softwaru k tvorbě, úpravě, analýze a optimalizaci návrhu
+- od BIM je především o přesné geometrii
+- Jak funguje?
+    - pracuje s vektorovou grafikou
+    - 1. Matematika
+        - čára/hrana uložena jako úsečka z bodu A[0,0,0] do bodu B[10,0,0]
+        - výkres možno přibližovat do nekonečna => čára dokonale ostrá a přesná
+    - 2. Souřadnicový systém (X, Y, Z)
+        - kartézský souřadnicový systém
+        - každý bod má přesnou adresu v prostoru
+        - umožňuje absolutní přesnost
+    - 3. Vrstvy
+        - možnost vidět objekty za zdivem pomocí skrytí zdiva apod.
+- typy:
+    - 2D CAD (Digitální rýsovací prkno)
+        - pouze plocha o souřadnicích x a y
+        - vytváření technických výkresů, půdorysů a řezů
+        - využítí pro jednodušší stavební výkresy, schémata zapojení, vypalování plechů laserem 
+    - 3D CAD (Prostorové modelování)
+        - obsahuje i osu z
+        - Plošné modelování (Surface Modeling)
+            - model je uvnitř prázdný, tvoří se pouze slupka objektu
+            - design karoserií aut, ergonomické tvary myší k počítači
+        - Objemové modelování (Solid Modeling)
+            - tvoří se plná tělesa, počítat ví, že je uvnitř materiál
+            - využití ve strojírenství - dokáže spočítat hmotnost, těžiště nebo pevnost součástky
+- využití:
+    - Architektura a stavebnictví
+        - návrhy domů, mostů, silnic
+        - zde přechází CAD v BIM
+    - Strojírenství
+        - návrhy aut, letadel, telefonů, kávovarů
+    - Elektrotechnika
+        - návrhy plošných spojů a čipů
+    - Fashion design
+        - střihy oblečení a návrhy látek
 
 ## Building Information Modeling - BIM (Informační modelování staveb)
 - moderní proces vytváření a správy digitálního modelu budovy
@@ -60,6 +97,11 @@
     - 6D - Udržitelnost - energetické analýzy, spotřeba energie, atd.
     - 7D - správa budovy po dokončení
 
+
+### CAD vs BIM
+- CAD je nástroj na kreslení. Nakreslí se dvě čáry a my víme, že je to zeď, ale počítač vidí jen dvě čáry - objekt nenese žádnou skutečnou informaci
+- BIM je nástroj na stavění. Vloží se objekt "Zeď" a počítač ví, že je to zeď z cihel - objekt nese další informace jako je typ objektu, materiál, apod.
+- většina moderních nástrojů je technicky CAD nástroj, ale je velmi pokročilejší a  tedy přechází v BIM
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
 - BonsaiBIm
