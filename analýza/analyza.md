@@ -1,7 +1,12 @@
-TODO
-- podrobně se podívat na IFC
-- podívat se mimo blender pro větší přehled
-- soustředit se více na přesnosti jednotlivých metod a jak se od sebe liší
+# Blender add-on pro parametrické modelování architektonických dispozic
+## Parametrické modelování
+## Architektonické dispozice
+- odborný výraz pro uspořádání vnitřních prostor stavby
+- logický systém, který určuje, kde se nachází jaká místnost, jak jsou velké, jak na sebe navazují a kudy se mezi nimi prochází
+- klíčové prvky:
+    - rozdělení na zóny/fukční celky - společenská, klidová, hospodářská, technická, vstupní, ...
+    - orientace ke světovým stranám - jih (obývací pokoje, dětské pokoje),  východ (ložnice, kuchyně), sever (technické místnosti, koupelny, ...)
+    - komunikace - pohyb po domě 
 
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
