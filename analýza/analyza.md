@@ -1,5 +1,4 @@
 - TODO
-    - BIM - Building Information Modeling
     - CAD - Computer-Aided Design
 
 # Blender add-on pro parametrické modelování architektonických dispozic
@@ -31,6 +30,8 @@
     - orientace ke světovým stranám - jih (obývací pokoje, dětské pokoje),  východ (ložnice, kuchyně), sever (technické místnosti, koupelny, ...)
     - komunikace - pohyb po domě 
 
+## Computer-Aided Design - CAD ()
+
 ## Building Information Modeling - BIM (Informační modelování staveb)
 - moderní proces vytváření a správy digitálního modelu budovy
 - stavění budovy z virtuálních objektů, které mají skutečné vlastnosti
@@ -42,7 +43,22 @@
         - informace o tom, že objekt je okno, má nějaká uložená data
             - rozměry, materiál, tepelná izolace, cena, výrobce, datum montáže, ...
 - hlavní principy:
-    - 
+    - parametrické chování
+        - založen na parametrickém modelování
+        - objekt/model je databáze dat
+    - spolupráce
+        - všichni odborníci (architekt, statik, topenář, elektrikář) pracují na jednom centrálním modelu
+    - detekce kolizí
+        - software automaticky detekuje chyby
+        - např. okno se překrývá s jiným oknem nebo dveřmi
+        - nebo trubka vede tam, kde bude zeď
+        - software upozorní červeným upozorněním
+- rozměry BIM:
+    - 3D - Geometrie, prostor, vizualizace
+    - 4D - Plánování výstavby, posloupnost stavby
+    - 5D - náklady a rozpočet - počet objektů a množství materiálu
+    - 6D - Udržitelnost - energetické analýzy, spotřeba energie, atd.
+    - 7D - správa budovy po dokončení
 
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
