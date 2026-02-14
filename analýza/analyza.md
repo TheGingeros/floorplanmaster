@@ -1,5 +1,7 @@
-- TODO
-    - CAD - Computer-Aided Design
+- definice půdorysu
+- cílové skupiny a uživatelé - primárně se zaměřit na to, co bude uživatel s addonem dělat a jaký chce, aby addon dělal výsledek
+- scénáře použití?
+- funkční požadavky
 
 # Blender add-on pro parametrické modelování architektonických dispozic
 ## Parametrické modelování
