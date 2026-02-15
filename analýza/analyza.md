@@ -1,4 +1,3 @@
-- definice půdorysu
 - cílové skupiny a uživatelé - primárně se zaměřit na to, co bude uživatel s addonem dělat a jaký chce, aby addon dělal výsledek
 - scénáře použití?
 - funkční požadavky
@@ -25,12 +24,19 @@
     - **Algoritmické** - vizuální skriptování
         - používané v moderní architektuře, hodně podobné geometry nodes
 ### Architektonické dispozice
+- dispozice = uspořádání, rozestavení, rozvržení
+- architektonická dispozice = logické a funkční uspořádání jednotlivých místností a prostorů v budově
 - odborný výraz pro uspořádání vnitřních prostor stavby
 - logický systém, který určuje, kde se nachází jaká místnost, jak jsou velké, jak na sebe navazují a kudy se mezi nimi prochází
 - klíčové prvky:
-    - rozdělení na zóny/fukční celky - společenská, klidová, hospodářská, technická, vstupní, ...
-    - orientace ke světovým stranám - jih (obývací pokoje, dětské pokoje),  východ (ložnice, kuchyně), sever (technické místnosti, koupelny, ...)
-    - komunikace - pohyb po domě 
+    - půdorysové řešení - kde jsou stěny, příčky, atd
+    - otvory - kde jsou dveře, kudy jde světlo / kde jsou okna
+    - funkce - co to je za místnost
+    - prostor - plocha a objem
+- co slovo neznamená:
+    - konstrukce - neřeším, z čeho je stěna, pouze tloušťku a polohu
+    - interiérový design - dispozice končí u stěn a podlah, neřeší nábytek závěsy, dekorace
+    - dispozice se primárně týká vnitřního uspořádání, neřešíme tedy střechy nebo fasády
 
 ### Computer-Aided Design - CAD (počítačem podporované projektování)
 - technologie, která nahradila rýsovací prkna, tužky a pravítka
@@ -129,6 +135,9 @@
         - ve 3D prostoru se staví virtuální zdi, okna, dveře, ...
         - vygeneruje se pohled na tento půdorys
         - následně se zvolí výška řezné roviny a půdorys se vygeneruje automaticky
+## Cílové skupiny
+1. 3D Vizualizátoři
+2. 
 
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
