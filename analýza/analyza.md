@@ -4,7 +4,7 @@
 - funkční požadavky
 
 # Blender add-on pro parametrické modelování architektonických dispozic
-## Parametrické modelování
+### Parametrické modelování
 - způsob vytváření 3D modelů
 - tvar objektu není definován pevně, je definován pomocí parametrů (čís. hodnot) a vztahů
 - čtverec například nadefinujeme takto:
@@ -24,7 +24,7 @@
         - standard ve strojírenství(SolidWorks) a architektuře (Revit)
     - **Algoritmické** - vizuální skriptování
         - používané v moderní architektuře, hodně podobné geometry nodes
-## Architektonické dispozice
+### Architektonické dispozice
 - odborný výraz pro uspořádání vnitřních prostor stavby
 - logický systém, který určuje, kde se nachází jaká místnost, jak jsou velké, jak na sebe navazují a kudy se mezi nimi prochází
 - klíčové prvky:
@@ -32,7 +32,7 @@
     - orientace ke světovým stranám - jih (obývací pokoje, dětské pokoje),  východ (ložnice, kuchyně), sever (technické místnosti, koupelny, ...)
     - komunikace - pohyb po domě 
 
-## Computer-Aided Design - CAD (počítačem podporované projektování)
+### Computer-Aided Design - CAD (počítačem podporované projektování)
 - technologie, která nahradila rýsovací prkna, tužky a pravítka
 - využití počítačového softwaru k tvorbě, úpravě, analýze a optimalizaci návrhu
 - od BIM je především o přesné geometrii
@@ -71,7 +71,7 @@
     - Fashion design
         - střihy oblečení a návrhy látek
 
-## Building Information Modeling - BIM (Informační modelování staveb)
+### Building Information Modeling - BIM (Informační modelování staveb)
 - moderní proces vytváření a správy digitálního modelu budovy
 - stavění budovy z virtuálních objektů, které mají skutečné vlastnosti
 - **nejdůležitější na modelu je to, že nese informace**
@@ -104,6 +104,32 @@
 - CAD je nástroj na kreslení. Nakreslí se dvě čáry a my víme, že je to zeď, ale počítač vidí jen dvě čáry - objekt nenese žádnou skutečnou informaci
 - BIM je nástroj na stavění. Vloží se objekt "Zeď" a počítač ví, že je to zeď z cihel - objekt nese další informace jako je typ objektu, materiál, apod.
 - většina moderních nástrojů je technicky CAD nástroj, ale je velmi pokročilejší a  tedy přechází v BIM
+
+### Půdorys
+- základní a nejdůležitější výkres ve stavebnictví a architektuře
+- laicky: pohled na dům shora bez střechy
+- odborně: vodorovný řez objektem vedený v určité výšce
+- technická definice:
+    - vznikne myšleným horizontálním řezem
+    - řez se vede zhruba 1 metr nad podlahou daného patra
+    - aby zasáhl případná okna, pokud by byl u podlahy, byly by vidět pouze stěny
+    - směr pohledu je kolmo zeshora dolů
+- co je vidět na výkresu:
+    - tlusté čáry: to, co přeřízl řez - nosné zdi, příčky, ...
+    - tenké čáry: to, co je pod rovinou řezu - podlahy, prahy, schody směrem dolů
+    - přerušované čáry: to, co je nad rovinou řezu, ale je důležité vidět - klenba, překlad, ...
+- **půdorys ve 3D softwaru:**
+    - rozdíl jestli se používá CAD software nebo chytrý BIM software
+    - přístup v CAD softwaru:
+        - nahrání 2D podkladu
+        - obkreslení stěn
+        - extrude stěn do požadované výšky a potřeba dalších úprav
+        - jakmile se půdorys změní, je často potřeba celý proces opakovat
+    - přístup v BIM softwaru:
+        - ve 3D prostoru se staví virtuální zdi, okna, dveře, ...
+        - vygeneruje se pohled na tento půdorys
+        - následně se zvolí výška řezné roviny a půdorys se vygeneruje automaticky
+
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
 - BonsaiBIm
