@@ -166,6 +166,8 @@
         - odeslání ve formátu IFC do sdíleného datového prostedí CDE ke koordinaci s navazujícími profesemi
 - **problémy současných nástrojů:**
 #### Standard SNIM
+#### Nařízení vlády č. 366/2013 Sb.
+#### Analýza proslunění dle ČSN 73 4301
 #### IFC - Industry Foundation Classes
 #### Geodetické podklady
 #### Datové prostředí CDE
