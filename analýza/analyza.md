@@ -1,8 +1,3 @@
-- cílové skupiny a uživatelé
-- funkční požadavky
-    - rozdělit na základní a specializované
-    - základní jsou základní funkce, které addon musí umět bez ohledu na požadavky uživatelů - jak spojovat zdi, jak kreslit zdi apod
-    - speciální jsou například jestli podporovat IFC apod.
 # Blender add-on pro parametrické modelování architektonických dispozic
 ### Parametrické modelování
 - způsob vytváření 3D modelů
@@ -258,8 +253,8 @@
 - každý objekt generovaný addon musí zůstat editovatelný prostřednictvím panelu vlastností nebo interaktivních manipulátorů v 3D okně
 
 - **1. Stěny:**
-    - 
-
+    - automatické začištění spojů v rozích (L-spoje, T-spoje, křížení) bez nutnosti manuálního ořezávání¨
+    - možnost zakřivených stěn s nastavitelnou segmentací
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
 - BonsaiBIm
