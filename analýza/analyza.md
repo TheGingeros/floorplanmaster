@@ -1,4 +1,4 @@
-# Blender add-on pro parametrické modelování architektonických dispozic
+# Blender add-on pro parametrické modelování a tvorbu 3D půdorysů
 ### Parametrické modelování
 - způsob vytváření 3D modelů
 - tvar objektu není definován pevně, je definován pomocí parametrů (čís. hodnot) a vztahů
