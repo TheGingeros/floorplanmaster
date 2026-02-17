@@ -151,6 +151,23 @@
     - rychlost – možnost iterativně zkoušet nové myšlenky a prototypy
     - možnost vytáhnout stěny z nápadu během několika minut a modifikovat jejich tloušťku a posouvat otvory bez nutnosti ručního upravování geometrie a posouvání jednotlivých vrcholů
     - častá práce s referenčními obrázky nebo jednoduchými náčrty, které jsou potřeba převést do 3d podoby pro ověření světelných podmínek a měřítka
+
+### 2. Interiéroví designéři
+- začínají v prázdném prostoruj, který musí přesně zaměřit a následně vyplnit novými prvky
+- vyžadují specifický přístup k modelování stávajících stavů
+#### Interier designer
+- kreativní profesionál zaměřený na detail, materiály a osvětlení
+- modely bývají geometricky husté kvůli detailu nábytku a podobných modelů
+- základní architektura tedy musí být co nejjednodušší na správu
+- **Potřeba:**
+    - přesnost v milimetrech
+    - snadná manipulace s výplněmi otvorů
+    - potřeba vizualizovat změny např. odstranění nenosné příčky nebo vytvoření nového otvoru
+
+### 3. 3D Umělci a vizualizátoři
+
+#### 3D Umělec / Vizualizátor
+- **Potřeba:**
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
 - BonsaiBIm
