@@ -1,6 +1,8 @@
-- cílové skupiny a uživatelé - primárně se zaměřit na to, co bude uživatel s addonem dělat a jaký chce, aby addon dělal výsledek
-- scénáře použití?
+- cílové skupiny a uživatelé
 - funkční požadavky
+    - rozdělit na základní a specializované
+    - základní jsou základní funkce, které addon musí umět bez ohledu na požadavky uživatelů - jak spojovat zdi, jak kreslit zdi apod
+    - speciální jsou například jestli podporovat IFC apod.
 
 - co je standard SNIM
 - co je to IFC
@@ -138,39 +140,6 @@
         - vygeneruje se pohled na tento půdorys
         - následně se zvolí výška řezné roviny a půdorys se vygeneruje automaticky
 ## Cílové skupiny
-### 1. Architekti, urbanisté a inženýři informačního modelování (BIM projektanti)
-- technicky nejnáročnější skupina
-- nevyžadují pouze vizuální reprezentaci ale komplexní databázi informací
-- 3D model není pouze estetická vizuální reprezentace, ale komplexní, multidimenzionální databázi informací
-- hl. cílem je vytvoření bezchybného informačního modelu a generování certifikované 2d dokumentace pro stavební řízení a realizaci
-- **potřeby:**
-    - legislativní shoda
-        -  nutnost dodržovat české normy, standard SNIM - definuje klasifikaci prvků a rozsah informací
-    - analytické nástroje
-        - automatický výpočet ploch dle určitého Nařízení vlády č. 366/2013 Sb. (započítávání příček, řešení podkroví)
-        - analýza proslunění dle ČSN 73 4301
-    - Interoperabilita
-        - plná podpora formátu IFC - Industry Foundation Classes
-        - stěna není jen 3d objekt, ale entita IfcWall s definovanými vlastnostmi
-- **pracovní postup:**
-    - 1. import vstupním podkladů - geodetická zaměření terénu, katastrální mapy, detailní body ze statických a mobilních laserových skenerů
-    - 2. hmotové a konceptuální modelování (massing)
-        - testování prostorových vztahů budovy a jejího okolí
-    - 3. detailní parametrizace
-        - hrubé hmoty jsou transformovány na inteligentní stěny a plochy 
-        - přidávání otvorů - oken a dvěří
-    - 4. obohacení o BIM metadata
-        - přirazení specifických datových sad jednotlivým stabením prvkům
-        - definování logických prostorových vazeb - zóny a místnosti
-    - 5. export IFC a výkresů
-        - odeslání ve formátu IFC do sdíleného datového prostedí CDE ke koordinaci s navazujícími profesemi
-- **problémy současných nástrojů:**
-#### Standard SNIM
-#### Nařízení vlády č. 366/2013 Sb.
-#### Analýza proslunění dle ČSN 73 4301
-#### IFC - Industry Foundation Classes
-#### Geodetické podklady
-#### Datové prostředí CDE
 
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
