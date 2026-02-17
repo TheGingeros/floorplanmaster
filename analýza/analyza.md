@@ -331,6 +331,21 @@
     - od prvního umístěného prvku uživatel nevytváří pouhý mesh, ale entitu definovanou schématem IFC
 -  jeden architektonický prvek může mít více geometrických forem současně
 - tyto formy lze editovat a poté opět vložit do IFC
+#### IFC - industry foundation classses
+- otevřený, na platformě nezávislý datový standard pro ukládání a výměnu dat ve stavebnictví a facility managementu
+- formát: .ifc nebo xml verze .ifcXML
+- objektově orientovaný datový model
+- hlavní myšlenkou je interoperabilita
+    - výměna dat
+    - koordinace
+    - archivace
+    - openBIm - filozofie, že data by neměla být uzamčena v softwaru jednoho výrobce
+- databáze vztahů a vlastností - hiearchie
+    - ifcproject
+    - ifcsite
+    - ifcbuilding
+    - ifcbuildingstorey
+    - ifcwall, ifcwindow, ...
 ### Geometry nodes
 - založeno na uzlových sítích
 - automatizace repetetivních úkolů
