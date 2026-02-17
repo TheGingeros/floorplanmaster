@@ -139,6 +139,7 @@
 - stěnová konstrukce není jen plocha, ale objem
 - není izolovaný prvek, zahrnuje systémové chování (automatické řešení spojů, vymezení uzavřených oblastí)
 - svým způsobem je to vlastně graf, kde stěny jsou hrany a spoje jsou vrcholy
+- slouží jako hostitel nebo modifikátor pro okna a dveře, které odečítají objem ze stěny
 ## Cílové skupiny
 ### 1. Architekti ve fázi konceptuálního navrhování
 - software není nástrojem pro tvorbu dokumentace a dat o 3d modelu
