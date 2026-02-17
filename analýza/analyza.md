@@ -239,6 +239,27 @@
 
 ## Funkční požadavky
 
+### 1. Kreslící nástroj typu "Pencil"
+- napříč všemi uživ. skupinami je poptávka po možnosti kreslit stěny interaktivně
+- režim by měl fungovat v modálním režimu podobně jako nástroj Knife nebo Grease Pencil
+    - modální režim je stav, kdy konkrétní nástroj dočasně převezme plnou kontrolu nad vstupem, dokud se práce nebo modul neukončí
+    - změna kurzoru myši na tužku
+    - kliknutí myši už nevybírá objekt ve scéně ale začíná kreslit zeď
+    - nástroj nedělá jednu věc, čeká na sérii kroků - klik -> pohyb myší -> klik -> pohyb -> atd.
+    - specifická klávesová zkratka
+- **Interativní délka a úhel:**
+    - při kreslení se zobrazují dynamické kóty a uživatel by měl mít možnost zadat přesnou délku pomocí kláves
+- **Zarovnání/snapping:**
+    - systém musí podporovat inteligentní přichytávání k osám, k existujícím vrcholům a k prodloužením hran, což je základem rychlosti SketchUpu
+- **Tloušťka a zarovnání stěny:**
+    - uživatel musí mít možnost přepínat mezi kreslením stěny na středovou osu, vnitřní nebo vnější líc přímo během procesu kreslení
+
+### 2. Parametrické stavební objekty
+- každý objekt generovaný addon musí zůstat editovatelný prostřednictvím panelu vlastností nebo interaktivních manipulátorů v 3D okně
+
+- **1. Stěny:**
+    - 
+
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
 - BonsaiBIm
