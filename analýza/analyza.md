@@ -220,6 +220,25 @@
 - https://www.reddit.com/r/floorplan/comments/1hije25/what_features_do_you_want_in_your_ideal_floorplan/
 
 
+## Současné pracovní postupy
+- při vytváření jednoduchého půdorysu v SketchUpu uživatel nakreslí obdélník, napíše rozměry a nástrojem Push/Pull vytáhne stěny
+- v blenderu bez doplňků stejná operace vyžaduje řadu kroků:
+    - přidání roviny
+    - vstup do edit modu
+    - posun podle souřadnic
+    - vysunutí / extrude
+    - přidání např. modifikátoru solidify pro tloušťku
+- každý z tento kroků zvyšuje šanci chyby a zpomaluje kreativní tok
+
+- potřeba parametrické inteligence bez BIM detailů
+- addon musí umožnit tvorbu inteligentní geometrie bez složitých náležitostí BIM
+- geometry first:
+    - umožní uživateli soustředit se na estetiku a proporce
+    - umožní iterativně vytvářet chytrou geometrii rychle a intuitivně
+- existence BIM základů jako např. automatický výpočet plochy, což se např. architektům hodí znát okamžitě při návrhu
+
+## Funkční požadavky
+
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
 - BonsaiBIm
