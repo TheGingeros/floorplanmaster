@@ -252,9 +252,26 @@
 ### 2. Parametrické stavební objekty
 - každý objekt generovaný addon musí zůstat editovatelný prostřednictvím panelu vlastností nebo interaktivních manipulátorů v 3D okně
 
-- **1. Stěny:**
+- **a. Stěny:**
     - automatické začištění spojů v rozích (L-spoje, T-spoje, křížení) bez nutnosti manuálního ořezávání¨
     - možnost zakřivených stěn s nastavitelnou segmentací
+- **b. Výplné otvorů:**
+    - systém hostování:  okno musí být svázáno se stěnou, při posunu okna se automaticky posune i výřez ve stěně
+    - knihovna základních typů: moderní, historická, fixní okna, posuvné dveře
+    - parametrizace rámů, křídel, klik a parapetů¨
+- **c. Podlahy a stropy:**
+    - automatické generování plochy na základě uzavřeného obvodu stěn
+    - parametry pro tloušťku a odsazení od podkladu
+### 3. Správa místností a dispozic
+- správa uspořádání prostoru
+- uživatelé potřebují správu těchto celků
+- **a. Detekce místností:**
+    - addon by měl být schopen rozpoznat uzavřené prostory a přiřadit jim název a vizuální štítek s plochou
+- **b. Správa podlaží:**
+    - možnost organizovat model do pater s definovanou výškou. Přepínání viditelnosti pater by mělo být intuitivní, ideálně jedním kliknutím v dedikovaném panelu
+- **c. Měřítko a kóty:**
+    -  systém pro automatické kótování, které zůstává dynamicky propojeno s geometrií
+    - kóta: je v architektuře a technickém kreslení grafický prvek, který určuje přesný rozměr objektu. Není to pouhý text s číslem; je to komplexní objekt, který říká: „Odsud potud je to přesně tolik.“
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
 - BonsaiBIm
