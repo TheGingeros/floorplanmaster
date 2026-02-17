@@ -276,6 +276,7 @@
 ### 4. UI
 - v architektonickém modelování je UI stejně důležité jako samotné funkce
 - v blenderu je často workflow rozstříštěná do několika panelů, addon musí nabídnout koncetrované prostředí
+- UI addonu by mělo přijmou konvence v základním blenderu, aby pro uživatele působil přirozeně
 
 - **Pet Pallete a on screen manipulátory:**
     - inspirace z archicadu v podobě kontextové nabídky - pet pallete
@@ -284,6 +285,14 @@
     - toto minimalizuje cestování myší do postranního panelu
     - na podobném způsobu by měli fungovat i on screen manipulátory ve 3D viewportu
     - namísto zadávání výšky stěny do pole by uživatel měl mít možnost chytit šipku nad stěnou a intuitivně ji vytáhnout, přičemž se vedle kurzoru zobrazuje aktuální hodnota
+
+### 5. Nedestruktivní workflow
+- využítí geometry nodes
+- stěna jako jednoduchá čára, na které jsou aplikovány uzly generující tloušťku, výšku a otvory
+- možnost pohnout s vrcholem čáry a stěna se v reálném čase přizpůsobí, včetně oken, dvěří v ní umístěný
+- důraz na nedestruktivnost boolean operací pro otvory a pro čistou geometrii¨
+
+## Technická řešerše implementace v Blenderu
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
 - BonsaiBIm
