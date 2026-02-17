@@ -1,4 +1,6 @@
-# Blender add-on pro parametrické modelování a tvorbu 3D půdorysů
+# Blender add-on pro parametrické modelování stěnových konstrukcí
+
+## Informační analýza
 ### Parametrické modelování
 - způsob vytváření 3D modelů
 - tvar objektu není definován pevně, je definován pomocí parametrů (čís. hodnot) a vztahů
@@ -131,6 +133,9 @@
         - ve 3D prostoru se staví virtuální zdi, okna, dveře, ...
         - vygeneruje se pohled na tento půdorys
         - následně se zvolí výška řezné roviny a půdorys se vygeneruje automaticky
+### Stěnová konstrukce aka 3D půdorys
+- parametrické 3D geometrické objemy, které vznikají vertikální extruzí nad 2D vektorovou osou
+- jsou charakterizovány svou tloušťkou, výškou, vzájemnou topologickou vazbou (spoje stěn) a schopností hostit podřízené objekty prostřednictvím booleanovských operací
 ## Cílové skupiny
 ### 1. Architekti ve fázi konceptuálního navrhování
 - software není nástrojem pro tvorbu dokumentace a dat o 3d modelu
