@@ -3,9 +3,6 @@
     - rozdělit na základní a specializované
     - základní jsou základní funkce, které addon musí umět bez ohledu na požadavky uživatelů - jak spojovat zdi, jak kreslit zdi apod
     - speciální jsou například jestli podporovat IFC apod.
-
-- co je standard SNIM
-- co je to IFC
 # Blender add-on pro parametrické modelování architektonických dispozic
 ### Parametrické modelování
 - způsob vytváření 3D modelů
