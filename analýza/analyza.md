@@ -176,8 +176,13 @@
 ### 4. Hobbyisté a laická věřejnost
 - dostupnost blenderu roste a s tím i dostupnost pro laickou věřejnost
 - hledání softwaru poskytující svobodu a otevřenost, které placené CAD programy zpravidla neposkytují
+- často si hrají s nápady, experimentují s barvami a snaží se získat cit pro prostor svého budoucího domova
+- addon představuje bránu pro přístupnější Blender
 #### Hobbyista
+- neškolený uživatel s velkým nadšením pro věc, ale s omezeným časem na studium komplexního rozhraní Blenderu
 - **Potřeba:**
+    - intuitivnost a vizuální jednoduchost
+    - možnost kreslit tužkou jako na papír a vidět okamžitý 3D výsledek
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
 - BonsaiBIm
