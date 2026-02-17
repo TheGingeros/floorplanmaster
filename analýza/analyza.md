@@ -136,6 +136,9 @@
 ### Stěnová konstrukce aka 3D půdorys
 - parametrické 3D geometrické objemy, které vznikají vertikální extruzí nad 2D vektorovou osou
 - jsou charakterizovány svou tloušťkou, výškou, vzájemnou topologickou vazbou (spoje stěn) a schopností hostit podřízené objekty prostřednictvím booleanovských operací
+- stěnová konstrukce není jen plocha, ale objem
+- není izolovaný prvek, zahrnuje systémové chování (automatické řešení spojů, vymezení uzavřených oblastí)
+- svým způsobem je to vlastně graf, kde stěny jsou hrany a spoje jsou vrcholy
 ## Cílové skupiny
 ### 1. Architekti ve fázi konceptuálního navrhování
 - software není nástrojem pro tvorbu dokumentace a dat o 3d modelu
