@@ -232,7 +232,7 @@
     - umožní iterativně vytvářet chytrou geometrii rychle a intuitivně
 - existence BIM základů jako např. automatický výpočet plochy, což se např. architektům hodí znát okamžitě při návrhu
 
-## Funkční požadavky
+## Požadované funkce - funční požadavky
 
 ### 1. Kreslící nástroj typu "Pencil"
 - napříč všemi uživ. skupinami je poptávka po možnosti kreslit stěny interaktivně
@@ -272,6 +272,18 @@
 - **c. Měřítko a kóty:**
     -  systém pro automatické kótování, které zůstává dynamicky propojeno s geometrií
     - kóta: je v architektuře a technickém kreslení grafický prvek, který určuje přesný rozměr objektu. Není to pouhý text s číslem; je to komplexní objekt, který říká: „Odsud potud je to přesně tolik.“
+
+### 4. UI
+- v architektonickém modelování je UI stejně důležité jako samotné funkce
+- v blenderu je často workflow rozstříštěná do několika panelů, addon musí nabídnout koncetrované prostředí
+
+- **Pet Pallete a on screen manipulátory:**
+    - inspirace z archicadu v podobě kontextové nabídky - pet pallete
+    - objeví přímo u kurzoru při výběru objektu, je jedním z nejčastějších požadavků profesionálů
+    - uživatel klikne na hranu stěny, dostane možnosti jako posunout hranu, přidat bod nebo změnit tloušťku
+    - toto minimalizuje cestování myší do postranního panelu
+    - na podobném způsobu by měli fungovat i on screen manipulátory ve 3D viewportu
+    - namísto zadávání výšky stěny do pole by uživatel měl mít možnost chytit šipku nad stěnou a intuitivně ji vytáhnout, přičemž se vedle kurzoru zobrazuje aktuální hodnota
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
 - BonsaiBIm
