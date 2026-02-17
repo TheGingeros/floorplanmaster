@@ -293,6 +293,15 @@
 - důraz na nedestruktivnost boolean operací pro otvory a pro čistou geometrii¨
 
 ## Technická řešerše implementace v Blenderu
+### Výkon a správa geometrie
+- při modelování celých budov může počet polygonů rychle narůst
+- addon by měl implementovat techniky pro zvýšení výkonu
+- Instance: okna a dveře stejného typu by měly být řešeny jako instance
+- Booleovské optimalizace: použití fast solveru pro interaktivní práci a přepnutí na exact pouze pro finální render nebo export
+### Python API a integrace rozhraní
+- modálního operátoru pro kreslení tužkou musí správně reagovat na události myši a klávesnice, aniž by blokoval ostatní funkce Blenderu
+- důležitým prvkem je integrace do horního panelu (Top Bar) nebo kontextových menu (Right Click), což je trend v blenderu 4.x pro udržení čistého pracovního prostoru
+- uživatel by měl mít možnost přizpůsobit si klávesové zkratky pro nejčastější operace
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
 - BonsaiBIm
