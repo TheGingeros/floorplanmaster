@@ -140,7 +140,17 @@
         - vygeneruje se pohled na tento půdorys
         - následně se zvolí výška řezné roviny a půdorys se vygeneruje automaticky
 ## Cílové skupiny
-
+### 1. Architekti ve fázi konceptuálního navrhování
+- software není nástrojem pro tvorbu dokumentace a dat o 3d modelu
+- software je nástroj pro prostorové myšlení
+- pracovní postup je vysoce iterativní a vyžaduje okamžitou zpětnou vazbu
+#### Architekt
+- odborník s vysokou znalostí architektonické kompozice
+- není expertem na komplexní technicky 3d modelování – retopologie, složité modifikátory, apod.
+- **Potřeba:**
+    - rychlost – možnost iterativně zkoušet nové myšlenky a prototypy
+    - možnost vytáhnout stěny z nápadu během několika minut a modifikovat jejich tloušťku a posouvat otvory bez nutnosti ručního upravování geometrie a posouvání jednotlivých vrcholů
+    - častá práce s referenčními obrázky nebo jednoduchými náčrty, které jsou potřeba převést do 3d podoby pro ověření světelných podmínek a měřítka
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
 - BonsaiBIm
