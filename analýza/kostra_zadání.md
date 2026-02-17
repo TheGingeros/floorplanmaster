@@ -6,9 +6,12 @@ Blender add-on pro parametrické modelování architektonických dispozic
 
 Blender add-on pro parametrické modelování 3D půdorysů
 - jde o půdorys (floor plan), nikoliv o celý dům s detaily
+- ovšem 3d půdorys vyznívá jako oxymoron
 
 
-Blender add-on pro parametrické modelování stěnových konstrukcí
+**Blender add-on pro parametrické modelování stěnových konstrukcí**
+
+
 **Možné zadání:**
 1. Proveďte rešerši existujících nástrojů pro parametrické modelování 3D půdorysů v prostředí Blenderu a analyzujte jejich metody generování geometrie, správu boolean operací a uživatelské rozhraní.
 2. Navrhněte a experimentálně ověřte algoritmy pro interaktivní vkládání stěn a otvorů do nich na základě vektorového vstupu s automatickým řešením spojů, detekci uzavřených místností z topologie stěn a správu jejich atributů.
