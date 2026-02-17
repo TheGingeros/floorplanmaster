@@ -165,8 +165,21 @@
     - potřeba vizualizovat změny např. odstranění nenosné příčky nebo vytvoření nového otvoru
 
 ### 3. 3D Umělci a vizualizátoři
-
+- blender hlavním pracovním nástrojem
+- addon představuje prostředek/nástroj k automatizaci opakujících se úkolů, což umožňuje věnovat se více uměleckých částem
+- přebírání podkladů od architektů a stavění finálního modelu pro render a prezentaci
+- parametrický nástroj šetří čas při tvorbě oken, dvěří a nebo třeba schodišť, což by jinak vyžadovalo manuální modelování
 #### 3D Umělec / Vizualizátor
+- technicky zdatný uživatel, který rozumí principům renderování, stínování a kompozice
+- dostávajá hotové plány ve formě DWG nebo PDF a úkolem je předtvořit do 3D
+- **Potřeba:**
+    - stabilita a čistota geometrie
+    - vyžaduje aby addon generoval čistou geometrii, která je kompatibilní s renderovacími enginy a podporuje automatické UV mapování
+
+### 4. Hobbyisté a laická věřejnost
+- dostupnost blenderu roste a s tím i dostupnost pro laickou věřejnost
+- hledání softwaru poskytující svobodu a otevřenost, které placené CAD programy zpravidla neposkytují
+#### Hobbyista
 - **Potřeba:**
 ## Současné hlavní architektonické nástroje pro Blender
 - ArchiPack
