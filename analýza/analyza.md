@@ -159,6 +159,17 @@
     - možnost vytáhnout stěny z nápadu během několika minut a modifikovat jejich tloušťku a posouvat otvory bez nutnosti ručního upravování geometrie a posouvání jednotlivých vrcholů
     - častá práce s referenčními obrázky nebo jednoduchými náčrty, které jsou potřeba převést do 3d podoby pro ověření světelných podmínek a měřítka
 
+- **Scénáře použítí:**
+    - 1. Rychlá skica/náčrtek - má v ruce půdorys a potřebuje z něho vytáhnout geometrii určité výšky a tloušťky, aniž by musel řešit technické detaily v blenderu jako jsou modifikátory a editace geometrie
+    - 2. Testování světla - je potřeba zkusit několik variant umístění oken na například jižní fasádě, potřeba upravit několik oken naráz a naráz je posunout nebo zvětšit a podívat se na nové osvětlení
+    - 3. Klient chce posunout vchodové dveře o metr doprava. Doplňek musí tento posun umožnit jedním tahem myši, přičemž posune i otvor ve zdi a zárubeň
+
+- Jaké z toho vyplývají technické nároky:
+    - parametrizace - objekty musí zůstat parametrizovatelné do exportu, tedy co nejdéle
+    - chytré objekty - stěna musí být vidět že je stěna se svými parametry, když se do ní vloží otvor, musí se chovat jako hostitel
+    - presety/knihovna běžných použití, aby se pokaždé nemusel základní postup opakovat
+    - i když neřeší topologii, je potřeba udržet čisté UV pro renderování
+
 ### 2. Interiéroví designéři
 - začínají v prázdném prostoruj, který musí přesně zaměřit a následně vyplnit novými prvky
 - vyžadují specifický přístup k modelování stávajících stavů
