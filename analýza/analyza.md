@@ -145,6 +145,12 @@
 - software není nástrojem pro tvorbu dokumentace a dat o 3d modelu
 - software je nástroj pro prostorové myšlení
 - pracovní postup je vysoce iterativní a vyžaduje okamžitou zpětnou vazbu
+- přemýšlí v objemech a hmotách, nikoliv v polygonech
+- dům - soubor objemů, prostorů a hmot
+- nezajímá je, jaké jso normály nebo quady
+- vyžaduje nedestruktivní workflow
+    - jestliže při změně návrhu se musí celý nebo část modelu vymazat a začít znovu je velice nepohodlné a hraje důležitou roli v pracovním postupu
+- důraz na vizuální workflow, nechce se starat o technické detaily
 #### Architekt
 - odborník s vysokou znalostí architektonické kompozice
 - není expertem na komplexní technicky 3d modelování – retopologie, složité modifikátory, apod.
