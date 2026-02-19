@@ -3,6 +3,11 @@
 
 **FloorPlanMaster - Blender add-on pro parametrické modelování prostorových dispozic**
 
+- 1. Proof of concept
+- 2. vývoj nástroje - vytvoření prototypu
+- 3. validace produktu a použitelnosti
+- 4. Distribuce cílové skupině - vydání open source projektu
+
 Blender add-on pro parametrické modelování architektonických dispozic
 - možná dezinterpretace, že addon obsahuje všechny náležitosti pro architeknonickou dispozici
 
