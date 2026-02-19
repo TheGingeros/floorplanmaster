@@ -207,6 +207,25 @@
     - intuitivnost a vizuální jednoduchost
     - možnost kreslit tužkou jako na papír a vidět okamžitý 3D výsledek
 
+### 5. Game designer - level design/ environmental design
+- skupina představující vývojáře 3D do her
+- potřeba návrhu herních prostor pro hru 
+- důraz na low poly a čistou geometrii pro snažší UV mapování
+- potřeba interativně vytvářet návrhy prostorů pro testování integrování herních mechanik
+- **Potřeba:**
+    - iterativně navrhovat vnitřní prostory pro herní prostředí
+    - automatické spojování a vytváření místností z uzavřených spojů
+    - možnost vkládat otvory do vytvořených prostor a manipulace s nimi
+    - vytvořená geometrie musí mít čistou topologii a UV připravené na mapování textur
+- **Bariéry:**
+    - iterativnost - upravování již existujícího modelu interiéru je v blenderu zdlouhavé
+    - je potřeba upravit každý vrchol v geometrii při posunu nějaké zdi, velká náchylnost na chybu
+    - vkládání otvorů je destruktivní, v případě odebrání otvoru nebo komplexnější změny je potřeba celou část geometrii předělat od nuly
+- **Scénáře Použití:**
+    - 1. Rychlé vytažení geometrie z návrhu "půdorysu" - má v ruce návrh jak by mělo rozložení prostor vidět a potřebuje tento 2D návrh převést do 3D, ideálně iterativně s možností upravovat detaily v případě nalezení problémů
+
+    - 2. Práce s existujícím modelem interiéru - potřeba upravit detaily rozmístění po testování herních mechanik
+
 ### Zdroje
 #### Architekti
 - https://www.archivinci.com/blogs/parametric-design-and-examples
