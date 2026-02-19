@@ -1,6 +1,8 @@
 -- https://projects.fit.cvut.cz/theses/5898
 
 
+**FloorPlanMaster - Blender add-on pro parametrické modelování prostorových dispozic**
+
 Blender add-on pro parametrické modelování architektonických dispozic
 - možná dezinterpretace, že addon obsahuje všechny náležitosti pro architeknonickou dispozici
 
@@ -9,7 +11,7 @@ Blender add-on pro parametrické modelování 3D půdorysů
 - ovšem 3d půdorys vyznívá jako oxymoron
 
 
-**Blender add-on pro parametrické modelování stěnových konstrukcí**
+Blender add-on pro parametrické modelování stěnových konstrukcí
 
 
 **Možné zadání:**
