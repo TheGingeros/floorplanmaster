@@ -1,4 +1,6 @@
-# Blender add-on pro parametrické modelování stěnových konstrukcí
+# Blender add-on pro parametrické modelování prostorových dispozic
+
+- Prostorová dispozice = logické a funkční uspořádání trojrozměrného objemu do smysluplných celků (místností a zón) a definování vztahů mezi nimi
 
 ## Informační analýza
 ### Parametrické modelování
