@@ -256,6 +256,24 @@
     - stabilita a čistota geometrie
     - vyžaduje aby addon generoval čistou geometrii, která je kompatibilní s renderovacími enginy a podporuje automatické UV mapování
 
+#### Přístup k problému návrhu:
+- primárně zvenku dovnitř, ale probíhá lehká kombinace
+- **zvenku dovnitř** - kompozice, světlo, kontext:
+    - začíná se zasazením holého modelu do prostředí
+    - hledají se nejlepší úhly kamery a testují se hlavní zdroje světla
+    - jaký příběh má vizualizace vyprávět
+- **zevnitř ven** - materiály, detaily:
+    - přesouvání se k detailům
+    - definice fyzikálně přesných materiálů, řešení odrazů, přidává nábytek, lidi, rostliny
+    - postup od detailu k finálnímu obrazu
+- **pracovní postup:**
+    - 1. Briefing a sběr dat - shromažďování 3D modelů, 2D výkřesů, referenční obrázky
+    - 2. Clay render - import modelů, nastavení kamery a světla
+    - 3. LookDev - aplikace barev a textur - vytváření Proběhne
+    - 4. Set Dressing - přidávání detailů - nábytek, auta, zeleň, lidé
+    - 5. Finální render a postproduction
+
+
 ### 4. Hobbyisté a laická věřejnost
 - dostupnost blenderu roste a s tím i dostupnost pro laickou věřejnost
 - hledání softwaru poskytující svobodu a otevřenost, které placené CAD programy zpravidla neposkytují
