@@ -156,7 +156,7 @@
 #### Přístup k problému návrhu
 - holistický a zároveň interativní přístup
     - neustálý dialog mezi vnitřní funkcí a vnějším kontextem
-    - často nelze postupovat jen jedním směrem¨
+    - často nelze postupovat jen jedním směrem
 - **zevnitř ven: (funkce a provoz)**
     - vychází  z potřeb uživatele/klienta
     - řeší se provozní schéma - jak na sebe navazují místnosti, nároky na plochu, světlo a ergonomii
@@ -170,6 +170,25 @@
     - následně se do ní naskládá požadovaný program - zevnitř ven
     - pokud se funkce do hmoty nevejde, je potřeba hmotu upravit
     - tento cyklus se opakuje tak dlouho, dokud nenastane dokonalá shoda
+- **Fáze problému návrhu:**
+    - 1. Analýza - Architekt zkoumá zadání klienta a místnost
+        - klient - zadání, budget, požadavky
+        - místo - limity pozemku, geologie, infrastruktura
+    - 2. Koncept - hledání jádra návrhu - specifický tvar, způsob prosvětlení nebo materiál
+    - 3. Studie - z konceptu do konkrétních půdorysů, řezů a fasády
+        - vznikají první 3D modely
+        - zde se odehrává největší část interativního procesu
+    - 4. Technický rozvoj a detail
+        - od řešení celku se přechází k řešení detailů
+        - detail - např. jak navazuje okno na fasádu, jaký bude obklad, kudy povedou trubky
+- **Příklad typického postupu:**
+    - Architekt rozešle podklady všem profesím
+    - Specialisté zakreslí své sítě a požadavky do modelu
+    - Proběhne koordinační schůzka - dnes často pomocí BIM
+    - Zjistí se kolize - např. trubka vzduchotechniky prochází přes ocelový nosník
+    - Architekt rozhodne o řešení - sníží se podhled / statik udělá průraz do nosníku / vzduchotechnika se povede jinudy
+    - Model se aktualizuje
+    - tento proces se opakuje v každé fázi projektu
 #### Architekt
 - odborník s vysokou znalostí architektonické kompozice
 - není expertem na komplexní technicky 3d modelování – retopologie, složité modifikátory, apod.
