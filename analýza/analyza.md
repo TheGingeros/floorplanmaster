@@ -153,6 +153,23 @@
 - vyžaduje nedestruktivní workflow
     - jestliže při změně návrhu se musí celý nebo část modelu vymazat a začít znovu je velice nepohodlné a hraje důležitou roli v pracovním postupu
 - důraz na vizuální workflow, nechce se starat o technické detaily
+#### Přístup k problému návrhu
+- holistický a zároveň interativní přístup
+    - neustálý dialog mezi vnitřní funkcí a vnějším kontextem
+    - často nelze postupovat jen jedním směrem¨
+- **zevnitř ven: (funkce a provoz)**
+    - vychází  z potřeb uživatele/klienta
+    - řeší se provozní schéma - jak na sebe navazují místnosti, nároky na plochu, světlo a ergonomii
+    - převažuje u vysoce funkčních budov - nemocnice, továrny, laboratoře
+- **zvenku dovnitř: (kontext a forma)**
+    - reaguje na okolí
+    - architekt analyzuje tvar pozemku, orientaci ke světovým stranám, výhledy, sklon terénu, limity územního plánu a charakter okolní zástavby
+    - tvar budovy navrhnut z těchto vnějších omezení
+- **V praxi:**
+    - začíná se hrubou hmotou vycházející s vnějších limitů - zvenku dovnitř
+    - následně se do ní naskládá požadovaný program - zevnitř ven
+    - pokud se funkce do hmoty nevejde, je potřeba hmotu upravit
+    - tento cyklus se opakuje tak dlouho, dokud nenastane dokonalá shoda
 #### Architekt
 - odborník s vysokou znalostí architektonické kompozice
 - není expertem na komplexní technicky 3d modelování – retopologie, složité modifikátory, apod.
