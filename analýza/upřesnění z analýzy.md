@@ -44,11 +44,22 @@
 6. Ukončení
     - jakmile je uživatel hotov, zmáčkne pravé tlačítko myši nebo esc
     - uzavřením tvaru se smyčka také automaticky ukončí
-
+#### Hmota zdi vůči myši
+1. Na střed - center
+    - ideální pro rychlé koncepty
+2. vnitřní líc
+    - kritické, pokud uživatel zná přesný čistý rozměr místnosti
+3. vnější líc
+    - nutné, když architekt obkresluje hranice pozemku nebo vnější rozměr budovy
 #### Inspirace z existujících softwarů podporující podobný nástroj
 1. SketchUp - Line Tool
+    - **Postup:**
+        - 1. Aktivace pomocí left click ve viewportu a následné uvolnění left click - zobrazí se bod a následně čára, která míří na aktuální pozici kurzoru - jak se kurzor myší hýbe, směr čáry se mění s ním
+        - ve směrech X, Y, Z os se automaticky směr zafixuje a uživatel může pomodlně kreslit ve směru zvolené osy
     - inference engine
-    - automaticky zamyká směry na X, Y, Z
+        - Při pohybu kurzoru se vpravo dole zobrazuje aktuální délka tvořené čáry od zvoleného bodu až po kurzor
+        - 2. Další kliknutí levým tlačítkem myši vytváří další bod, vytváří čárou mezi 1. a 2. bodem a čáru mezi 2. bodem a aktuální pozicí kurzoru - jak se kurzor myší hýbe, směr čáry se mění s ním
+        - 3. ukončení nástroje pomocí klávesy escape
     - pokud se napíše číslo, automaticky se aplikuje na aktuální směr
 2. Archicad / Revit - Wall Tool
     - uživatel kreslí čáru ale software na obrazovce ukazuje zvolenou tloušťku zdi
