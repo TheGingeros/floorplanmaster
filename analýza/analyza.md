@@ -1,38 +1,18 @@
 # Analýza
-Název projekt: Blender add-on pro parametrické modelování prostorových dispozic
+Název projektu: Blender add-on pro parametrické modelování prostorových dispozic
 
-## Parametrické modelování
+## Úvod
+- vytvoření rozšiřovacího modulu pro Blender zaměřený na parametrické modelování prostorových dispozic
+- addon umožní uživateli v top view kreslit místnosti nástrojem tužka, definovat parametry objektů jako je stěna, dveře, podlaží, apod. a parametricky je upravovat
 
 ## Informační analýza
 
-### CAD vs BIM
-- CAD je nástroj na kreslení. Nakreslí se dvě čáry a my víme, že je to zeď, ale počítač vidí jen dvě čáry - objekt nenese žádnou skutečnou informaci
-- BIM je nástroj na stavění. Vloží se objekt "Zeď" a počítač ví, že  to zeď z cihel - objekt nese další informace jako je typ objektu, materiál, apod.
-- většina moderních nástrojů je technicky CAD nástroj, ale je velmi pokročilejší a  tedy přechází v BIM
+### Parametrické modelování
+- [Definice](./definice.md#parametrické-modelování)
 
-### Holistický přístup - pohled na celek
-- nedíváme se na izolované kousky problému ale na celý komplexní systém
-- vše souvisí se vším a celek je více než jen součet jeho částí - provázanost
-- v architektuře:
-    - architekt nenavrhuje dům tak, že by kreslil půdorys a k těmu dal fasádu a potom chtěl po topenáři, ať tam zavede topení - musí se uvažovat o všem najednou jako celku
-    - příklad:
-        - architekt se rozhodne zvětšit okno na jižní fasádě
-        - musí přemýšlet holisticky nad důsledky - v létě přehřívání místnosti
-        - nutná venkovní žaluzie
-        - architekt vnímá stavbu jako propojený celek, kde jedna změna spustí řetězovou reakci
-### Iterativní přístup - postupné vylepšování v cyklech
-- iterace = opakování
-- finální a úplný návrh se nedělá hned na první pokus
-- postupuje se ve smyčkách
-- hrubý návrh, poté zhodnocení, zjištění nedostatků a návrh se upravý
-- s každým dalším krokem je návrh propracovanější 
-- v architektuře - pokus - vyhodnocení - úprava (v návrhu)
-- příklad:
-    - 1. iterace - architekt navrhne jednoduché místnosti, zjistí, že se do přízemí nevejde schodiště
-    - 2. Změní tvar, čímz vznikne prostor pro schodiště, pošle to statikovi
-    - 3. Statik zjistí nedostatek, například v podobě příliš velkého stropu a doprostřed místnosti je tím pádem potřeba přidat spolupráce
-    - 4. Architekt nechce sloup v obýváku, mírně posune nosnou stěnu a zmenší rozpoznat
-    - 5. Zaslání klientovi, který zase chce větší např. koupelnu a proces pokračuje v další iteraci
+### Prostorové dispozice
+- [Definice](./definice.md#prostorová-dispozice)
+
 ## Cílové skupiny
 ### 1. Architekti ve fázi konceptuálního navrhování
 - software není nástrojem pro tvorbu dokumentace a dat o 3d modelu
