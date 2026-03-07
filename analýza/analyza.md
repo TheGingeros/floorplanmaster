@@ -1,11 +1,17 @@
 # Analýza
 Název projektu: Blender add-on pro parametrické modelování prostorových dispozic
 
-## Úvod
+## Definice problému
+TODO
+
+## Cíl projektu
 - vytvoření rozšiřovacího modulu pro Blender zaměřený na parametrické modelování prostorových dispozic
 - addon umožní uživateli v top view kreslit místnosti nástrojem tužka, definovat parametry objektů jako je stěna, dveře, podlaží, apod. a parametricky je upravovat
 
 ## Informační analýza
+
+### Analýza existujících řešení
+TODO
 
 ### Parametrické modelování
 - [Definice](./definice.md#parametrické-modelování)
@@ -14,6 +20,21 @@ Název projektu: Blender add-on pro parametrické modelování prostorových dis
 - [Definice](./definice.md#prostorová-dispozice)
 
 ## Cílové skupiny
+TODO
+### Uživatelé
+### Persony
+### Uživatelské scénáře - use cases
+
+## Analýza požadavků
+TODO
+### Funkční požadavky
+### Nefunkční požadavky
+
+## Návrh UI
+TODO
+## Technická analýza a návrh architektury
+TODO
+
 ### 1. Architekti ve fázi konceptuálního navrhování
 - software není nástrojem pro tvorbu dokumentace a dat o 3d modelu
 - software je nástroj pro prostorové myšlení
