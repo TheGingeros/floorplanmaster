@@ -2,11 +2,12 @@
 Název projektu: Blender add-on pro parametrické modelování prostorových dispozic
 
 ## Definice problému
-TODO
+- tvorba půdorysů a 3D dispozic budov je v čistém Blenderu zdlouhavá a destruktivní
 
 ## Cíl projektu
 - vytvoření rozšiřovacího modulu pro Blender zaměřený na parametrické modelování prostorových dispozic
-- addon umožní uživateli v top view kreslit místnosti nástrojem tužka, definovat parametry objektů jako je stěna, dveře, podlaží, apod. a parametricky je upravovat
+- uživatel bude moci prostorové dispozice intuitivně vytvářet a nedestruktivně upravovat pomocí parametrů
+- cílem je primárně urychlit ranou fázi architektonického návrhu
 
 ## Informační analýza
 
