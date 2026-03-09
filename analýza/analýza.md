@@ -13,14 +13,14 @@ Název projektu: Blender add-on pro parametrické modelování prostorových dis
 
 ### Analýza existujících řešení
 TODO
-- [Současné hlavní architektonické rozšiřující moduly pro Blender](./analyza_existujici_reseni.md#současné-hlavní-architektonické-rozšiřující-moduly-pro-blender)
-- [Hlavní architektonické nástroje mimo Blender](./analyza_existujici_reseni.md#hlavní-architektonické-nástroje-mimo-blender)
+- [Současné hlavní architektonické rozšiřující moduly pro Blender](./files/existujici_reseni.md#současné-hlavní-architektonické-rozšiřující-moduly-pro-blender)
+- [Hlavní architektonické nástroje mimo Blender](./files/existujici_reseni.md#hlavní-architektonické-nástroje-mimo-blender)
 
 ### Parametrické modelování
-- [Definice](./definice.md#parametrické-modelování)
+- [Definice](./files/definice.md#parametrické-modelování)
 
 ### Prostorové dispozice
-- [Definice](./definice.md#prostorová-dispozice)
+- [Definice](./files/definice.md#prostorová-dispozice)
 
 ## Cílové skupiny
 TODO
