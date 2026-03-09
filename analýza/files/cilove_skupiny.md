@@ -41,6 +41,8 @@
 - modelovací nástroje Blenderu nejsou primárně optimalizovány pro rychlý level design
 - ruční přestavování rozměrů místnosti nebo přesouvání otvorů během prototypování je příliš pomalé, což ztěžuje plynulé iterování hratelnosti a omezuje rychlost vývoje herní úrovně
 
+### [Více informací o cílových skupinách](./cilove_skupiny_rozsahlejsi.md)
+
 # Persony
 TODO
 

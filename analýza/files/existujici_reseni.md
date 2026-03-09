@@ -59,6 +59,8 @@ Analýza existujících řešení
 - data jsou spjata s .blend souborem
 - bonsai naproti tomu umožňuje Blenderu fungovat jako prohlížeč a editor databáze IFC
 
+## [Více informací](./existujici_reseni_rozsahlejsi)
+
 # Hlavní architektonické nástroje mimo Blender
 ## Sketchup
 - postaven na principu přímého modelování ploch
