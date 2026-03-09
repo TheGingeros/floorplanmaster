@@ -47,3 +47,18 @@
 TODO
 
 # Uživatelské scénáře
+## Scénář 1: Vytvoření základní místnosti pomocí kreslení v top-down pohledu
+- uživatel aktivuje kreslící nástroj addonu v ortografickém pohledu shora
+- klikáním do 3D prostoru definuje rohové body a tvar půdorysu 
+- po uzavření tvaru nebo potvrzení addon automaticky vytáhne 3D stěny s výchozí výškou a tloušťkou
+## Scénář 2: Vytvoření základní místnosti pomocí parametrů
+- uživatel v uživatelském rozhraní addonu klikne na tlačítko pro přidání výchozí místnosti (např. obdélníkové) se zvolenými parametry jako je objem, šířka, délka, ...
+- addon vygeneruje na pozici 3D kurzoru základní blok místnosti s danými parametry
+## Scénář 3: Parametrická úprava místnosti
+- uživatel vybere již dříve vygenerovanou místnost ve 3D Viewportu nebo v panelu
+- v panelu vlastností addonu změní na posuvníku libovolný parametr (např. zvětší tloušťku stěn nebo zvedne výšku stropu)
+- addon v reálném čase nedestruktivně přepočítá 3D model, aniž by bylo nutné cokoli ručně modelovat
+## Scénář 4: Vložení otvoru do stěny
+- uživatel označí konkrétní stěnu místnosti a v panelu klikne na „Add window / doors“
+- addon na daném místě vytvoří otvor, který automaticky a čistě prostupuje celou tloušťkou stěny
+- pomocí dodatečných parametrů (např. posuvníků pro osu X a Z) uživatel přesně doladí umístění a velikost otvoru v rámci vybrané stěny
