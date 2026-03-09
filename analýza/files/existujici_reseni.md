@@ -49,8 +49,16 @@ Analýza existujících řešení
 - PRO verze nabízí export do formátu IFC 
 
 ## BonsaiBIM
+- oproti Archimeshi a Archipacku je navržen jako nativní platforma pro tvorbu a správu informačních modelů budov, založena na mezinárodním standardu IFC - ISO 16739
 
-## Ostatní
+### BonsaiBIM - IFC
+- [IFC](./definice.md#ifc---industry-foundation-classses)
+
+## Shrnutí
+- archimesh a archipeck jsou nástavby nad standardním modelovacím procesem
+- data jsou spjata s .blend souborem
+- bonsai naproti tomu umožňuje Blenderu fungovat jako prohlížeč a editor databáze IFC
+
 # Hlavní architektonické nástroje mimo Blender
 TODO
 ## Sketchup
