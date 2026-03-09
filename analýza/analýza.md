@@ -12,7 +12,6 @@ Název projektu: Blender add-on pro parametrické modelování prostorových dis
 ## Informační analýza
 
 ### Analýza existujících řešení
-TODO
 - [Současné hlavní architektonické rozšiřující moduly pro Blender](./files/existujici_reseni.md#současné-hlavní-architektonické-rozšiřující-moduly-pro-blender)
 - [Hlavní architektonické nástroje mimo Blender](./files/existujici_reseni.md#hlavní-architektonické-nástroje-mimo-blender)
 
@@ -25,6 +24,9 @@ TODO
 ## Cílové skupiny
 TODO
 ### Uživatelé
+1. [Architekti](./files/cilove_skupiny.md#architekti)
+2. [3D Umělci a Vizualizátoři](./files/cilove_skupiny.md#3d-umělci-a-vizualizátoři)
+3. [Game Designeři / Level Designeři](./files/cilove_skupiny.md#game-designeři--level-designeři)
 ### Persony
 ### Uživatelské scénáře - use cases
 
