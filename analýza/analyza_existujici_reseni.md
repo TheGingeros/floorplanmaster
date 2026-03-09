@@ -32,7 +32,21 @@ Analýza existujících řešení
 - generátor knih, lamp a závěsů
 
 ## Archipack
-- 
+- vytvořen jako robustnější a výkonnější alternativa k Archimesh
+- zaměřen primárně pro profesionální architekty a vizualizátory
+- autor - Stephen Leger
+- navrhnut jako komplexní framework pro architektonické navrhnování v Blenderu
+- existují dvě verze - Community Edition a Pro
+
+### Archipack - parametrické modelování
+- důraz na interaktivní manipulaci
+- systém Auto-manipulate on select - při výběru objektu se ve 3D viewportu objeví táhla (gizmos) a textové popisky, které umožňují měnit rozměry, pozici a rotaci prvků přímým tažením myši
+- spravování objektů pomocí vlastního systému Properties - zůstavájí zachovány po celou dobu životnosti projektu
+- uživatel může kdykoliv vybrat stěnu a změnit její tloušťku nebo výšku, všechny připojené prvky, jako jsou okna, dveře nebo podlahy, na tuto změnu reagují
+
+### Archipack - export a interoperabilita
+- nástroj pro generování řezů a půdorysů, ty lze exportovat do formátu SVG pro další úpravy v programech jako Inkscape nebo Illustrator
+- PRO verze nabízí export do formátu IFC 
 
 ## BonsaiBIM
 
