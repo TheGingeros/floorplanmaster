@@ -167,3 +167,19 @@
     - 3. Statik zjistí nedostatek, například v podobě příliš velkého stropu a doprostřed místnosti je tím pádem potřeba přidat spolupráce
     - 4. Architekt nechce sloup v obýváku, mírně posune nosnou stěnu a zmenší rozpoznat
     - 5. Zaslání klientovi, který zase chce větší např. koupelnu a proces pokračuje v další iteraci
+
+#### IFC - industry foundation classses
+- otevřený, na platformě nezávislý datový standard pro ukládání a výměnu dat ve stavebnictví a facility managementu
+- formát: .ifc nebo xml verze .ifcXML
+- objektově orientovaný datový model
+- hlavní myšlenkou je interoperabilita
+    - výměna dat
+    - koordinace
+    - archivace
+    - openBIm - filozofie, že data by neměla být uzamčena v softwaru jednoho výrobce
+- databáze vztahů a vlastností - hiearchie
+    - ifcproject
+    - ifcsite
+    - ifcbuilding
+    - ifcbuildingstorey
+    - ifcwall, ifcwindow, ...
