@@ -36,6 +36,10 @@
 - respoektování [DepsGraph](definice.md#depsgraph---dependency-graph) - systém závislostí v Blenderu, aby nedocházelo ke zbytečným cyklickým přepočtům celé scény
 
 ## 3. Použitelnost a UX
+- vzhled addonu by měl působit jako nativní součást blenderu
+- striktní použití zabudovaných UI komponent - UILayout.row atd
+- logické seskupování nástrojů do záložek, přidávání Tooltips
+- důraz na ošetření chyb - srozumitelný feedback při špatných operací, například přidání okna do stěny, která je menší než zadaná velikost okna
 
 # Volitelné požadavky
 ## 1. Kontextová nabídka
