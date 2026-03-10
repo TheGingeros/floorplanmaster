@@ -183,3 +183,14 @@
     - ifcbuilding
     - ifcbuildingstorey
     - ifcwall, ifcwindow, ...
+
+## Depsgraph - Dependency graph
+- klíčová komponenta Blender API
+- graf, který hlídá, v jakém pořadí se mají počítat a aktualizovat věci ve scéně
+- probíhá s ním komunikace pokaždé, kdy z interaktivní stěny probíhá generace finálního modelu
+- objekt A, B, C. A parent B a B parent C, jakmile pohneme objektem A, blender musí vědět, co má přepočítat dřív. Depsgraph si proto pamatuje závislosti A -> B -> C
+- Original vs Evaluated data
+    - stěna je ve skutečnosti křivka s dvěma body - original, pomocí geometry nodes vypadá jako stěna - pokud chce při finálním nástroji model stěny, tázám se na evaluated ata. 
+
+- změny výšky stěny nad original daty se pouze ukládají do paměti
+- při změně je potřeba nastavit tag pomocí - obj.update_tag() - tím říkám depsgraphu aby přepočítal vše v celém stromu co s daným objektem souvisí
