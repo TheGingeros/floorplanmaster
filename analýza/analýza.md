@@ -22,7 +22,6 @@ Název projektu: Blender add-on pro parametrické modelování prostorových dis
 - [Definice](./files/definice.md#prostorová-dispozice)
 
 ## Cílové skupiny
-TODO
 ### Uživatelé
 1. [Architekti](./files/cilove_skupiny.md#architekti)
 2. [3D Umělci a Vizualizátoři](./files/cilove_skupiny.md#3d-umělci-a-vizualizátoři)
