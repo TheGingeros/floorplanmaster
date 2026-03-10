@@ -42,8 +42,16 @@
 - důraz na ošetření chyb - srozumitelný feedback při špatných operací, například přidání okna do stěny, která je menší než zadaná velikost okna
 
 # Volitelné požadavky
-## 1. Kontextová nabídka
+## 1. Kontextová nabídka - pet palette
+- po kliknutí na určitý objekt/prvek se přímo na daném místě na obrazovce objeví malá plovoucí nabídka s akcemi
+- addon musí zachytávat události myši, provést raycast a zjistit, na jakou část objektu uživatel kliknul
+- pomocí modulu gpu nebo blf nakreslit a ovládat vlastní UI vrstu překrývající 3D viewport
 
 ## 2. Interaktivní 3D manipulátory
+- místo zadávání úpravy do panelu může uživatel chytit barevnouo šipku přímo u zdi a táhnout s ní hahoru
+- využití rozhraní bpy.types.Gizmo a GizmoGroup 
 
 ## 3. Automatické kótování
+- vizualizace rozměrů, která neustále ukazují velikost, aniž by se musela překreslovat
+- generování dynamických textů přes modul blf přímo do viewportu přes draw_handler
+- tyto kóty se musí aktulizovat nejen při změně délky stěny ale musí se správně orientovat podle pohledu kamery
