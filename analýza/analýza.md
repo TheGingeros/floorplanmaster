@@ -37,8 +37,18 @@ TODO
 ## Analýza požadavků
 TODO
 ### Funkční požadavky
+1. [Interaktivní tvorba místností a kreslení - Pencil Tool](./files/analyza_pozadavku.md#1-interaktivní-tvorba-místností-a-kreslení---pencil-tool)
+2. [Generování a úprava parametrických objektů](./files/analyza_pozadavku.md#2-generování-a-úprava-parametrických-objektů)
+3. [Správa prostoru a metadat](./files/analyza_pozadavku.md#3-správa-prostoru-a-metadat)
+4. [Finalizační nástroj](./files/analyza_pozadavku.md#4-finalizační-nástroj)
 ### Nefunkční požadavky
-
+1. [Architektura a technologie](./files/analyza_pozadavku.md#1-architektura-a-technologie)
+2. [Výkon a Nedestruktivnost](./files/analyza_pozadavku.md#2-výkon-a-nedestruktivnost)
+3. [Použitelnost a UX](./files/analyza_pozadavku.md#3-použitelnost-a-ux)
+### Volitelné / Rozšiřující požadavky
+1. [Kontextová nabídka](./files/analyza_pozadavku.md#1-kontextová-nabídka)
+2. [Interaktivní 3D manipulátory](./files/analyza_pozadavku.md#2-interaktivní-3d-manipulátory)
+3. [Automatické kótování](./files/analyza_pozadavku.md#3-automatické-kótování)
 ## Návrh UI
 TODO
 ## Technická analýza a návrh architektury
