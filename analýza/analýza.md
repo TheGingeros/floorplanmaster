@@ -52,7 +52,7 @@ Název projektu: Blender add-on pro parametrické modelování prostorových dis
 
 ## Analýza požadavků
 ### Tabulka
-| Potřeba / Funkční požadavek | Architekti | 3D Vizualizátoři | Game Designeři |
+| Požadavek | Architekti | 3D Vizualizátoři | Game Designeři |
 | :--- | :--- | :--- | :--- |
 | **Rychlá tvorba základní geometrie** (skicování/parametry) | Vysoká | Vysoká | Vysoká |
 | **Nedestruktivní / Parametrické úpravy** (posouvání stěn, změny rozměrů) | Vysoká | Střední | Vysoká |
