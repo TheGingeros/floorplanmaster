@@ -34,6 +34,16 @@ Název projektu: Blender add-on pro parametrické modelování prostorových dis
 2. [Vizualizátorka Klára](./files/cilove_skupiny.md#vizualizátorka-klára---zaměřeno-na-rychlost-a-čistou-topologii)
 3. [Level Designer Tomáš](./files/cilove_skupiny.md#level-designer-tomáš---zaměřeno-na-blockout-a-hratelnost)
 
+### Vstup
+1. [2D podklady](./files/definice.md#2d-podklady)
+2. [Kvantitativní zadání](./files/definice.md#kvantitativní-zadání-stavební-program)
+3. [Čistý koncept](./files/definice.md#čistý-koncept-myšlenka)
+
+### Výstup
+1. [3D hmotový model](./files/definice.md#3d-hmotový-model-massing)
+2. [Optimalizovaná geometrie pro export](./files/definice.md#optimalizovaná-geometrie-pro-export-blockout)
+3. [Přehledná prostorová data](./files/definice.md#přehledná-prostorová-data)
+
 ### Uživatelské scénáře - use cases
 1. [Scénář 1: Vytvoření základní místnosti pomocí kreslení](./files/cilove_skupiny.md#scénář-1-vytvoření-základní-místnosti-pomocí-kreslení)
 2. [Scénář 2: Vytvoření základní místnosti pomocí parametrů](./files/cilove_skupiny.md#scénář-2-vytvoření-základní-místnosti-pomocí-parametrů)
