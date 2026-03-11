@@ -44,7 +44,38 @@
 ### [Více informací o cílových skupinách](./cilove_skupiny_rozsahlejsi.md)
 
 # Persony
-TODO
+## Architekt Adam - zaměřeno na studii a rychlý koncept
+### Profil
+- 32 let
+- pracuje v menším architektonickém ateliéru
+- zodpovědní za úvodní studie a komunikaci s klienty ve fázi hledání tvar a dispozice budovy
+### Technické zázemí
+- pracuje v CAD/BIM softwaru (AutoCAD, Revit)
+- pro rychlé 3D koncepty a objemové studie začal používat Blender protože je svižnější a nabízí hezčí real-time zobrazení
+- neumí programovat a Geometry Nodes jsou pro něj příliš složité
+### Cíle
+- potřebuje vytvořit během několika hodin 3 různé varianty prostorového uspořádání domu, pro ukázku pro klienta
+- primárně mu jde o hmotu, návaznost místností a základní rozměry
+### Flustrace
+- v čistém blenderu ho zdržuje extrudování polygonů, když klient řekne, že chce obývák o metr širší, musí ručně posouvat vertexy a přepočítávat návaznosti
+- chybí také rychlý přehled o metrech čtverečních
+### Očekávání
+- očekává jednoduché UI, kde zadá rozměry místnosti, nebo je naskicuje
+- při změně parametru addon automaticky zachová tloušťku zdiva a nerozbije návaznost na další místnosti
+
+## Vizualizátor - zaměřeno na rychlost a čistou topologii
+### Profil
+### Technické zázemí
+### Cíle
+### Flustrace
+### Očekávání
+
+## Level Designer - zaměřeno na "Blockout" a hratelnost
+### Profil
+### Technické zázemí
+### Cíle
+### Flustrace
+### Očekávání
 
 # Uživatelské scénáře
 ## Scénář 1: Vytvoření základní místnosti pomocí kreslení v top-down pohledu
