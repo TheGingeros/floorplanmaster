@@ -51,6 +51,19 @@ Název projektu: Blender add-on pro parametrické modelování prostorových dis
 4. [Scénář 4: Vložení otvoru do stěny](./files/cilove_skupiny.md#scénář-4-vložení-otvoru-do-stěny)
 
 ## Analýza požadavků
+### Tabulka
+| Potřeba / Funkční požadavek | Architekti | 3D Vizualizátoři | Game Designeři |
+| :--- | :--- | :--- | :--- |
+| **Rychlá tvorba základní geometrie** (skicování/parametry) | Vysoká (Must have) | Vysoká (Must have) | Vysoká (Must have) |
+| **Nedestruktivní / Parametrické úpravy** (posouvání stěn, změny rozměrů) | Vysoká (Must have) | Střední (Should have) | Vysoká (Must have) |
+| **Čistá topologie** (pro textury a modifikátory) | Nízká (Nice to have) | Vysoká (Must have) | Střední (Should have) |
+| **Automatická a nedestruktivní tvorba otvorů** (okna, dveře) | Střední (Should have) | Vysoká (Must have) | Střední (Should have) |
+| **Přesné zadávání číselných hodnot** (metry, centimetry) | Vysoká (Must have) | Střední (Should have) | Nízká (Nice to have) |
+| **Obkreslování podloženého 2D půdorysu** (např. z PDF) | Střední (Should have) | Vysoká (Must have) | Nízká (Could have) |
+| **Modulární návaznosti místností a chodeb** | Vysoká (Must have) | Nízká (Could have) | Vysoká (Must have) |
+| **Bezproblémový export do herních enginů** (včetně kolizí) | Nízká (Nice to have) | Nízká (Nice to have) | Vysoká (Must have) |
+| **Přehled o ploše místností** (metry čtvereční) | Vysoká (Must have) | Nízká (Nice to have) | Irelevantní (Out of scope) |
+
 ### Funkční požadavky
 1. [Interaktivní tvorba místností a kreslení - Pencil Tool](./files/analyza_pozadavku.md#1-interaktivní-tvorba-místností-a-kreslení---pencil-tool)
 2. [Generování a úprava parametrických objektů](./files/analyza_pozadavku.md#2-generování-a-úprava-parametrických-objektů)
