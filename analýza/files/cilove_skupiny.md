@@ -81,12 +81,22 @@
 - chce nástroj podobný tužce, s kterým obkreslí podložený půdorys
 - následně jedním kliknutím vkládat otvory - okna  a dveře s tím, že addon se stará o čistou topologii otvorů
 
-## Level Designer - zaměřeno na "Blockout" a hratelnost
+## Level Designer Tomáš - zaměřeno na "Blockout" a hratelnost
 ### Profil
+- 25 let
+- vývojář v nezávislém herním studiu
+- vytváří herní úrovně a testuje, jak se v nich hráč pohybuje
 ### Technické zázemí
+- primárně pracuje v herních enginech - UE a Unity
+- Blender používá k tvorbě takzvaného "Blockoutu" nebo "Greyboxingu" – rychlé tvorbě hrubých geometrických bloků
 ### Cíle
+- rychle vybudovat komplexní herní mapu (např. spleť chodeb a místností), vyexportovat ji do enginu a projít si ji s herní postavou
 ### Flustrace
+- po testování často zjistí, že chodba je pro souboj příliš úzká nebo strop moc nízký. Pokud má úroveň vymodelovanou z jednoho kusu geometrie v čistém Blenderu, je její úprava destruktivní a zdlouhavá
 ### Očekávání
+- hledá robustnost a rychlost iterace
+- parametrické místnosti mu umožní po playtestu jednoduše kliknout na chodbu, změnit v panelu šířku z 2 metrů na 3 metry a add-on se postará o zbytek
+- bezproblémový export, který nerozbije kolize pro herní engine
 
 # Uživatelské scénáře
 ## Scénář 1: Vytvoření základní místnosti pomocí kreslení v top-down pohledu
