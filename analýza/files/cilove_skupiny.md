@@ -63,12 +63,23 @@
 - očekává jednoduché UI, kde zadá rozměry místnosti, nebo je naskicuje
 - při změně parametru addon automaticky zachová tloušťku zdiva a nerozbije návaznost na další místnosti
 
-## Vizualizátor - zaměřeno na rychlost a čistou topologii
+## Vizualizátorka Klára - zaměřeno na rychlost a čistou topologii
 ### Profil
+- 28 let
+- vizualizátorka na volné noze - freelance
+- specializace na fotorealistické interiéry pro developery a realitní kanceláře
 ### Technické zázemí
+- blender ovládá na velmi vysoké úrovni
+- dokonale zná materály, nasvícení a rendering
+- spíše umělecky zaměřena, než technicky
 ### Cíle
+- od klienta dostane 2D půdorys v PDF a potřebuje co nejrychleji vytvořit 3D shell bytu - aby se věnovala hlavnímu a to je nasvícení, materiály a vybavení nábytkem
 ### Flustrace
+- modelování holích zdí ji zdržuje a nebaví
+- nativní boolean operace na otvory vytváří ošklivou topologii, kterou musí čistit, kvůli renderingu a materiálům
 ### Očekávání
+- chce nástroj podobný tužce, s kterým obkreslí podložený půdorys
+- následně jedním kliknutím vkládat otvory - okna  a dveře s tím, že addon se stará o čistou topologii otvorů
 
 ## Level Designer - zaměřeno na "Blockout" a hratelnost
 ### Profil
