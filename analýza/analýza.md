@@ -1,5 +1,4 @@
-# Analýza
-Název projektu: Blender add-on pro parametrické modelování prostorových dispozic
+# Analýza - Blender add-on pro parametrické modelování prostorových dispozic
 
 ## Definice problému
 - Blender je primárně obecný 3D polygonální modelovací nástroj, nikoliv specializovaný CAD/BIM software
