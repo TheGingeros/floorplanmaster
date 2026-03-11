@@ -193,4 +193,21 @@
     - stěna je ve skutečnosti křivka s dvěma body - original, pomocí geometry nodes vypadá jako stěna - pokud chce při finálním nástroji model stěny, tázám se na evaluated ata. 
 
 - změny výšky stěny nad original daty se pouze ukládají do paměti
-- při změně je potřeba nastavit tag pomocí - obj.update_tag() - tím říkám depsgraphu aby přepočítal vše v celém stromu co s daným objektem souvisí
+- při změně je potřeba nastavit tag pomocí - obj.update_tag() - tím říkám depsgraphu aby přepočítal vše v celém stromu co s daným objektem 
+
+## Současné pracovní postupy
+- při vytváření jednoduchého půdorysu v SketchUpu uživatel nakreslí obdélník, napíše rozměry a nástrojem Push/Pull vytáhne stěny
+- v blenderu bez doplňků stejná operace vyžaduje řadu kroků:
+    - přidání roviny
+    - vstup do edit modu
+    - posun podle souřadnic
+    - vysunutí / extrude
+    - přidání např. modifikátoru solidify pro tloušťku
+- každý z tento kroků zvyšuje šanci chyby a zpomaluje kreativní tok
+
+- potřeba parametrické inteligence bez BIM detailů
+- addon musí umožnit tvorbu inteligentní geometrie bez složitých náležitostí BIM
+- geometry first:
+    - umožní uživateli soustředit se na estetiku a proporce
+    - umožní iterativně vytvářet chytrou geometrii rychle a intuitivně
+- existence BIM základů jako např. automatický výpočet plochy, což se např. architektům hodí znát okamžitě při návrhusouvisí
