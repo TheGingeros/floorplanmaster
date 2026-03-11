@@ -35,7 +35,6 @@ TODO
 4. [Scénář 4: Vložení otvoru do stěny](./files/cilove_skupiny.md#scénář-4-vložení-otvoru-do-stěny)
 
 ## Analýza požadavků
-TODO
 ### Funkční požadavky
 1. [Interaktivní tvorba místností a kreslení - Pencil Tool](./files/analyza_pozadavku.md#1-interaktivní-tvorba-místností-a-kreslení---pencil-tool)
 2. [Generování a úprava parametrických objektů](./files/analyza_pozadavku.md#2-generování-a-úprava-parametrických-objektů)
