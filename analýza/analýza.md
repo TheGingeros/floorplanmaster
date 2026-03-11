@@ -2,6 +2,8 @@
 Název projektu: Blender add-on pro parametrické modelování prostorových dispozic
 
 ## Definice problému
+- Blender je primárně obecný 3D polygonální modelovací nástroj, nikoliv specializovaný CAD/BIM software
+- nabízí obrovskou flexibilitu, pro specifické potřeby architektonického navrhování avšak postrádá nativní nástroje, což vede k neefektivně a zdlouhavosti pracovních postupů
 - tvorba půdorysů a 3D dispozic budov je v čistém Blenderu zdlouhavá a destruktivní
 
 ## Cíl projektu
@@ -26,8 +28,12 @@ Název projektu: Blender add-on pro parametrické modelování prostorových dis
 1. [Architekti](./files/cilove_skupiny.md#architekti)
 2. [3D Umělci a Vizualizátoři](./files/cilove_skupiny.md#3d-umělci-a-vizualizátoři)
 3. [Game Designeři / Level Designeři](./files/cilove_skupiny.md#game-designeři--level-designeři)
+
 ### Persony
-TODO
+1. [Architekt Adam](./files/cilove_skupiny.md#architekt-adam---zaměřeno-na-studii-a-rychlý-koncept)
+2. [Vizualizátorka Klára](./files/cilove_skupiny.md#vizualizátorka-klára---zaměřeno-na-rychlost-a-čistou-topologii)
+3. [Level Designer Tomáš](./files/cilove_skupiny.md#level-designer-tomáš---zaměřeno-na-blockout-a-hratelnost)
+
 ### Uživatelské scénáře - use cases
 1. [Scénář 1: Vytvoření základní místnosti pomocí kreslení](./files/cilove_skupiny.md#scénář-1-vytvoření-základní-místnosti-pomocí-kreslení)
 2. [Scénář 2: Vytvoření základní místnosti pomocí parametrů](./files/cilove_skupiny.md#scénář-2-vytvoření-základní-místnosti-pomocí-parametrů)
