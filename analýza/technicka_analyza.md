@@ -9,10 +9,10 @@
 ### Uživatelské rozhraní
 ### Vlastnosti a data
 
-## Návrh - Pencil Tool
+## Návrh - FP1 - Pencil Tool
 
-## Návrh - Generování a úprava parametrických objektů
+## Návrh - FP2 - Generování a úprava parametrických objektů
 
-## Návrh - správa prostoru a metadat
+## Návrh - FP3 - správa prostoru a metadat
 
-## Návrh - finalizační nástroj
+## Návrh - FP4 - finalizační nástroj
