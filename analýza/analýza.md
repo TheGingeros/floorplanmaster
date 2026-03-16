@@ -30,8 +30,8 @@
 
 ### Persony
 1. [Architekt Adam](./files/cilove_skupiny.md#architekt-adam---zaměřeno-na-studii-a-rychlý-koncept)
-2. [Vizualizátorka Klára](./files/cilove_skupiny.md#vizualizátorka-klára---zaměřeno-na-rychlost-a-čistou-topologii)
-3. [Level Designer Tomáš](./files/cilove_skupiny.md#level-designer-tomáš---zaměřeno-na-blockout-a-hratelnost)
+2. [Vizualizátorka Věra](./files/cilove_skupiny.md#vizualizátorka-věra---zaměřeno-na-rychlost-a-čistou-topologii)
+3. [Level Designer Denis](./files/cilove_skupiny.md#level-designer-denis---zaměřeno-na-blockout-a-hratelnost)
 
 ### Vstup
 1. [2D podklady](./files/definice.md#2d-podklady)

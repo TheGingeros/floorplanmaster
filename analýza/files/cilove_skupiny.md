@@ -63,7 +63,7 @@
 - očekává jednoduché UI, kde zadá rozměry místnosti, nebo je naskicuje
 - při změně parametru addon automaticky zachová tloušťku zdiva a nerozbije návaznost na další místnosti
 
-## Vizualizátorka Klára - zaměřeno na rychlost a čistou topologii
+## Vizualizátorka Věra - zaměřeno na rychlost a čistou topologii
 ### Profil
 - 28 let
 - vizualizátorka na volné noze - freelance
@@ -81,7 +81,7 @@
 - chce nástroj podobný tužce, s kterým obkreslí podložený půdorys
 - následně jedním kliknutím vkládat otvory - okna  a dveře s tím, že addon se stará o čistou topologii otvorů
 
-## Level Designer Tomáš - zaměřeno na "Blockout" a hratelnost
+## Level Designer Denis - zaměřeno na "Blockout" a hratelnost
 ### Profil
 - 25 let
 - vývojář v nezávislém herním studiu
