@@ -45,14 +45,14 @@
 
 ### Uživatelské scénáře - use cases
 #### 1. Architekti
-[Scénář 1.1: Hmotová studie na základě stavebního programu](./files/cilove_skupiny.md#scénář-11-hmotová-studie-na-základě-stavebního-programu)
-[Scénář 1.2: Zkoušení prostorových variant a posun stěn](./files/cilove_skupiny.md#scénář-12-zkoušení-prostorových-variant-a-posun-stěn)
+[UC 1.1 Scénář 1.1: Hmotová studie na základě stavebního programu](./files/cilove_skupiny.md#scénář-11-hmotová-studie-na-základě-stavebního-programu)
+[UC 1.2 Scénář 1.2: Zkoušení prostorových variant a posun stěn](./files/cilove_skupiny.md#scénář-12-zkoušení-prostorových-variant-a-posun-stěn)
 #### 2. 3D Umělci a Vizualizátoři
-[Scénář 2.1: Obkreslení 2D půdorysu do čisté 3D geometrie](./files/cilove_skupiny.md#scénář-21-obkreslení-2d-půdorysu-do-čisté-3d-geometrie)
-[Scénář 2.2: Vložení otvorů pro přesné 3D modely oken/dveří](./files/cilove_skupiny.md#scénář-22-vložení-otvorů-pro-přesné-3d-modely-okendveří)
+[UC 2.1 Scénář 2.1: Obkreslení 2D půdorysu do čisté 3D geometrie](./files/cilove_skupiny.md#scénář-21-obkreslení-2d-půdorysu-do-čisté-3d-geometrie)
+[UC 2.2 Scénář 2.2: Vložení otvorů pro přesné 3D modely oken/dveří](./files/cilove_skupiny.md#scénář-22-vložení-otvorů-pro-přesné-3d-modely-okendveří)
 #### 3. Game Designeři
-[Scénář 3.1: Rychlý blockout a tvorba chodeb](./files/cilove_skupiny.md#scénář-31-rychlý-blockout-a-tvorba-chodeb)
-[Scénář 3.2: Iterace na základě playtestingu a finalizace pro export](./files/cilove_skupiny.md#scénář-32-iterace-na-základě-playtestingu-a-finalizace-pro-export)
+[UC 3.1 Scénář 3.1: Rychlý blockout a tvorba chodeb](./files/cilove_skupiny.md#scénář-31-rychlý-blockout-a-tvorba-chodeb)
+[UC 3.2 Scénář 3.2: Iterace na základě playtestingu a finalizace pro export](./files/cilove_skupiny.md#scénář-32-iterace-na-základě-playtestingu-a-finalizace-pro-export)
 
 ## Analýza požadavků
 ### Tabulka
@@ -74,20 +74,18 @@
 - Irelevantní - out of scope
 
 ### Funkční požadavky
-1. [Interaktivní tvorba místností a kreslení - Pencil Tool](./files/analyza_pozadavku.md#1-interaktivní-tvorba-místností-a-kreslení---pencil-tool)
-2. [Generování a úprava parametrických objektů](./files/analyza_pozadavku.md#2-generování-a-úprava-parametrických-objektů)
-3. [Správa prostoru a metadat](./files/analyza_pozadavku.md#3-správa-prostoru-a-metadat)
-4. [Finalizační nástroj](./files/analyza_pozadavku.md#4-finalizační-nástroj)
+1. [Interaktivní tvorba místností a kreslení - Pencil Tool - UC 2.1, UC 3.1](./files/analyza_pozadavku.md#1-interaktivní-tvorba-místností-a-kreslení---pencil-tool)
+2. [Generování a úprava parametrických objektů - UC 1.1, UC 2.2, UC 3.2](./files/analyza_pozadavku.md#2-generování-a-úprava-parametrických-objektů)
+3. [Správa prostoru a metadat - UC 1.1, UC 1.2 ](./files/analyza_pozadavku.md#3-správa-prostoru-a-metadat)
+4. [Finalizační nástroj - UC 3.2](./files/analyza_pozadavku.md#4-finalizační-nástroj)
+5. [Kontextová nabídka](./files/analyza_pozadavku.md#5-kontextová-nabídka---pet-palette)
+6. [Interaktivní 3D manipulátory](./files/analyza_pozadavku.md#6-interaktivní-3d-manipulátory)
 
 ### Nefunkční požadavky
 1. [Architektura a technologie](./files/analyza_pozadavku.md#1-architektura-a-technologie)
 2. [Výkon a Nedestruktivnost](./files/analyza_pozadavku.md#2-výkon-a-nedestruktivnost)
 3. [Použitelnost a UX](./files/analyza_pozadavku.md#3-použitelnost-a-ux)
-
-### Volitelné / Rozšiřující požadavky
-1. [Kontextová nabídka](./files/analyza_pozadavku.md#1-kontextová-nabídka)
-2. [Interaktivní 3D manipulátory](./files/analyza_pozadavku.md#2-interaktivní-3d-manipulátory)
-3. [Automatické kótování](./files/analyza_pozadavku.md#3-automatické-kótování)
+4. [Automatické kótování](./files/analyza_pozadavku.md#4-automatické-kótování
 
 ## Návrh UI
 TODO

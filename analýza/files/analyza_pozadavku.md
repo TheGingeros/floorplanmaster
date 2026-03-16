@@ -20,6 +20,15 @@
 - jakmile je návrh hotový, uživatel potřebuje z tohoto parametrického systému vytvořit obyčejný 3D model pro další zpracování, např. UV mapování nebo export do herního enginu
 - systém projde vybrané objekty a postupně trvale aplikovat všechny generátory, následně začistit topologii
 
+## 5. Kontextová nabídka - pet palette
+- po kliknutí na určitý objekt/prvek se přímo na daném místě na obrazovce objeví malá plovoucí nabídka s akcemi
+- addon musí zachytávat události myši, provést raycast a zjistit, na jakou část objektu uživatel kliknul
+- pomocí modulu gpu nebo blf nakreslit a ovládat vlastní UI vrstu překrývající 3D viewport
+
+## 6. Interaktivní 3D manipulátory
+- místo zadávání úpravy do panelu může uživatel chytit barevnouo šipku přímo u zdi a táhnout s ní hahoru
+- využití rozhraní bpy.types.Gizmo a GizmoGroup 
+
 # Nefunkční požadavky
 ## 1. Architektura a technologie
 - geometry nodes jako výpočetní jádro addonu
@@ -41,17 +50,7 @@
 - logické seskupování nástrojů do záložek, přidávání Tooltips
 - důraz na ošetření chyb - srozumitelný feedback při špatných operací, například přidání okna do stěny, která je menší než zadaná velikost okna
 
-# Volitelné požadavky
-## 1. Kontextová nabídka - pet palette
-- po kliknutí na určitý objekt/prvek se přímo na daném místě na obrazovce objeví malá plovoucí nabídka s akcemi
-- addon musí zachytávat události myši, provést raycast a zjistit, na jakou část objektu uživatel kliknul
-- pomocí modulu gpu nebo blf nakreslit a ovládat vlastní UI vrstu překrývající 3D viewport
-
-## 2. Interaktivní 3D manipulátory
-- místo zadávání úpravy do panelu může uživatel chytit barevnouo šipku přímo u zdi a táhnout s ní hahoru
-- využití rozhraní bpy.types.Gizmo a GizmoGroup 
-
-## 3. Automatické kótování
+## 4. Automatické kótování
 - vizualizace rozměrů, která neustále ukazují velikost, aniž by se musela překreslovat
 - generování dynamických textů přes modul blf přímo do viewportu přes draw_handler
 - tyto kóty se musí aktulizovat nejen při změně délky stěny ale musí se správně orientovat podle pohledu kamery
