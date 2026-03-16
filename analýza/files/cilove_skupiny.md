@@ -99,6 +99,24 @@
 - bezproblémový export, který nerozbije kolize pro herní engine
 
 # Uživatelské scénáře
+## 1. Architekti
+### Scénář 1.1: Hmotová studie na základě stavebního programu
+### Scénář 1.2: Zkoušení prostorových variant a posun stěn
+## 2. 3D Umělci a Vizualizátoři
+### Scénář 2.1: Obkreslení 2D půdorysu do čisté 3D geometrie
+### Scénář 2.2: Vložení otvorů pro přesné 3D modely oken/dveří
+## 3. Game Designeři
+### Scénář 3.1: Rychlý blockout a tvorba chodeb
+### Scénář 3.2: Iterace na základě playtestingu a finalizace pro export
+
+
+
+
+
+
+
+
+
 ## Scénář 1: Vytvoření základní místnosti pomocí kreslení v top-down pohledu
 - uživatel aktivuje kreslící nástroj addonu v ortografickém pohledu shora
 - klikáním do 3D prostoru definuje rohové body a tvar půdorysu 

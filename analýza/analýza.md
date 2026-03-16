@@ -44,10 +44,15 @@
 3. [Přehledná prostorová data](./files/definice.md#přehledná-prostorová-data)
 
 ### Uživatelské scénáře - use cases
-1. [Scénář 1: Vytvoření základní místnosti pomocí kreslení](./files/cilove_skupiny.md#scénář-1-vytvoření-základní-místnosti-pomocí-kreslení)
-2. [Scénář 2: Vytvoření základní místnosti pomocí parametrů](./files/cilove_skupiny.md#scénář-2-vytvoření-základní-místnosti-pomocí-parametrů)
-3. [Scénář 3: Parametrická úprava místnosti](./files/cilove_skupiny.md#scénář-3-parametrická-úprava-místnosti)
-4. [Scénář 4: Vložení otvoru do stěny](./files/cilove_skupiny.md#scénář-4-vložení-otvoru-do-stěny)
+#### 1. Architekti
+[Scénář 1.1: Hmotová studie na základě stavebního programu](./files/cilove_skupiny.md#scénář-11-hmotová-studie-na-základě-stavebního-programu)
+[Scénář 1.2: Zkoušení prostorových variant a posun stěn](./files/cilove_skupiny.md#scénář-12-zkoušení-prostorových-variant-a-posun-stěn)
+#### 2. 3D Umělci a Vizualizátoři
+[Scénář 2.1: Obkreslení 2D půdorysu do čisté 3D geometrie](./files/cilove_skupiny.md#scénář-21-obkreslení-2d-půdorysu-do-čisté-3d-geometrie)
+[Scénář 2.2: Vložení otvorů pro přesné 3D modely oken/dveří](./files/cilove_skupiny.md#scénář-22-vložení-otvorů-pro-přesné-3d-modely-okendveří)
+#### 3. Game Designeři
+[Scénář 3.1: Rychlý blockout a tvorba chodeb](./files/cilove_skupiny.md#scénář-31-rychlý-blockout-a-tvorba-chodeb)
+[Scénář 3.2: Iterace na základě playtestingu a finalizace pro export](./files/cilove_skupiny.md#scénář-32-iterace-na-základě-playtestingu-a-finalizace-pro-export)
 
 ## Analýza požadavků
 ### Tabulka
