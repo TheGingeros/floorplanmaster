@@ -58,15 +58,16 @@
 ### Tabulka
 | Požadavek | Architekti | 3D Vizualizátoři | Game Designeři |
 | :--- | :--- | :--- | :--- |
-| **Rychlá tvorba základní geometrie** (skicování/parametry) | Vysoká | Vysoká | Vysoká |
-| **Nedestruktivní / Parametrické úpravy** (posouvání stěn, změny rozměrů) | Vysoká | Střední | Vysoká |
-| **Čistá topologie** (pro textury a modifikátory) | Nízká | Vysoká | Střední |
-| **Automatická a nedestruktivní tvorba otvorů** (okna, dveře) | Střední | Vysoká | Střední |
-| **Přesné zadávání číselných hodnot** (metry, centimetry) | Vysoká | Střední | Nízká |
-| **Obkreslování podloženého 2D půdorysu** (např. z PDF) | Střední | Vysoká | Nízká |
-| **Modulární návaznosti místností a chodeb** | Vysoká | Nízká | Vysoká |
-| **Bezproblémový export do herních enginů** (včetně kolizí) | Nízká | Nízká | Vysoká |
-| **Přehled o ploše místností** (metry čtvereční) | Vysoká | Nízká | Irelevantní |
+| **FP1 - Interaktivní tvorba místností a kreslení** | Vysoká | Vysoká | Vysoká |
+| **FP2 - Generování a úprava parametrických objektů** | Vysoká | Vysoká | Vysoká |
+| **FP3 - Správa prostoru a metadat** | Vysoká | Nízká | Irelevantní |
+| **FP4 - Finalizační nástroj** | Nízká | Střední | Vysoká |
+| **FP5 - Kontextová nabídka** | Střední | Nízká | Nízká |
+| **FP6 - Interaktivní 3D manipulátory** | Vysoká | Střední | Vysoká |
+| **NP1 - Architektura a technologie** | Vysoká | Vysoká | Vysoká |
+| **NP2 - Výkon a Nedestruktivnost** | Vysoká | Vysoká | Vysoká |
+| **NP3 - Použitelnost a UX** | Vysoká | Vysoká | Vysoká |
+| **NP4 - Automatické kótování** | Vysoká | Nízká | Irelevantní |
 
 - Vysoká - Must Have
 - Střední - Should have
@@ -74,18 +75,18 @@
 - Irelevantní - out of scope
 
 ### Funkční požadavky
-1. [Interaktivní tvorba místností a kreslení - Pencil Tool - UC 2.1, UC 3.1](./files/analyza_pozadavku.md#1-interaktivní-tvorba-místností-a-kreslení---pencil-tool)
-2. [Generování a úprava parametrických objektů - UC 1.1, UC 2.2, UC 3.2](./files/analyza_pozadavku.md#2-generování-a-úprava-parametrických-objektů)
-3. [Správa prostoru a metadat - UC 1.1, UC 1.2 ](./files/analyza_pozadavku.md#3-správa-prostoru-a-metadat)
-4. [Finalizační nástroj - UC 3.2](./files/analyza_pozadavku.md#4-finalizační-nástroj)
-5. [Kontextová nabídka - UC 1.2, UC 2.2](./files/analyza_pozadavku.md#5-kontextová-nabídka---pet-palette)
-6. [Interaktivní 3D manipulátory - UC 1.2](./files/analyza_pozadavku.md#6-interaktivní-3d-manipulátory)
+1. [FP1 - Interaktivní tvorba místností a kreslení - Pencil Tool - UC 2.1, UC 3.1](./files/analyza_pozadavku.md#1-interaktivní-tvorba-místností-a-kreslení---pencil-tool)
+2. [FP2 - Generování a úprava parametrických objektů - UC 1.1, UC 2.2, UC 3.2](./files/analyza_pozadavku.md#2-generování-a-úprava-parametrických-objektů)
+3. [FP3 - Správa prostoru a metadat - UC 1.1, UC 1.2 ](./files/analyza_pozadavku.md#3-správa-prostoru-a-metadat)
+4. [FP4 - Finalizační nástroj - UC 3.2](./files/analyza_pozadavku.md#4-finalizační-nástroj)
+5. [FP5 - Kontextová nabídka - UC 1.2, UC 2.2](./files/analyza_pozadavku.md#5-kontextová-nabídka---pet-palette)
+6. [FP6 - Interaktivní 3D manipulátory - UC 1.2](./files/analyza_pozadavku.md#6-interaktivní-3d-manipulátory)
 
 ### Nefunkční požadavky
-1. [Architektura a technologie](./files/analyza_pozadavku.md#1-architektura-a-technologie)
-2. [Výkon a Nedestruktivnost](./files/analyza_pozadavku.md#2-výkon-a-nedestruktivnost)
-3. [Použitelnost a UX](./files/analyza_pozadavku.md#3-použitelnost-a-ux)
-4. [Automatické kótování](./files/analyza_pozadavku.md#4-automatické-kótování)
+1. [NP1 - Architektura a technologie](./files/analyza_pozadavku.md#1-architektura-a-technologie)
+2. [NP2 - Výkon a Nedestruktivnost](./files/analyza_pozadavku.md#2-výkon-a-nedestruktivnost)
+3. [NP3 - Použitelnost a UX](./files/analyza_pozadavku.md#3-použitelnost-a-ux)
+4. [NP4 - Automatické kótování](./files/analyza_pozadavku.md#4-automatické-kótování)
 
 ## Návrh UI
 TODO
