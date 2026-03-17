@@ -17,6 +17,7 @@
 ### [2. Fáze registrace a aktivace](./files/technicka_analyza_detail.md#2-fáze-registrace-a-aktivace)
 ### [3. Fáze běhu a interakce](./files/technicka_analyza_detail.md#3-fáze-běhu-a-interakce)
 ### [4. Fáze deaktivace a odregistrace](./files/technicka_analyza_detail.md#4-fáze-deaktivace-a-odregistrace)
+### [5. Fáze Odinstalace](./files/technicka_analyza_detail.md#5-odinstalace)
 
 ## Základní stavební kameny addonu - paradigmata
 ### Operátory
