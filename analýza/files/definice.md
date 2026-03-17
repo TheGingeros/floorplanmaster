@@ -254,3 +254,24 @@
 - systém pro definování strukturovaných dat s bohatými metadaty a chováním za běhu
 - poskytuje vysoko úrovňový popis datových struktur Blenderu a souvisejících funkcí, který je využíván pro běh UI, animací, knihovních přepisů a python API - bpy
 - většina blender python api je automaticky generována z RNA, např. ```bpy.data.meshes["Cube"].vertices[0].co``` spoléhá na RNA jak popíše, co ```vertices``` a ```co``` jsou a jak k nim přistupovat a jaké by měli být jejich typy a chování
+
+### Vzor MVC - Model-View-Controller
+- architektonický navrhovací vzor v SI
+- cílem je oddělit datovou logiku aplikace od uživatelského rozhraní
+- umožňuje snadnější údržbu, testování a paralelní vývoj
+- využítí mvc:
+    1. Oddělení zájmů - vývojář logiky může pracovat na algoritmech Modelu, zatímco UI designer může měnit vzhled aplikace, aniž by si navzájem přepisovali kód
+    2. Znovupoužitelnosti - jeden model může mít více různých views
+    3. Snažší testování - logiku v modelu lze testovat automatizovanými testy bez nutnosti spouštět grafické rozhraní
+    4. Škálovatelnost - aplikace postavené na mvc se mnohem lépe rozšiřují o nové funkce, protože implementace není propletená
+- rozděluje aplikaci na tři hlavní volné propojené části:
+#### 1. Model - data a logika
+- spravuje stav aplikace, provádí výpočty a komunikuje s databází nebo souborovým systémem
+- v kontextu blender addonu představuje samotná data o stěnách a geometrické algoritmy v geometry nodes, které definují výsledný tvar
+#### 2. View - zobrazení
+- prezentuje data z modelu uživateli
+- neví co data znamenají, pouze je vykresluje
+- v kontextu blender addonu se zde jedná o 3D viewport, postranní n panely a kontextové nabídky které zobrazují aktuální stav návrhu
+#### 3. Controller - Řízení
+- přijímá vstupy od uživatele, interpretuje je a dává pokyny modelu, aby změnil nebo view aby se aktulizovalo
+- v kontextu blender addonu jsou to python operátory, které zachytí kliknutí ve viewportu a následně změní parametry v geometry nodes

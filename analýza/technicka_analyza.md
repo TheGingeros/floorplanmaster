@@ -5,13 +5,14 @@
 - blender využívá kombinaci vzoru MVC - model view controller, což umožňuje oddělit uživatelské rozhraní - view, od vnitřní logiky - model a zpracování vstupů - controller
 - addony tedy můžou definovat vlastní výpočty např. v GN - model, zatímco blende se stará o jejich vykreslení do viewportu a zachytávání událostí myši přes python API
 
+
+
 ### [Modulární systém](./files/definice.md#modulární-systém)
 ### [Systém DNA](./files/definice.md#systém-dna)
 ### [Systém RNA](./files/definice.md#systém-rna)
 [Zdroje](./files/sources.md#modularita-systém-dna-a-rna)
 
-### Vzor MVC - Model-View-Controller
-todo
+### [Vzor MVC - Model-View-Controller](./files/definice.md#vzor-mvc---model-view-controller)
 
 ## Životní cyklus addonu v Blenderu
 
