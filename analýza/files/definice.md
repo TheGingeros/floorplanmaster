@@ -230,3 +230,27 @@
 
 ### Přehledná prostorová data
 - rychlá zpětná vazba o tom, zda uživatel splnil zadání (zobrazení vypočítaných metrů čtverečních jednotlivých místností, kontrola tloušťky nosných stěn)
+
+### Modulární systém
+- soustava nezávislých specializovaných modulů/komponent které spolu komunikují skrze definovanán rozhraní
+- modularita blenderu je rozdělena do několika klíčových vrstev
+#### MainLoop
+- řídící moduly, které koordinují ostatní služby, např. framework editoru
+#### Handleable
+- moduly poskytující služby objektům, jako je fyzika nebo logika
+#### Library
+- khihovny pro specifické výpočty, jako je matematika
+#### System
+- nízkoúrovňové služby zajišťující vstup z klávesnice, myši a grafický vstup napříč platformami
+#### Representation
+- moduly pro zobrazení dat jako je 3D viewport
+
+### Systém DNA
+- nízkoúrovňový systém, který spravuje binární struktury ukládané do .blend souborů tak, aby byli reprodukovatelné a dopředu i zpětně kompatibilní s minulými či budoucími verzemi
+- poskytuje strukturu a význam binárním částem dat nalezených na disku nebo v paměti počítače
+
+### Systém RNA
+- abstraktní vrsta nad DNA poskytující metadata a umožňuje Pythonu k těmto datům přistupovat modulárním způsobem přes rozhraní bpy
+- systém pro definování strukturovaných dat s bohatými metadaty a chováním za běhu
+- poskytuje vysoko úrovňový popis datových struktur Blenderu a souvisejících funkcí, který je využíván pro běh UI, animací, knihovních přepisů a python API - bpy
+- většina blender python api je automaticky generována z RNA, např. ```bpy.data.meshes["Cube"].vertices[0].co``` spoléhá na RNA jak popíše, co ```vertices``` a ```co``` jsou a jak k nim přistupovat a jaké by měli být jejich typy a chování

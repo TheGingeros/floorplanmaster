@@ -32,3 +32,11 @@
 - https://www.reddit.com/r/blender/comments/1ccjpjn/is_blender_the_right_tool_for_a_floor_plan/
 - https://www.reddit.com/r/floorplan/comments/1ohdvdi/software_features/
 - https://www.reddit.com/r/floorplan/comments/1hije25/what_features_do_you_want_in_your_ideal_floorplan/
+
+# Technická analýza
+
+## Modularita, systém DNA a RNA
+- https://developer.blender.org/docs/handbook/new_developers/faq/
+- https://developer.blender.org/docs/features/core/dna/
+- https://developer.blender.org/docs/features/core/rna/
+- https://devtalk.blender.org/t/a-basicmodaloperator-proof-of-concept-please-review/5108
