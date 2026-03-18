@@ -24,14 +24,23 @@
 ### Uživatelské rozhraní
 ### Vlastnosti a data
 
-## Návrh: FP1 Pencil Tool
+## Návrh jednotlivých požadavků:
+### FP1 Pencil Tool
 
-## Návrh: FP2 Generování a úprava parametrických objektů
+### FP2 Generování a úprava parametrických objektů
 
-## Návrh: FP3 správa prostoru a metadat
+### FP3 správa prostoru a metadat
 
-## Návrh: FP4 Finalizační nástroj
+### FP4 Finalizační nástroj
 
-## Návrh: FP5 Kontextová nabídka
+### FP5 Kontextová nabídka
 
-## Návrh: FP6 Interaktivní 3D manipulátory
+### FP6 Interaktivní 3D manipulátory
+
+### NP1 Architektura a technologie
+
+### NP2 Výkon a Nedestruktivnost
+
+### NP3 Použitelnost a UX
+
+### NP4 Automatické kótování
