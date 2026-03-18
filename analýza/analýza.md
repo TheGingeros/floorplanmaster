@@ -77,18 +77,18 @@
 - Irelevantní - out of scope
 
 ### Funkční požadavky
-1. [FP1 - Interaktivní tvorba místností a kreslení - Pencil Tool - UC 2.1, UC 3.1](./files/analyza_pozadavku.md#1-interaktivní-tvorba-místností-a-kreslení---pencil-tool)
-2. [FP2 - Generování a úprava parametrických objektů - UC 1.1, UC 2.2, UC 3.2](./files/analyza_pozadavku.md#2-generování-a-úprava-parametrických-objektů)
-3. [FP3 - Správa prostoru a metadat - UC 1.1, UC 1.2 ](./files/analyza_pozadavku.md#3-správa-prostoru-a-metadat)
-4. [FP4 - Finalizační nástroj - UC 3.2](./files/analyza_pozadavku.md#4-finalizační-nástroj)
-5. [FP5 - Kontextová nabídka - UC 1.2, UC 2.2](./files/analyza_pozadavku.md#5-kontextová-nabídka---pet-palette)
-6. [FP6 - Interaktivní 3D manipulátory - UC 1.2](./files/analyza_pozadavku.md#6-interaktivní-3d-manipulátory)
+1. [FP1 Interaktivní tvorba místností a kreslení - Pencil Tool - UC 2.1, UC 3.1](./files/analyza_pozadavku.md#1-interaktivní-tvorba-místností-a-kreslení---pencil-tool)
+2. [FP2 Generování a úprava parametrických objektů - UC 1.1, UC 2.2, UC 3.2](./files/analyza_pozadavku.md#2-generování-a-úprava-parametrických-objektů)
+3. [FP3 Správa prostoru a metadat - UC 1.1, UC 1.2 ](./files/analyza_pozadavku.md#3-správa-prostoru-a-metadat)
+4. [FP4 Finalizační nástroj - UC 3.2](./files/analyza_pozadavku.md#4-finalizační-nástroj)
+5. [FP5 Kontextová nabídka - UC 1.2, UC 2.2](./files/analyza_pozadavku.md#5-kontextová-nabídka---pet-palette)
+6. [FP6 Interaktivní 3D manipulátory - UC 1.2](./files/analyza_pozadavku.md#6-interaktivní-3d-manipulátory)
 
 ### Nefunkční požadavky
-1. [NP1 - Architektura a technologie](./files/analyza_pozadavku.md#1-architektura-a-technologie)
-2. [NP2 - Výkon a Nedestruktivnost](./files/analyza_pozadavku.md#2-výkon-a-nedestruktivnost)
-3. [NP3 - Použitelnost a UX](./files/analyza_pozadavku.md#3-použitelnost-a-ux)
-4. [NP4 - Automatické kótování](./files/analyza_pozadavku.md#4-automatické-kótování)
+1. [NP1 Architektura a technologie](./files/analyza_pozadavku.md#1-architektura-a-technologie)
+2. [NP2 Výkon a Nedestruktivnost](./files/analyza_pozadavku.md#2-výkon-a-nedestruktivnost)
+3. [NP3 Použitelnost a UX](./files/analyza_pozadavku.md#3-použitelnost-a-ux)
+4. [NP4 Automatické kótování](./files/analyza_pozadavku.md#4-automatické-kótování)
 
 ## Návrh UI
 TODO
