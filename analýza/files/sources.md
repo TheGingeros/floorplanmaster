@@ -40,6 +40,8 @@
 - https://vibimglobal.com/blog/bim-vs-cad/
 - https://architizer.com/blog/practice/details/architecture-101-what-is-parametric-architecture/
 - https://www.bimassociates.com/blog/parametric-modeling-how-it-works/
+- https://www.mdpi.com/2071-1050/15/2/1371
+- https://www.autodesk.com/solutions/proceduralism
 
 # Technická analýza
 
