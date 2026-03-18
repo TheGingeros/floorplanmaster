@@ -60,16 +60,16 @@
 ### Tabulka
 | Požadavek | Architekti | 3D Vizualizátoři | Game Designeři |
 | :--- | :--- | :--- | :--- |
-| **FP1 - Interaktivní tvorba místností a kreslení** | Vysoká | Vysoká | Vysoká |
-| **FP2 - Generování a úprava parametrických objektů** | Vysoká | Vysoká | Vysoká |
-| **FP3 - Správa prostoru a metadat** | Vysoká | Nízká | Irelevantní |
-| **FP4 - Finalizační nástroj** | Nízká | Střední | Vysoká |
-| **FP5 - Kontextová nabídka** | Střední | Nízká | Nízká |
-| **FP6 - Interaktivní 3D manipulátory** | Vysoká | Střední | Vysoká |
-| **NP1 - Architektura a technologie** | Vysoká | Vysoká | Vysoká |
-| **NP2 - Výkon a Nedestruktivnost** | Vysoká | Vysoká | Vysoká |
-| **NP3 - Použitelnost a UX** | Vysoká | Vysoká | Vysoká |
-| **NP4 - Automatické kótování** | Vysoká | Nízká | Irelevantní |
+| **FP1 Interaktivní tvorba místností a kreslení** | Vysoká | Vysoká | Vysoká |
+| **FP2 Generování a úprava parametrických objektů** | Vysoká | Vysoká | Vysoká |
+| **FP3 Správa prostoru a metadat** | Vysoká | Nízká | Irelevantní |
+| **FP4 Finalizační nástroj** | Nízká | Střední | Vysoká |
+| **FP5 Kontextová nabídka** | Střední | Nízká | Nízká |
+| **FP6 Interaktivní 3D manipulátory** | Vysoká | Střední | Vysoká |
+| **NP1 Architektura a technologie** | Vysoká | Vysoká | Vysoká |
+| **NP2 Výkon a Nedestruktivnost** | Vysoká | Vysoká | Vysoká |
+| **NP3 Použitelnost a UX** | Vysoká | Vysoká | Vysoká |
+| **NP4 Automatické kótování** | Vysoká | Nízká | Irelevantní |
 
 - Vysoká - Must Have
 - Střední - Should have
