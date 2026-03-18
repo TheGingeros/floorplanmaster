@@ -24,7 +24,13 @@
 ### Uživatelské rozhraní
 ### Vlastnosti a data
 
-## Návrh jednotlivých požadavků:
+## Teorie grafů a topologická reprezentace prostorových uspořádání
+- základním kamenem by měla být schopnost softwaru porozumět prostorovým vztahům mezi jednotlivými vkládanými elementy
+- půdorys je z hlediska lidské percepce souborem ploch tvořící pokoje a chodby
+- z hlediska výpočetní geometrie a informatiky je složitou topologickou sítí, kterou lze nejlépe abstrahovat, reprezentovat a analyzovat pomocí teorie grafů
+### [Aplikace grafů při strukturální analýze půdorysů](./files/technicka_analyza_detail.md#aplikace-grafů-při-strukturální-analýze-půdorysů)
+
+## Návrh implementace jednotlivých požadavků:
 ### FP1 Pencil Tool
 
 ### FP2 Generování a úprava parametrických objektů

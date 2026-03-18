@@ -294,3 +294,13 @@
 #### 3. Controller - Řízení
 - přijímá vstupy od uživatele, interpretuje je a dává pokyny modelu, aby změnil nebo view aby se aktulizovalo
 - v kontextu blender addonu jsou to python operátory, které zachytí kliknutí ve viewportu a následně změní parametry v geometry nodes
+
+## Graf konektivity - Connectivity graf
+- často podgraf grafu sousednosti
+- zaměřen na reálnou propustnost a cirkulaci osob v budově
+- hrana spojuje dvě místnosti pouze tehdy, pokud jsou funkče propojeny tak, aby jimi mohl člověk fyzicky projít
+
+## Graf sousednosti nebo také graf prostorové sousednosti - Adjacency Graph
+- definuje, které místnosti a prostory leží fyzicky bezprostředně vedle sebe
+- hrana mezi dvěma uzly existuje v případě, že obě místnosti sdílejí společnou fyzickou hranici, např. dělící stěnu
+- mapuje celkovou topologii a vzájemné dotyky prostorů bez ohledu na to, zda se mezi nimi dá procházet
