@@ -12,15 +12,17 @@
 
 ## Informační analýza
 
-### Analýza existujících řešení
-- [Současné hlavní architektonické rozšiřující moduly pro Blender](./files/existujici_reseni.md#současné-hlavní-architektonické-rozšiřující-moduly-pro-blender)
-- [Hlavní architektonické nástroje mimo Blender](./files/existujici_reseni.md#hlavní-architektonické-nástroje-mimo-blender)
-
 ### Parametrické modelování
 - [Definice](./files/definice.md#parametrické-modelování)
+- [Problematika parametrického modelování](./files/definice.md#problematika-parametrického-modelování-v-architektuře)
 
 ### Prostorové dispozice
 - [Definice](./files/definice.md#prostorová-dispozice)
+
+
+### Analýza existujících řešení
+- [Současné hlavní architektonické rozšiřující moduly pro Blender](./files/existujici_reseni.md#současné-hlavní-architektonické-rozšiřující-moduly-pro-blender)
+- [Hlavní architektonické nástroje mimo Blender](./files/existujici_reseni.md#hlavní-architektonické-nástroje-mimo-blender)
 
 ## Cílové skupiny
 ### Uživatelé

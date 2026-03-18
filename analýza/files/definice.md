@@ -3,8 +3,22 @@
 ## Prostorová dispozice
 - logické a funkční uspořádání trojrozměrného objemu do smysluplných celků (místností a zón) a definování vztahů mezi nimi
 
+
+
+## Problematika parametrického modelování v architektuře
+- představuje fundamentální posun od tradičního reprezentování kreslení k algoritmickému a objektově orientovanému přístupu
+- tradiční systémy [CAD](#computer-aided-design---cad-počítačem-podporované-projektování) se spoléhají na explicitní definici geometrie pomocí statických bodů, úseček a mnohoúhelníků reprezentující pouhé vizuální symboly
+- parametrické modelování zavádí systém vzájemně propojených proměnných, matematických omezení a deduktivních pravidel, které dynamicky generují a aktulizují výslednou formu
+- umožňuje, aby modifikace jediného parametru – například celkové výšky podlaží nebo tloušťky nosné stěny – automaticky a kaskádovitě modifikovala všechny závislé entity, jako jsou příčky, vkládaná okna či schodiště, aniž by bylo nutné tyto prvky manuálně a destruktivně přestavovat
+- je potřeba rozlišovat mezi [parametrickým modelováním](#parametrické-modelování---definice), [procedurálním generováním](#procedurální-generování) a [informačním modelováním](#building-information-modeling---bim-informační-modelování-staveb)
+- ačkoliv se tyto tři domény v praxi do jisté míry překrývají, vývoj 
+
+[Zdroje](./sources.md#problematika-parametrického-modelování)
+
+
 ## Parametrické modelování
 - způsob vytváření 3D modelů
+- exaktně definován uživatelem stanovenými proměnnými a pevnými geometrickými vztahy, kde tvůrce přímo kontroluje vstupy a algoritmickou logiku závislostí
 - tvar objektu není definován pevně, je definován pomocí parametrů (čís. hodnot) a vztahů
 - čtverec například nadefinujeme takto:
     - parametr A: šířka - 100mm
@@ -23,6 +37,10 @@
         - standard ve strojírenství(SolidWorks) a architektuře (Revit)
     - **Algoritmické** - vizuální skriptování
         - používané v moderní architektuře, hodně podobné geometry nodes
+
+## Procedurální generování
+- využívá stochastické algoritmy, fraktální matemaitku a šumové funkce, gramatické sady pravidel k systématickému a masovému genenrování obsahu
+- typicky s určitou mírou náhodnostijako je generování rozsáhlých urbanistických struktur, přírodních terénů nebo organických textur v počítačové grafice a herním průmyslu
 
 ## Architektonické dispozice
 - dispozice = uspořádání, rozestavení, rozvržení
@@ -81,6 +99,7 @@
 ## Building Information Modeling - BIM (Informační modelování staveb)
 - moderní proces vytváření a správy digitálního modelu budovy
 - stavění budovy z virtuálních objektů, které mají skutečné vlastnosti
+- představuje zastřešující metodiku a technologický rámec, který nad rámec pouhé parametrické 3D geometrie integruje sémantická data o životním cyklu, fyzikálních a materiálových vlastnostech, finančních nákladech a harmonogramu výstavby
 - **nejdůležitější na modelu je to, že nese informace**
 - pokud klikneme na objekt okna:
     - CAD:
