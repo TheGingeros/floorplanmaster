@@ -20,6 +20,7 @@
 ### [5. Fáze Odinstalace](./files/technicka_analyza_detail.md#5-odinstalace)
 
 ## Základní stavební kameny addonu - paradigmata
+TODO
 ### Operátory
 ### Uživatelské rozhraní
 ### Vlastnosti a data
@@ -31,6 +32,7 @@
 ### [Aplikace grafů při strukturální analýze půdorysů](./files/technicka_analyza_detail.md#aplikace-grafů-při-strukturální-analýze-půdorysů)
 
 ## Návrh implementace jednotlivých požadavků:
+TODO
 ### FP1 Pencil Tool
 
 ### FP2 Generování a úprava parametrických objektů

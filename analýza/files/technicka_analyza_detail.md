@@ -31,4 +31,4 @@
 - při abstrahování fyzické formy do logické se využívají primárně grafy [konektivity](./definice.md#graf-konektivity) a [sousednosti](./definice.md#graf-sousednosti)
 - vrcholy typicky reprezentující jednotlivé místnosti a hrany jsou fyzické nebo logické propojení mezi nimi
     - tato reprezentace je známá z analýzy vizibility a axiálních map, v architektuře se používá pro algoritmické hodnocení pohybu chodců či evakuačních tras
-- 
+TODO
