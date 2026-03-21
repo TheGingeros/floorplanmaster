@@ -99,7 +99,7 @@
 4. [FP4 - Finalizační nástroj - UC 3.2](./files/analyza_pozadavku.md#4-finalizační-nástroj)
 5. [FP5 - Kontextová nabídka - UC 1.2, UC 2.2](./files/analyza_pozadavku.md#5-kontextová-nabídka---pet-palette)
 6. [FP6 - Interaktivní 3D manipulátory - UC 1.2](./files/analyza_pozadavku.md#6-interaktivní-3d-manipulátory)
-7. [FP7 - Automatické kótování](./files/analyza_pozadavku.md#4-automatické-kótování)
+7. [FP7 - Automatické kótování - UC 1.1, UC 1.2](./files/analyza_pozadavku.md#4-automatické-kótování)
 
 ### Nefunkční požadavky
 1. [NP1 - Architektura a technologie](./files/analyza_pozadavku.md#1-architektura-a-technologie)
