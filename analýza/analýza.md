@@ -55,24 +55,42 @@
 [UC 3.2 Scénář 3.2: Iterace na základě playtestingu a finalizace pro export](./files/cilove_skupiny.md#scénář-32-iterace-na-základě-playtestingu-a-finalizace-pro-export)
 
 ## Analýza požadavků
-### Tabulka
-| Požadavek | Architekti | 3D Vizualizátoři | Game Designeři |
-| :--- | :--- | :--- | :--- |
-| **FP1 - Interaktivní tvorba místností a kreslení** | Vysoká | Vysoká | Vysoká |
-| **FP2 - Generování a úprava parametrických objektů** | Vysoká | Vysoká | Vysoká |
-| **FP3 - Správa prostoru a metadat** | Vysoká | Nízká | Irelevantní |
-| **FP4 - Finalizační nástroj** | Nízká | Střední | Vysoká |
-| **FP5 - Kontextová nabídka** | Střední | Nízká | Nízká |
-| **FP6 - Interaktivní 3D manipulátory** | Vysoká | Střední | Vysoká |
-| **NP1 - Architektura a technologie** | Vysoká | Vysoká | Vysoká |
-| **NP2 - Výkon a Nedestruktivnost** | Vysoká | Vysoká | Vysoká |
-| **NP3 - Použitelnost a UX** | Vysoká | Vysoká | Vysoká |
-| **NP4 - Automatické kótování** | Vysoká | Nízká | Irelevantní |
 
-- Vysoká - Must Have
-- Střední - Should have
-- Nízká - Nice to have
-- Irelevantní - out of scope
+### Tabulka požadavků vs use cases
+| Požadavek | UC 1.1 | UC 1.2 | UC 2.1 | UC 2.2 | UC 3.1 | UC 3.2 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **FP1 - Interaktivní tvorba místností a kreslení** |  |  | Ano | | Ano | |
+| **FP2 - Generování a úprava parametrických objektů** | Ano |  |  |Ano | | Ano|
+| **FP3 - Správa prostoru a metadat** | Ano | Ano |  | | | |
+| **FP4 - Finalizační nástroj** |  |  |  | | |Ano |
+| **FP5 - Kontextová nabídka** |  | Ano |  | Ano| | |
+| **FP6 - Interaktivní 3D manipulátory** |  | Ano |  | | | |
+| **FP7 - Automatické kótování** | Ano | Ano |  | | | |
+<!-- | **NP1 - Architektura a technologie** |  |  |  | | | |
+| **NP2 - Výkon a Nedestruktivnost** |  |  |  | | | |
+| **NP3 - Použitelnost a UX** |  |  |  | | | | -->
+
+
+### Tabulka Priorit
+| Požadavek | Architekti | 3D Vizualizátoři | Game Designeři | Vážený průměr | Výsledná priorita |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **FP1 - Interaktivní tvorba místností a kreslení** | Vysoká | Vysoká | Vysoká | **3,00** | **Vysoká** |
+| **FP2 - Generování a úprava parametrických objektů** | Vysoká | Vysoká | Vysoká | **3,00** | **Vysoká** |
+| **FP6 - Interaktivní 3D manipulátory** | Vysoká | Střední | Vysoká | **2,67** | **Vysoká** |
+| **FP3 - Správa prostoru a metadat** | Vysoká | Nízká | Irelevantní | **1,83** | **Střední** |
+| **FP7 - Automatické kótování** | Vysoká | Nízká | Irelevantní | **1,83** | **Střední** |
+| **FP4 - Finalizační nástroj** | Nízká | Střední | Vysoká | **1,67** | **Střední** |
+| **FP5 - Kontextová nabídka** | Střední | Nízká | Nízká | **1,50** | **Střední** |
+| **NP1 - Architektura a technologie** | Vysoká | Vysoká | Vysoká | **3,00** | **Vysoká** |
+| **NP2 - Výkon a Nedestruktivnost** | Vysoká | Vysoká | Vysoká | **3,00** | **Vysoká** |
+| **NP3 - Použitelnost a UX** | Vysoká | Vysoká | Vysoká | **3,00** | **Vysoká** |
+
+
+- Vážený průměr = (Priorita architeků * 3 + Priorita 3D Umělců * 2 + Priorita Game designerů * 1) / 6
+- Vysoká - Must Have - váha 3
+- Střední - Should have - váha 2
+- Nízká - Nice to have - váha 1
+- Irelevantní - out of scope - váha 0
 
 ### Funkční požadavky
 1. [FP1 - Interaktivní tvorba místností a kreslení - Pencil Tool - UC 2.1, UC 3.1](./files/analyza_pozadavku.md#1-interaktivní-tvorba-místností-a-kreslení---pencil-tool)
@@ -81,12 +99,12 @@
 4. [FP4 - Finalizační nástroj - UC 3.2](./files/analyza_pozadavku.md#4-finalizační-nástroj)
 5. [FP5 - Kontextová nabídka - UC 1.2, UC 2.2](./files/analyza_pozadavku.md#5-kontextová-nabídka---pet-palette)
 6. [FP6 - Interaktivní 3D manipulátory - UC 1.2](./files/analyza_pozadavku.md#6-interaktivní-3d-manipulátory)
+7. [FP7 - Automatické kótování](./files/analyza_pozadavku.md#4-automatické-kótování)
 
 ### Nefunkční požadavky
 1. [NP1 - Architektura a technologie](./files/analyza_pozadavku.md#1-architektura-a-technologie)
 2. [NP2 - Výkon a Nedestruktivnost](./files/analyza_pozadavku.md#2-výkon-a-nedestruktivnost)
 3. [NP3 - Použitelnost a UX](./files/analyza_pozadavku.md#3-použitelnost-a-ux)
-4. [NP4 - Automatické kótování](./files/analyza_pozadavku.md#4-automatické-kótování)
 
 ## Návrh UI
 TODO

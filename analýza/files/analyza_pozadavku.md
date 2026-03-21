@@ -29,6 +29,11 @@
 - místo zadávání úpravy do panelu může uživatel chytit barevnouo šipku přímo u zdi a táhnout s ní hahoru
 - využití rozhraní bpy.types.Gizmo a GizmoGroup 
 
+## 7. Automatické kótování
+- vizualizace rozměrů, která neustále ukazují velikost, aniž by se musela překreslovat
+- generování dynamických textů přes modul blf přímo do viewportu přes draw_handler
+- tyto kóty se musí aktulizovat nejen při změně délky stěny ale musí se správně orientovat podle pohledu kamery
+
 # Nefunkční požadavky
 ## 1. Architektura a technologie
 - geometry nodes jako výpočetní jádro addonu
@@ -49,8 +54,3 @@
 - striktní použití zabudovaných UI komponent - UILayout.row atd
 - logické seskupování nástrojů do záložek, přidávání Tooltips
 - důraz na ošetření chyb - srozumitelný feedback při špatných operací, například přidání okna do stěny, která je menší než zadaná velikost okna
-
-## 4. Automatické kótování
-- vizualizace rozměrů, která neustále ukazují velikost, aniž by se musela překreslovat
-- generování dynamických textů přes modul blf přímo do viewportu přes draw_handler
-- tyto kóty se musí aktulizovat nejen při změně délky stěny ale musí se správně orientovat podle pohledu kamery
