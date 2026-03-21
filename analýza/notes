@@ -2,10 +2,9 @@ udělat:
 DONE - do tabulky přidat use casy a označit jestli jsou v požadavku
 DONE - automatické kotování do funkčních požadavků
 DONE - váhy jednotlivých skupin jsou podle pořadí - udělat vážený průměr požadavků
+- rozdělit na požadavky na další podbody priorit
 - seřadit požadavky dle priorit
 - reprezentace geometrie, topologie v blenderu
-- datové možnosti blenderu pro ten addon
 - vytvořit si struktury té analýzy před děláním researche
 - analýza formátu exportu
 - (doménová analýza)
-- rozdělit na požadavky na další podbody priorit
