@@ -78,3 +78,29 @@
 
 ### Geometry nodes
 - uzly, klasika viz GN tab v blenderu
+
+
+#### Archimesh - add-on pro Blender, který umožňuje generovat místnosti, okna, dveře a další architektonické prvky. [Archimesh stránka](https://extensions.blender.org/add-ons/archimesh/)
+##### Výhody:
+- Jednoduchost a dostupnost (rychlé „naklikání“ místnosti/okna/dveří).
+- Rychlé generování základních prvků – místnost i s otvory bez většího nastavování.
+- Nízká bariéra pro začátečníky; hodí se na „blockout“ a hrubé dispozice. (Souhrny a tutoriály to takto používají.)
+##### Nevýhody:
+- Parametrika je omezenější (po vygenerování už není vše pohodlně „živě“ upravitelné on-screen jako u Archipacku).
+- Údržba/robustnost některých nástrojů – uživatelé zmiňují potřebu větších update a občasné potíže (např. auto-holes u dveří/oken).
+- Méně „BIM-like“ (Building Information Modeling) workflow (spíš generátor prvků než kompletní systém s rozšířenou 2D→3D, kótami apod.)
+#### Archipack - robustní framework pro Blender, zaměřený na architektonické modelování (parametrické stěny, okna, schodiště…). [Archipack stránka](https://blender-archipack.org/)
+##### Výhody:
+- Parametrické objekty s bohatými vlastnostmi (zdi, okna/dveře, schody, střechy, stropy, podlahy…).
+- Realtime on-screen editace (manipulátory, rychlé úpravy na scéně).
+- Širší nástroje/workflow: 2D→3D, auto-boolean, podpora BlenderBIM kót, import z křivek/grease-pencil jako stěny.
+- Aktivnější vývoj a dokumentace mimo Blender manuál (changelog, nové funkce).
+##### Nevýhody:
+- Složitější křivka učení a „těžší“ UI (víc panelů a voleb, někdy těžkopádné).
+- Dualita verzí (základ vs. rozšířená/placená), takže některé funkce jsou mimo čistě „stock“ Blender.
+- Smíšené dojmy komunity — část uživatelů jej miluje, část volí ruční modelování kvůli jednoduchosti/robustnosti.
+ 
+#### Mezery současných řešení, které lze vylepšit a nabídnout tak konkurenční add-on:
+- „SketchUp-like“ kreslení zdí - Archipack sice umí stěny z křivky a grease-pencil, ale UX není vyloženě „tužka v půdorysu“ jako v SU/ArchiCAD.
+- Robustní a srozumitelné vkládání otvorů se snapem na stěnu + auto-boolean + parametry (šířka, výška, odskoky od hran) – u Archimeshe jsou s „auto-holes“ hlášené slabiny; u Archipacku je to silné, ale UI je těžší. FloorPlanMaster může nabídnout štíhlé, specializované UX.
+- Jednoduchý analytický modul (výměry/objemy) přímo navázaný na místnosti vytvořené kreslením — v obou add-onech to není centrální, „na jedno kliknutí“. Tyto detaily a analytiky jsou často uživately schované za náročným UI

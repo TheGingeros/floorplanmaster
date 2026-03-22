@@ -33,10 +33,20 @@
 - https://www.reddit.com/r/floorplan/comments/1ohdvdi/software_features/
 - https://www.reddit.com/r/floorplan/comments/1hije25/what_features_do_you_want_in_your_ideal_floorplan/
 
+# Informační analýza
+## Problematika parametrického modelování
+- https://www.reddit.com/r/3dsmax/comments/g054t4/parametric_vs_procedural_whats_the_difference/
+- https://architizer.com/blog/practice/details/architecture-101-what-is-parametric-architecture/
+- https://vibimglobal.com/blog/bim-vs-cad/
+- https://architizer.com/blog/practice/details/architecture-101-what-is-parametric-architecture/
+- https://www.bimassociates.com/blog/parametric-modeling-how-it-works/
+- https://www.mdpi.com/2071-1050/15/2/1371
+- https://www.autodesk.com/solutions/proceduralism
+
 # Technická analýza
 
 ## Modularita, systém DNA a RNA
 - https://developer.blender.org/docs/handbook/new_developers/faq/
 - https://developer.blender.org/docs/features/core/dna/
 - https://developer.blender.org/docs/features/core/rna/
-- https://devtalk.blender.org/t/a-basicmodaloperator-proof-of-concept-please-review/5108
+- https://devtalk.blender.org/t/a-basicmodaloperator-proof-of-concept-please-review/5108¨

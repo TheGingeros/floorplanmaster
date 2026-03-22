@@ -20,14 +20,35 @@
 ### [5. Fáze Odinstalace](./files/technicka_analyza_detail.md#5-odinstalace)
 
 ## Základní stavební kameny addonu - paradigmata
+TODO
 ### Operátory
 ### Uživatelské rozhraní
 ### Vlastnosti a data
 
-## Návrh - FP1 - Pencil Tool
+## Teorie grafů a topologická reprezentace prostorových uspořádání
+- základním kamenem by měla být schopnost softwaru porozumět prostorovým vztahům mezi jednotlivými vkládanými elementy
+- půdorys je z hlediska lidské percepce souborem ploch tvořící pokoje a chodby
+- z hlediska výpočetní geometrie a informatiky je složitou topologickou sítí, kterou lze nejlépe abstrahovat, reprezentovat a analyzovat pomocí teorie grafů
+### [Aplikace grafů při strukturální analýze půdorysů](./files/technicka_analyza_detail.md#aplikace-grafů-při-strukturální-analýze-půdorysů)
 
-## Návrh - FP2 - Generování a úprava parametrických objektů
+## Návrh implementace jednotlivých požadavků:
+TODO
+### FP1 Pencil Tool
 
-## Návrh - FP3 - správa prostoru a metadat
+### FP2 Generování a úprava parametrických objektů
 
-## Návrh - FP4 - finalizační nástroj
+### FP3 správa prostoru a metadat
+
+### FP4 Finalizační nástroj
+
+### FP5 Kontextová nabídka
+
+### FP6 Interaktivní 3D manipulátory
+
+### NP1 Architektura a technologie
+
+### NP2 Výkon a Nedestruktivnost
+
+### NP3 Použitelnost a UX
+
+### NP4 Automatické kótování
