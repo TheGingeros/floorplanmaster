@@ -43,5 +43,23 @@
 [Zdroje](./sources.md#modální-operátory---modal-operators---fp1)
 
 ## Vykreslování vlastního UI ve scéně - FP7
+- modul `gpu`, který slouží jako abstrakční vrstva nad nízkoúrovňovými grafickými knihovnami jako OpenGL, Metal a Vulkan
+- pro architektonický addon je tento modul naprosto klíčový, protože umožňuje vykreslovat vodící linky, kóty a náhledy stěn přímo na grafickou kartu bez nutnosti vytvářet náročnou 3D geometrii v databázi Blenderu
 
+### Architektura GPU kreslení a vestavěné shadery
+- vykreslování pomocí modulu `gpu` probíhá prostřednictvím draw handlerů, které se registrují do 3D viewportu
+- tyto handlery jsou volány při každém překreslení okna a využívají GPU dávky (GPUBatch) složené z vertexových bufferů (GPUVertBuf) a shaderů
+- blender poskytuje řadu vestavěných shaderů, které pokrývají většinu potřeb architektonické vizualizace
+
+| Název shaderu | Vlastnosti a použití | Klíčové uniformy/atributy |
+| :--- | :--- | :--- |
+| `2D_UNIFORM_COLOR` | Ploché kreslení kót a 2D symbolů přes viewport | `color` (RGBA), `pos` (2D) |
+| `3D_UNIFORM_COLOR` | Vodící linky v prostoru, osy a drátové náhledy | `color` (RGBA), `pos` (3D) |
+| `3D_POLYLINE_UNIFORM_COLOR` | Čáry s tloušťkou, ideální pro obrysy zdí | `lineWidth`, `viewportSize`, `color` |
+| `3D_SMOOTH_COLOR` | Stínované náhledy ploch s barevnými přechody | `pos` (3D), `color` (per vertex) |
+| `IMAGE` | Vykreslování textur, například ikon nástrojů ve 3D prostoru | `image` (sampler2D), `texCoord` |
+
+- využití `3D_POLYLINE_UNIFORM_COLOR` je v architektuře zásadní pro kreslení čitelných půdorysů, protože standardní čáry v moderních API často postrádají nativní podporu pro tloušťku větší než jeden pixel
+#### Implementace Drawing Handlers a správa paměti
+- draw handlery se přidávají k `bpy.types.SpaceView3D` pomocí metody `draw_handler_add`
 ## Limity výkonu Pythonu v Blenderu
