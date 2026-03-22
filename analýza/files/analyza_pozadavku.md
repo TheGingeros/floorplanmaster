@@ -6,36 +6,41 @@
 #### Rozšíření požadavku - should have:
 - **Automatický snapping k osám XYZ** - kontrola vzdálenosti kurzoru od existujích bodů nebo os a pokud je dostatečně blízko, zarovná ho k nim
 #### Rozšíření požadavku - nice to have:
-- systém musí neustále zachytávat pozici kurzoru, vykreslovat náhled budoucí stěny a čekat na kliknutí, zadání čísla nebo stisk klávesy enter
+- **Vykreslování náhledu nové stěny před potvrzením** - systém musí neustále zachytávat pozici kurzoru, vykreslovat náhled budoucí stěny a čekat na kliknutí, zadání čísla nebo stisk klávesy enter
 ## 2. Generování a úprava parametrických objektů - UC 1.1, UC 2.2, UC 3.2
-- objekt stěny nebo otvorů není obyčejná mesh z polygonů, ale dynamický systém řízený vstupními parametry jako je délka, výška, tloušťka, pozice na ose
-- addon musí využívat custom properties - bpy.props pro uložení dat do .blend souboru
-- každý objekt si pamatuje své parametry, když se hodnota změní na posuvníku, addon musí tuto změnu zachytit pomocí funkce update a přepočítat geometrii
-- systém musí umět matematicky a datově svázat otvor s danou stěnou, pokud se stěna posune, všechny závislé otvory na ní musí s ní
-- ořez otvorů řešen dynamicky, např. pomocí boolean operací v geometry nodes
+#### Základ požadavku - must have:
+- **Dynamická reprezentace stěn** - objekt stěny nebo otvorů není obyčejná mesh z polygonů, ale dynamický systém řízený vstupními parametry jako je délka, výška, tloušťka, pozice na ose
+- **Dynamický update stěn při změně parametrů** - každý objekt si pamatuje své parametry, když se hodnota změní na posuvníku, addon musí tuto změnu zachytit pomocí funkce update a přepočítat geometrii
+- **Dynamický posun otvorů při posunu stěn** - systém musí umět matematicky a datově svázat otvor s danou stěnou, pokud se stěna posune, všechny závislé otvory na ní musí s ní
+#### Rozšíření požadavku - should have:
+- **Chytrá správa vytváření otvorů** - ořez otvorů řešen dynamicky, např. pomocí boolean operací v geometry nodes
 
 ## 3. Správa prostoru a metadat - UC 1.1, UC 1.2 
-- systém automaticky detekje uzavřené prostory stěn jako místnosti, umožní s nimi pracovat a evidovat jejich data
-- algoritická detekve uzavřených křívek, systém prochází graf bodů a zjišťuje, zda tvoří uzavřený tvar, pokud ano, spočítá jeho plochu
-- doplněk umožní organizaci místností a podlaží v collections, vytvoří logickou strukturu a poskytne rozhraní k jejich hromadnému přepínání viditelnosti
+#### Základ požadavku - must have:
+- **Detekce místností** - systém automaticky detekje uzavřené prostory stěn jako místnosti, umožní s nimi pracovat a evidovat jejich data
+- **Zobrazení objemu místností** - pro detekované místnosti systém zobrazí data o dané hmotě, například její obsah
+#### Rozšíření požadavku - nice to have:
+- **Hiearchizace místností a správa jejich viditelnosti** - doplněk umožní organizaci místností a podlaží v collections, vytvoří logickou strukturu a poskytne rozhraní k jejich hromadnému přepínání viditelnosti
 
 ## 4. Finalizační nástroj - UC 3.2
-- jakmile je návrh hotový, uživatel potřebuje z tohoto parametrického systému vytvořit obyčejný 3D model pro další zpracování, např. UV mapování nebo export do herního enginu
-- systém projde vybrané objekty a postupně trvale aplikovat všechny generátory, následně začistit topologii
+#### Základ požadavku - must have:
+- **Aplikace použitých modifikátorů a finalizace** - jakmile je návrh hotový, uživatel potřebuje z tohoto parametrického systému vytvořit obyčejný 3D model pro další zpracování, např. UV mapování nebo export do herního enginu, systém projde vybrané objekty a postupně trvale aplikovat všechny generátory
 
 ## 5. Kontextová nabídka - pet palette - UC 1.2, UC 2.2
+#### Základ požadavku - must have:
 - po kliknutí na určitý objekt/prvek se přímo na daném místě na obrazovce objeví malá plovoucí nabídka s akcemi
 - addon musí zachytávat události myši, provést raycast a zjistit, na jakou část objektu uživatel kliknul
 - pomocí modulu gpu nebo blf nakreslit a ovládat vlastní UI vrstu překrývající 3D viewport
 
 ## 6. Interaktivní 3D manipulátory - UC 1.2
-- místo zadávání úpravy do panelu může uživatel chytit barevnouo šipku přímo u zdi a táhnout s ní hahoru
+#### Základ požadavku - must have:
+- **Interaktivní manipulátor** - místo zadávání úpravy do panelu může uživatel chytit barevnouo šipku přímo u zdi a táhnout s ní hahoru
 - využití rozhraní bpy.types.Gizmo a GizmoGroup 
 
-## 7. Automatické kótování
-- vizualizace rozměrů, která neustále ukazují velikost, aniž by se musela překreslovat
+## 7. Automatické kótování - UC 1.1, UC 1.2
+#### Základ požadavku - must have:
+- **vizualizace rozměrů** - neustále ukazují velikost, aniž by se musela překreslovat
 - generování dynamických textů přes modul blf přímo do viewportu přes draw_handler
-- tyto kóty se musí aktulizovat nejen při změně délky stěny ale musí se správně orientovat podle pohledu kamery
 
 # Nefunkční požadavky
 ## 1. Architektura a technologie
