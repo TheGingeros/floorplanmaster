@@ -49,4 +49,14 @@
 - https://developer.blender.org/docs/handbook/new_developers/faq/
 - https://developer.blender.org/docs/features/core/dna/
 - https://developer.blender.org/docs/features/core/rna/
-- https://devtalk.blender.org/t/a-basicmodaloperator-proof-of-concept-please-review/5108¨
+- https://devtalk.blender.org/t/a-basicmodaloperator-proof-of-concept-please-review/5108
+
+## Modální operátory - modal operators - FP1
+- https://developer.blender.org/docs/features/interface/operators/
+- https://blender.stackexchange.com/questions/63553/what-do-the-modal-operators-do
+- https://blender.stackexchange.com/questions/44936/how-to-structure-modal-operator-correctly-with-macro-like-step-by-step-execution
+- https://docs.blender.org/api/current/bpy.types.Operator.html
+- https://docs.blender.org/api/current/info_best_practice.html
+- https://blender.stackexchange.com/questions/288309/how-to-make-snapping-similar-to-measure-tool
+- https://blender-archipack.org/features
+- https://blender-archipack.gitlab.io/user/archipack%20objects.html
