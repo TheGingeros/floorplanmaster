@@ -1,0 +1,64 @@
+# Funkční požadavky
+## 1. Interaktivní tvorba místností a kreslení - Pencil Tool - UC 2.1, UC 3.1
+#### Základ požadavku - must have:
+- **Kreslení půdorysu v top view** - doplněk umožní uživateli definovat půdorys klikáním bodů ve 3D prostoru v pohledu shora
+- **Nástroj jako modální operátor** - stav, kdy addon přebírá všechny vstupy z myši a klávesnice
+#### Rozšíření požadavku - should have:
+- **Automatický snapping k osám XYZ** - kontrola vzdálenosti kurzoru od existujích bodů nebo os a pokud je dostatečně blízko, zarovná ho k nim
+#### Rozšíření požadavku - nice to have:
+- **Vykreslování náhledu nové stěny před potvrzením** - systém musí neustále zachytávat pozici kurzoru, vykreslovat náhled budoucí stěny a čekat na kliknutí, zadání čísla nebo stisk klávesy enter
+## 2. Generování a úprava parametrických objektů - UC 1.1, UC 2.2, UC 3.2
+#### Základ požadavku - must have:
+- **Dynamická reprezentace stěn** - objekt stěny nebo otvorů není obyčejná mesh z polygonů, ale dynamický systém řízený vstupními parametry jako je délka, výška, tloušťka, pozice na ose
+- **Dynamický update stěn při změně parametrů** - každý objekt si pamatuje své parametry, když se hodnota změní na posuvníku, addon musí tuto změnu zachytit pomocí funkce update a přepočítat geometrii
+- **Dynamický posun otvorů při posunu stěn** - systém musí umět matematicky a datově svázat otvor s danou stěnou, pokud se stěna posune, všechny závislé otvory na ní musí s ní
+#### Rozšíření požadavku - should have:
+- **Chytrá správa vytváření otvorů** - ořez otvorů řešen dynamicky, např. pomocí boolean operací v geometry nodes
+
+## 3. Správa prostoru a metadat - UC 1.1, UC 1.2 
+#### Základ požadavku - must have:
+- **Detekce místností** - systém automaticky detekje uzavřené prostory stěn jako místnosti, umožní s nimi pracovat a evidovat jejich data
+- **Zobrazení objemu místností** - pro detekované místnosti systém zobrazí data o dané hmotě, například její obsah
+#### Rozšíření požadavku - nice to have:
+- **Hiearchizace místností a správa jejich viditelnosti** - doplněk umožní organizaci místností a podlaží v collections, vytvoří logickou strukturu a poskytne rozhraní k jejich hromadnému přepínání viditelnosti
+
+## 4. Finalizační nástroj - UC 3.2
+#### Základ požadavku - must have:
+- **Aplikace použitých modifikátorů a finalizace** - jakmile je návrh hotový, uživatel potřebuje z tohoto parametrického systému vytvořit obyčejný 3D model pro další zpracování, např. UV mapování nebo export do herního enginu, systém projde vybrané objekty a postupně trvale aplikovat všechny generátory
+
+## 5. Kontextová nabídka - pet palette - UC 1.2, UC 2.2
+#### Základ požadavku - must have:
+- po kliknutí na určitý objekt/prvek se přímo na daném místě na obrazovce objeví malá plovoucí nabídka s akcemi
+- addon musí zachytávat události myši, provést raycast a zjistit, na jakou část objektu uživatel kliknul
+- pomocí modulu gpu nebo blf nakreslit a ovládat vlastní UI vrstu překrývající 3D viewport
+
+## 6. Interaktivní 3D manipulátory - UC 1.2
+#### Základ požadavku - must have:
+- **Interaktivní manipulátor** - místo zadávání úpravy do panelu může uživatel chytit barevnouo šipku přímo u zdi a táhnout s ní hahoru
+- využití rozhraní bpy.types.Gizmo a GizmoGroup 
+
+## 7. Automatické kótování - UC 1.1, UC 1.2
+#### Základ požadavku - must have:
+- **vizualizace rozměrů** - neustále ukazují velikost, aniž by se musela překreslovat
+- generování dynamických textů přes modul blf přímo do viewportu přes draw_handler
+
+# Nefunkční požadavky
+## 1. Architektura a technologie
+- geometry nodes jako výpočetní jádro addonu
+- logika tvarování geometrie bude díky geometry nodes stromům
+- python bude sloužit jako manažer, které tyto stromy bude připojovat a měnit jejich vstupy
+- oddělení vizuální logiky a aplikační logiky
+- zero dependency - addon nesmí k běhu potřebovat doinstalování externích knihoven - pro běžného uživatele složité
+- vše se musí zvládnout pomocí bpy a standardní knihovny Python
+
+## 2. Výkon a Nedestruktivnost
+- systém musí reagovat plynule, netrhat se a uživatel nesmí ztratit možnost úpravy ani pro komplexních úpravách a generace
+- minimalizace výpočetní náročnosti při operacích
+- důraz na optimalizaci při přepočtu parametrů
+- respoektování [DepsGraph](definice.md#depsgraph---dependency-graph) - systém závislostí v Blenderu, aby nedocházelo ke zbytečným cyklickým přepočtům celé scény
+
+## 3. Použitelnost a UX
+- vzhled addonu by měl působit jako nativní součást blenderu
+- striktní použití zabudovaných UI komponent - UILayout.row atd
+- logické seskupování nástrojů do záložek, přidávání Tooltips
+- důraz na ošetření chyb - srozumitelný feedback při špatných operací, například přidání okna do stěny, která je menší než zadaná velikost okna
