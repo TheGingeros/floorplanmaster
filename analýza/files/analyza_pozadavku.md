@@ -1,9 +1,12 @@
 # Funkční požadavky
 ## 1. Interaktivní tvorba místností a kreslení - Pencil Tool - UC 2.1, UC 3.1
-- doplněk umožní uživateli definovat půdorys klikáním bodů ve 3D prostoru v pohledu shora
-- nástroj musí fungovat jako modální operátor - stav, kdy addon přebírá všechny vstupy z myši a klávesnice
+#### Základ požadavku - must have:
+- **Kreslení půdorysu v top view** - doplněk umožní uživateli definovat půdorys klikáním bodů ve 3D prostoru v pohledu shora
+- **Nástroj jako modální operátor** - stav, kdy addon přebírá všechny vstupy z myši a klávesnice
+#### Rozšíření požadavku - should have:
+- **Automatický snapping k osám XYZ** - kontrola vzdálenosti kurzoru od existujích bodů nebo os a pokud je dostatečně blízko, zarovná ho k nim
+#### Rozšíření požadavku - nice to have:
 - systém musí neustále zachytávat pozici kurzoru, vykreslovat náhled budoucí stěny a čekat na kliknutí, zadání čísla nebo stisk klávesy enter
-- potřeba automatického snappingu k osám XYZ - kontrola vzdálenosti kurzoru od existujích bodů nebo os a pokud je dostatečně blízko, zarovná ho k nim
 ## 2. Generování a úprava parametrických objektů - UC 1.1, UC 2.2, UC 3.2
 - objekt stěny nebo otvorů není obyčejná mesh z polygonů, ale dynamický systém řízený vstupními parametry jako je délka, výška, tloušťka, pozice na ose
 - addon musí využívat custom properties - bpy.props pro uložení dat do .blend souboru
