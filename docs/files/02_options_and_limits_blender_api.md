@@ -116,4 +116,4 @@ k překonání těchto limitů se v profesionálních add-onech využívají ná
 - python add-on může vytvořit uzel Geometry Nodes, který obsahuje veškerou logiku pro stavbu domu a přes API pouze manipulovat se vstupními hodnotami tohoto uzlu
 - výpočet samotné geometrie pak probíhá v nativním kódu Blenderu, který je o několik řádů rychlejší a efektivnější než jakýkoli skript v Pythonu
 
-[Zdroje]()
+[Zdroje](./sources.md#limity-výkonu-pythonu-v-blenderu)
