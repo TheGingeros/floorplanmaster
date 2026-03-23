@@ -13,9 +13,9 @@
 ### [Vzor MVC - Model-View-Controller](./files/definice.md#vzor-mvc---model-view-controller)
 
 ## Možnosti a limity Blender API
-### Modální operátory - modal operators - FP1
-### Vykreslování vlastního UI ve scéně - FP7
-### Limity výkonu Pythonu v Blenderu
+### [Modální operátory - modal operators - FP1](./files/02_options_and_limits_blender_api.md#modální-operátory---modal-operators---fp1)
+### [Vykreslování vlastního UI ve scéně - FP7](./files/02_options_and_limits_blender_api.md#vykreslování-vlastního-ui-ve-scéně---fp7)
+### [Limity výkonu Pythonu v Blenderu](./files/02_options_and_limits_blender_api.md#limity-výkonu-pythonu-v-blenderu)
 
 ## Reprezentace geometrie a topologie
 

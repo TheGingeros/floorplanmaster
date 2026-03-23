@@ -92,3 +92,24 @@ https://gist.github.com/semagnum/2604c2a4e37ddafe1845f9d0116fc4dc
 - https://blender.stackexchange.com/questions/329351/how-to-update-geometry-nodes-input-variables-from-python
 - https://developer.blender.org/docs/release_notes/3.1/nodes_physics/
 - https://www.youtube.com/watch?v=n0i9RHMypfo
+
+## Reprezentace geometrie - bmesh a geometry nodes
+- https://docs.blender.org/manual/en/latest/modeling/geometry_nodes/mesh/operations/mesh_boolean.html
+- https://discourse.mcneel.com/t/extracting-structural-and-skeleton-graphs-from-floor-plans/185632
+- https://arxiv.org/html/2408.16258v1
+- https://blenderartists.org/t/bmesh-vs-non-bmesh-where-is-the-benefit/531065
+- https://docs.blender.org/api/current/bmesh.types.html
+- https://www.reddit.com/r/blender/comments/16wbk9g/creating_a_model_with_geometry_nodes_or_python/
+- https://developer.blender.org/docs/release_notes/3.1/nodes_physics/
+- https://blenderartists.org/t/is-scripting-easier-than-gn-or-a-scripting-language-that-compiles-to-geometry-nodes/1366624
+- https://developer.blender.org/docs/features/objects/attributes/
+- https://blender.stackexchange.com/questions/255759/geometry-nodes-custom-attributes-in-blender-3-0
+- https://medium.com/@bldevries/blender-python-and-your-custom-data-part-2-using-custom-attributes-in-geometry-nodes-b37db6984987
+- https://blenderartists.org/t/buildings-walls-planner-with-geo-nodes/1559163
+- https://www.youtube.com/watch?v=n0i9RHMypfo
+- https://lonedevr.com/2022/03/20/blender-procedural-cities-python-vs-geometry-nodes/
+- https://lonedevr.com/2022/03/20/blender-procedural-cities-python-vs-geometry-nodes/
+- https://learngeodata.eu/3d-scene-graphs-for-spatial-ai-with-networkx-and-openusd/
+- https://blender.stackexchange.com/questions/260113/uneven-profile-curve-thickness-with-geometry-nodes-curve-to-mesh
+- https://blenderartists.org/t/geo-nodes-even-thickness-for-curves/1353613
+- https://devtalk.blender.org/t/curve-to-mesh-node-even-thickness-feedback-thread/27271
