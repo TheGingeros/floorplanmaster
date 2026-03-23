@@ -62,4 +62,58 @@
 - využití `3D_POLYLINE_UNIFORM_COLOR` je v architektuře zásadní pro kreslení čitelných půdorysů, protože standardní čáry v moderních API často postrádají nativní podporu pro tloušťku větší než jeden pixel
 #### Implementace Drawing Handlers a správa paměti
 - draw handlery se přidávají k `bpy.types.SpaceView3D` pomocí metody `draw_handler_add`
+- dva hlavní režimy vykreslování: `POST_VIEW` a `POST_PIXEL`
+    - `POST_VIEW` vykresluje objekty v souřadném systému 3D scény, ideální pro vodící linky stěn
+    - `POST_PIXEL` pracuje v souřadnicích obrazovky a je nezbytný pro textové popisky a kóty, které mají zůstat čitelné nezávisle na zoomu
+- důležitou odpovědností je správa paměti, každý přidaný handler musí být odstraněn v `modal()` nebo `__del__()` pomocí `draw_handler_remove()`
+- v případě selhání nastává hromadění handlerů v paměti, což může způsobit vizuální artefakty a pád aplikace
+- pro aktulizaci vizualizace se používá `area.tag_redraw()`, signalizuje Blenderu, že se  data v GPU bufferech změnila a je třeba viewport překreslit
+
+[Zdroje](./sources.md#vykreslování-vlastního-ui-ve-scéně---fp7)
+
+### Typografie a dynamické kótování s modulem BLF
+- textový modul BLF - ideální pro vizualizaci rozměrů v reálném čase
+- umožňuje vykreslovat text přímo do viewportu s vysokou kontrolou nad pozicí a vzhledem
+- ideální pro zobrazení délek stěn, úhlů a ploch místností
+- pro kótování ve 3D prostoru je nutné kombinovat blf s utilitami pro transformaci souřadnic
+
+[Zdroje](./sources.md#typografie-a-dynamické-kótování-s-modulem-blf)
+
+## Prostorová matematika a transformace souřadnic - FP1
+- přesně kreslení půdorysu vyžaduje precizní převod 2D polohy myši na 3D body v prostoru scény
+- blender k tomuto poskytuje modul `bpy_extras.view3d_utils`, řeší inverzní projekci z plochy obrazovky do hloubky 3D scény
+- klíčové transformační funkce:
+    1. `region_2d_to_vector_3d` - vypočítá normalizovaný směrový vektor paprsku vycházejícího z pozice kamery směrem k bodu pod kurzorem
+    2. `region_2d_to_origin_3d` - určí počáteční bod paprsku v 3D prostoru, což je u perspektivní kamery její poloha a u ortografického zobrazení bod na blízké ořezové rovině
+    3. `region_2d_to_location_3d` - umožňuje projektovat kurzor na specifickou rovinu v hloubce scény, což je základ pro kreslení na podlahu (rovina XY)
+
+- pro implementaci snappingu k vrcholům a hranám je iterace přes všechny objekty v Pytohnu příliš pomalá
+- výkonnným řešením je `mathutils.bvhtree.BVHTree`
+    - datová struktura umožňující prostorové dělení scény, díky němuž lze dotaz na nejbližší bod k myši vyřídit v logaritmickém čase namísto lineárního, což je u komplexních půdorysů a scén kritické
+
+[Zdroje](./sources.md#prostorová-matematika-a-transformace-souřadnic---fp1)
+
 ## Limity výkonu Pythonu v Blenderu
+- python je v prostředí blenderu interpretovaným jazykem
+- je potřeba náročné operace delegovat na stranu Blenderu nebo GPU, které využívají C++
+- zkušnosti z vývoje komplexních importérů a generativních nástrojů ukazují, že čistý Python je řádově pomalejší při úlohách vyžadující hromadné zpracování dat
+- v kontextu architektonického kreslení jsou hlavními limitujícími faktory:
+    1. **Iterace přes mesh data** - procházení vrcholů pomocí for smyčky je pomalé
+    2. **Počet objektů v `bpy.data.objects`** - blender zpomaluje exponenciálně s rostoucím počtem unikátních objektů ve scéně
+    3. **Časté aktulizace DepsGraphu** - každá změna geometrie vynucuje přepočet grafu závislosti, 
+
+### Metody delegování výpočtů na C++ jádro
+k překonání těchto limitů se v profesionálních add-onech využívají následující techniky:
+#### Využítí foreach_set a foreach_get
+- tyto metody umožňují přenášet celá pole dat  mezi Pythonem a C++ strukturami Blenderu jedinou operací
+- operátor vypočítá novou pozici stěny, namísto nastavování každého vrcholu zvlášť by měl použít NumPy pole a metodu `foreach_set`, což přinese zrychlení
+#### Delegování na modifikátory
+- místo aby Python generoval detailní geometrii, měl by vytvořit pouze základní čárový model a na něj aplikovat modifikátory jako Solidify, Bevel nebo Array
+- modifikátory jsou implementovány v C++, plně využívají multithreading a jsou optimalizovány pro real-time aktualizaci při změně parametrů
+- python operátor pak v modálním běhu pouze mění číselné hodnoty jako modifier.thickness, což je operace s téměř nulovou režií
+#### Geometry nodes jako výpočetní backend
+- moderním přístupem je využití Geometry Nodes jako vysoce výkonného generativního motoru
+- python add-on může vytvořit uzel Geometry Nodes, který obsahuje veškerou logiku pro stavbu domu a přes API pouze manipulovat se vstupními hodnotami tohoto uzlu
+- výpočet samotné geometrie pak probíhá v nativním kódu Blenderu, který je o několik řádů rychlejší a efektivnější než jakýkoli skript v Pythonu
+
+[Zdroje]()
