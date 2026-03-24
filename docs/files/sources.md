@@ -113,3 +113,16 @@ https://gist.github.com/semagnum/2604c2a4e37ddafe1845f9d0116fc4dc
 - https://blender.stackexchange.com/questions/260113/uneven-profile-curve-thickness-with-geometry-nodes-curve-to-mesh
 - https://blenderartists.org/t/geo-nodes-even-thickness-for-curves/1353613
 - https://devtalk.blender.org/t/curve-to-mesh-node-even-thickness-feedback-thread/27271
+
+## Datová reprezentace logické struktury sítě místností
+- https://arxiv.org/html/2408.16258v1
+- https://developer.blender.org/docs/features/objects/attributes/
+- https://medium.com/@bldevries/blender-python-and-your-custom-data-part-2-using-custom-attributes-in-geometry-nodes-b37db6984987
+- https://blender.stackexchange.com/questions/255759/geometry-nodes-custom-attributes-in-blender-3-0
+- https://discourse.mcneel.com/t/extracting-structural-and-skeleton-graphs-from-floor-plans/185632
+- https://learngeodata.eu/3d-scene-graphs-for-spatial-ai-with-networkx-and-openusd/
+- https://docs.blender.org/api/current/bmesh.types.html
+- https://docs.blender.org/manual/en/latest/modeling/geometry_nodes/mesh/operations/mesh_boolean.html
+- https://blog.tomsawyer.com/networkx-graph-visualization
+- https://sustainability-gis.readthedocs.io/en/2022/lessons/L2/spatial_network_analysis.html
+- https://blog.tomsawyer.com/networkx-graph-visualization

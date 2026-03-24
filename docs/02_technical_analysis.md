@@ -1,6 +1,6 @@
 # Technická Analýza - Blender add-on pro parametrické modelování prostorových dispozic
 
-## Architektura Blenderu a Blender API
+## 1. Architektura Blenderu a Blender API
 - Blender je modulární systém postavený na unikátním způsoby správy dat - dualita systému DNA a RNA
 - blender využívá kombinaci vzoru MVC - model view controller, což umožňuje oddělit uživatelské rozhraní - view, od vnitřní logiky - model a zpracování vstupů - controller
 - addony tedy můžou definovat vlastní výpočty např. v GN - model, zatímco blende se stará o jejich vykreslení do viewportu a zachytávání událostí myši přes python API
@@ -17,11 +17,12 @@
 ### [Vykreslování vlastního UI ve scéně - FP7](./files/02_options_and_limits_blender_api.md#vykreslování-vlastního-ui-ve-scéně---fp7)
 ### [Limity výkonu Pythonu v Blenderu](./files/02_options_and_limits_blender_api.md#limity-výkonu-pythonu-v-blenderu)
 
-## Reprezentace geometrie a topologie
+## 2. Reprezentace geometrie
 ### BMesh
 ### Geometry Nodes
 ### Porovnání BMesh vs Geometry Nodes
-### Datová reprezentace logické struktury sítě místností
+### Tvorba otvorů pro okna a dveře - nedestruktivní workflow
+## 3. Datová reprezentace logické struktury sítě místností
 
 ## Ukládání dat a správa metadat
 
