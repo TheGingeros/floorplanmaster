@@ -126,3 +126,16 @@ https://gist.github.com/semagnum/2604c2a4e37ddafe1845f9d0116fc4dc
 - https://blog.tomsawyer.com/networkx-graph-visualization
 - https://sustainability-gis.readthedocs.io/en/2022/lessons/L2/spatial_network_analysis.html
 - https://blog.tomsawyer.com/networkx-graph-visualization
+
+## Tvorba otvorů pro okna a dveře - nedestruktivní workflow
+- https://blender.stackexchange.com/questions/218190/is-there-any-difference-in-mesh-generated-by-bool-tool-addon-vs-default-boolean
+- https://devtalk.blender.org/t/major-boolean-modifier-upgrade-use-as-boolean-object-a-whole-collection/6739?page=3
+- https://news.ycombinator.com/item?id=30279470
+- https://docs.blender.org/manual/en/3.3/modeling/geometry_nodes/mesh/mesh_boolean.html
+- https://blender.stackexchange.com/questions/345513/strange-behaviour-with-exact-boolean-difference-in-geometry-nodes
+- https://www.youtube.com/watch?v=7sBR2S4GxkM
+- https://blenderartists.org/t/boolean-modifier-intersect-object-to-collection/1387541
+- https://blender.stackexchange.com/questions/166364/modelling-advice-using-boolean
+- https://blender.stackexchange.com/questions/301835/is-there-a-faster-computationally-way-than-mesh-boolean-to-poke-holes-into-a-g
+- https://blenderartists.org/t/boolean-ops-in-geometry-nodes-any-speed-tips/1460723
+- https://www.reddit.com/r/blenderhelp/comments/11qxol3/difference_in_performance_when_distributing_with/

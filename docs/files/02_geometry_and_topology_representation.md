@@ -124,18 +124,54 @@
 - tento přístup využívá standardní modifikátorový stack Blenderu, kde Python skript dynamicky vytváří a konfiguruje objekty typu `cutter` a přiřazuje je ke stěně
 - každý modifikátor v Blenderu představuje separátní výpočetní krok v rámci objektu
 - při použití `Exact` solveru se využívají homogenní celočíselné souřadnice k zajištění absolutní přesnosti, což eliminuje numerické chyby u coplanárních ploch, ale je to náročné na paměť
+#### Nevýhody
 - hlavní nevýhodou při správě přes API je, že každá Booleovská operace mezi dvěma objekty musí brát v úvahu jejich světové transformační matice
 - pokud souřadnice po transformaci nejsou binárně identické (např. kvůli zaokrouhlovací chybě floatů), `Exact` solver může selhat při detekci společných ploch, což vede k artefaktům
+-režie na správu stacku s desítkami modifikátorů je extrémní
+-Blender musí při každé změně reevaluovat celý řetězec, což v Pythonu nelze efektivně paralelizovat
 
 ### Mesh Boolean v Geometry Nodes
-- vše v rámci jednoho node-tree, vysoký výkon 
-- náročnější na logiku injection dat oken 
+- tato metoda nahrazuje objektový stack jedním uzlovým stromem, kde operace probíhají nad proudy geometrických dat
+- na rozdíl od modifikátorů, které pracují v párech (Object A - Object B), uzel Mesh Boolean v Geometry Nodes dokáže zpracovat celé kolekce instancí oken jako jeden sloučený vstup - to dramaticky snižuje počet reevaluací
+- uzel Mesh Boolean považuje vše zapojené do vstupu Mesh 1 za jediné těleso
+- pokud se tedy dvě stěny uvnitř tohoto vstupu překrývají nebo dotýkají, solver se snaží vyřešit i tyto vnitřní průsečíky, což může způsobit mizení částí geometrie nebo vznik dutých výsledků
+#### Pokročilé solvery
+- **Manifold Solver:** Nejrychlejší metoda, která však vyžaduje, aby vstupy byly perfektně uzavřené a orientované
+
+- **Hole Tolerant:** Specifické nastavení `Exact` solveru pro GN, které umožňuje pracovat s architektonickými modely obsahujícími topologické chyby (např. importované prvky bez tloušťky)
 
 ### Metody bez Booleovských operací (Procedurální dekompozice)
-- 
+- tyto metody se vyhýbají drahým výpočtům průsečíků ploch a místo toho otvory vkládají přímo do procesu generování topologie
+
+#### Curve Trimming (Ořez křivek): 
+- pokud jsou stěny generovány z vodicích křivek, využívá se uzel Trim Curve ještě před vytažením do 3D
+- matematicky se křivka rozdělí v parametrickém prostoru na segmenty, čímž vzniknou fyzické mezery
+- výsledný 3D mesh je topologicky čistý a nevyžaduje žádné čištění hranic
+- nelze využít pro okna
+
+#### Modulární instancování: 
+- stěna není chápána jako monolit, ale jako pole buněk
+- pomocí uzlu Instance on Points se na vodicí mesh umisťují buď plné moduly stěn, nebo moduly s předpřipravenými otvory pro okna
+
+#### Vertex Group Topology: 
+- pokročilé workflow, kde se specifické vrcholy vodicího meshe označí atributem (např. „is_window“)
+- Geometry Nodes následně tyto vrcholy posunou tak, aby vytvořily pravoúhlý otvor, a pomocí uzlu Bridge Edge Loops se vytvoří ostění oken
+- tento přístup je nejrychlejší z hlediska výkonu, ale vyžaduje striktní kontrolu nad indexy vrcholů
+
+### Srovnání metod
+| Parametr | API Modifikátory | GN Mesh Boolean | Curve Trimming |
+| :--- | :--- | :--- | :--- |
+| **Výpočetní složitost** | $O(n \times m)$ | $O(m \times \log m)$ | $O(n)$ |
+| **Numerická stabilita** | Nízká (float drift mezi objekty) | Střední (závislá na Gapu) | Absolutní (čistá topologie) |
+| **Topologický výstup** | Často n-gony s artefakty | n-gony, vyžaduje Merge by Distance | Perfektní quads/tris |
+| **Flexibilita** | Vysoká (libovolné tvary) | Vysoká | Omezená na vertikální otvory |
+
+- hint: doporučuje se kombinace curve trimming pro základní stěnové otvory a GN mesh boolean pro atypické otvory, které nelze vyjádřit 2d profilem
 
 ### Problém coplanárních ploch a integrity sítě
 - coplární plocha = plochy oken a stěn ležící v přesně stejné rovině
 - architektonické modely jsou náchylné k chybám Boolean operací díky nim
 - často vede k selhání Exact solveru nebo k vytvoření dutých stěn
 - osvědčeným řešením v parametrickém workflow je zavedení nepatrného přesahu u cutterů
+
+[Zdroje](./sources.md#tvorba-otvorů-pro-okna-a-dveře---nedestruktivní-workflow)
