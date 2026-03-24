@@ -3,8 +3,7 @@ DONE - do tabulky přidat use casy a označit jestli jsou v požadavku
 DONE - automatické kotování do funkčních požadavků
 DONE - váhy jednotlivých skupin jsou podle pořadí - udělat vážený průměr požadavků
 DONE - rozdělit na požadavky na další podbody priorit
-- seřadit požadavky dle priorit
-- reprezentace geometrie, topologie v blenderu
-- vytvořit si struktury té analýzy před děláním researche
+???  - seřadit požadavky dle priorit
+DONE - reprezentace geometrie, topologie v blenderu
 - analýza formátu exportu
 - prejmenovat soubory v ./docs/files na anglické schéma
