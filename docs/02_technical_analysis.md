@@ -12,21 +12,21 @@
 
 ### [Vzor MVC - Model-View-Controller](./files/definice.md#vzor-mvc---model-view-controller)
 
-## 1. Interaktivní kreslení a interakce ve viewportu
+## 1. Interaktivní kreslení a interakce ve viewportu - jak ovládat a spravovat prvky ve viewportu
 ### [Modální operátory - modal operators - FP1](./files/02_options_and_limits_blender_api.md#modální-operátory---modal-operators---fp1)
 ### [Vykreslování vlastního UI ve scéně - FP7](./files/02_options_and_limits_blender_api.md#vykreslování-vlastního-ui-ve-scéně---fp7)
 ### [Limity výkonu Pythonu v Blenderu](./files/02_options_and_limits_blender_api.md#limity-výkonu-pythonu-v-blenderu)
 
-## 2. Reprezentace geometrie
+## 2. Reprezentace geometrie - jak generovat a reprezentovat stěny a geometrii
 ### [BMesh](./files/02_geometry_and_topology_representation.md#datová-struktura-bmesh-a-její-význam-pro-architektonické-modelování)
 ### [Geometry Nodes](./files/02_geometry_and_topology_representation.md#geometry-nodes-a-paradigma-polí)
 ### [Porovnání BMesh vs Geometry Nodes](./files/02_geometry_and_topology_representation.md#porovnání-bmesh-a-geometry-nodes-pro-generování-3d-stěn)
 
-## 3. Datová reprezentace logické struktury sítě místností
+## 3. Datová reprezentace logické struktury sítě místností - jak reprezentovat síť stěn a místností na pozadí
 ### [Abstraktní grafy - grafová reprezentace](./files/02_geometry_and_topology_representation.md#abstraktní-grafy---grafová-reprezentace)
 ### [Datový model](./files/02_geometry_and_topology_representation.md#datový-model---multigraph)
 
-## 4. Tvorba otvorů pro okna a dveře - nedestruktivní workflow
+## 4. Tvorba otvorů pro okna a dveře - nedestruktivní workflow - jak vytvářet otvory pro okna a dveře v síti stěn
 ### [Boolean operace spravované přes Python API](./files/02_geometry_and_topology_representation.md#boolean-operace-spravované-přes-python-api)
 
 ### [Mesh Boolean v Geometry Nodes](./files/02_geometry_and_topology_representation.md#mesh-boolean-v-geometry-nodes)
@@ -38,7 +38,7 @@
 ### [Problém coplanárních ploch a integrity sítě](./files/02_geometry_and_topology_representation.md#problém-coplanárních-ploch-a-integrity-sítě)
 
 
-## 5. Ukládání dat a správa metadat
+## 5. Ukládání dat a správa metadat - jak ukládat potřebná data pro doplňek
 
 ## Návrh uživatelského rozhraní a interakce
 
