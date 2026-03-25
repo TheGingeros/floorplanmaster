@@ -139,3 +139,24 @@ https://gist.github.com/semagnum/2604c2a4e37ddafe1845f9d0116fc4dc
 - https://blender.stackexchange.com/questions/301835/is-there-a-faster-computationally-way-than-mesh-boolean-to-poke-holes-into-a-g
 - https://blenderartists.org/t/boolean-ops-in-geometry-nodes-any-speed-tips/1460723
 - https://www.reddit.com/r/blenderhelp/comments/11qxol3/difference_in_performance_when_distributing_with/
+
+## Ukládání dat a správa metadat
+- https://renderday.com/blog/deep-dive-into-blenders-id-properties
+- https://blender.stackexchange.com/questions/36587/how-to-define-customized-property-in-material
+- https://www.blender.org/documentation/blender_python_api_2_68_release/bpy.props.html
+- https://blender-archipack.gitlab.io/dev/developper%20guide.html
+- https://docs.blender.org/api/current/mathutils.geometry.html
+- https://blender.stackexchange.com/questions/47675/surface-area-of-a-mesh-using-python-code-in-blender
+- https://blender.stackexchange.com/questions/45701/how-to-get-the-area-of-a-polygon-in-python-api
+- https://docs.blender.org/manual/en/latest/modeling/meshes/properties/object_data.html
+- https://blenderartists.org/t/mesh-vs-object/406584
+- https://devtalk.blender.org/t/storing-custom-properties-in-your-blend-file/5605
+- https://blenderartists.org/t/object-vs-mesh-naming-and-instance/1445861
+- https://docs.blender.org/manual/en/2.93/animation/constraints/relationship/child_of.html
+- https://blenderartists.org/t/when-to-use-child-of-constraint-vs-parent-relation/650287
+- https://www.reddit.com/r/blender/comments/1i7bb7k/drivers_and_constraints_only_because_i_hate/
+- https://www.reddit.com/r/blender/comments/1by3rrs/dynamic_lods_using_the_handler_api_blender/
+- https://docs.blender.org/manual/en/latest/modeling/modifiers/generate/booleans.html
+- https://docs.blender.org/manual/en/latest/modeling/meshes/editing/vertex/hooks.html
+- https://docs.blender.org/api/current/bpy.app.handlers.html
+https://developer.blender.org/docs/release_notes/2.80/python_api/scene_and_object_api/
