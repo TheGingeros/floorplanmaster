@@ -39,9 +39,13 @@
 
 
 ## 5. Ukládání dat a správa metadat - jak ukládat potřebná data pro doplňek
+### [Systémy pro správu metadat a uživatelských parametrů](./files/02_saving_data_and_metadata.md#systémy-pro-správu-metadat-a-uživatelských-parametrů)
+### [Vazby dat, Scéna, Objekt, Mesh](./files/02_saving_data_and_metadata.md#vazby-dat-scéna-objekt-mesh)
+### [Systém prostorových závislostí](./files/02_saving_data_and_metadata.md#systém-prostorových-závislostí)
 
-## Návrh uživatelského rozhraní a interakce
-
-## Finalizační nástroj
-
-## Architektura samotného kódu
+## 6. Návrh uživatelského rozhraní - jak definovat a vykreslovat UI
+todo
+## 7. Finalizační nástroj
+todo
+## 8. Architektura samotného kódu - jak obecně strukturovat implementaci addonu atd.
+todo
