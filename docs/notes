@@ -6,8 +6,9 @@ DONE - rozdělit na požadavky na další podbody priorit
 ???  - seřadit požadavky dle priorit
 DONE - reprezentace geometrie, topologie v blenderu
 DONE - analýza UI
-- analýza formátu exportu
+DONE - analýza formátu exportu
 DONE - prejmenovat soubory v ./docs/files na anglické schéma
 - přesunout Vykreslování vlastního UI ve scéně - FP7 do kapitoly o UI
 - fix linků v souborech
 - změnit strukturu souborů na strukturu viz schůzka
+- připravit si obsah a strukturu pro návrh implementace
