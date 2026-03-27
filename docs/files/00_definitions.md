@@ -193,25 +193,6 @@
     - umožní iterativně vytvářet chytrou geometrii rychle a intuitivně
 - existence BIM základů jako např. automatický výpočet plochy, což se např. architektům hodí znát okamžitě při návrhusouvisí
 
-## Vstup
-### 2D podklady
-- naskenované ruční skici, PDF výkresy, obrázky půdorysů nebo importované 2D CAD výkresy (DXF/DWG), které uživatel potřebuje transformovat do 3D
-### Kvantitativní zadání (Stavební program)
-- seznam požadavků od klienta nebo game designera (např. "potřebujeme obývák o rozloze 30 $m^2$", "šířka chodby musí být přesně 2 metry kvůli pohybu NPC")
-### Čistý koncept (Myšlenka)
-- uživatel nemá žádný podklad, začíná s prázdnou scénou a potřebuje nástroj, který udrží krok s jeho rychlým tokem myšlenek při navrhování
-
-## Výstup
-### 3D hmotový model (Massing)
-- čistá prostorová 3D reprezentace stěn, místností a otvorů
-- slouží k vizuální kontrole proporcí, tvorbě úvodních renderů, světelných studií nebo k prezentaci klientovi
-
-### Optimalizovaná geometrie pro export (Blockout)
-- vyčištěný 3D model bez topologických chyb, který si level designer může okamžitě vyexportovat (např. přes FBX/OBJ) do herního enginu
-
-### Přehledná prostorová data
-- rychlá zpětná vazba o tom, zda uživatel splnil zadání (zobrazení vypočítaných metrů čtverečních jednotlivých místností, kontrola tloušťky nosných stěn)
-
 ### Modulární systém
 - soustava nezávislých specializovaných modulů/komponent které spolu komunikují skrze definovanán rozhraní
 - modularita blenderu je rozdělena do několika klíčových vrstev
