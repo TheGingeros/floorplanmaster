@@ -53,5 +53,3 @@
 ## [GPU Modul - Hardwarově akcelerované vykreslování](./files/02_user_interface_posibilities.md#gpu-modul---hardwarově-akcelerované-vykreslování)
 ## 7. Finalizační nástroj
 todo
-## 8. Architektura samotného kódu - jak obecně strukturovat implementaci addonu atd.
-todo

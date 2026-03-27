@@ -168,3 +168,14 @@ https://developer.blender.org/docs/release_notes/2.80/python_api/scene_and_objec
 - https://docs.blender.org/manual/en/latest/interface/controls/buttons/menus.html
 - https://blenderartists.org/t/context-sensitive-pie-menu/1480331
 - https://developer.blender.org/docs/features/gpu/
+
+## Finalizační nástroj
+- https://docs.blender.org/manual/en/latest/modeling/geometry_nodes/instances/realize_instances.html
+- https://projects.blender.org/blender/blender/issues/122994
+- https://blender.stackexchange.com/questions/7196/how-to-get-a-new-mesh-with-modifiers-applied-using-blender-python-api
+- https://stackoverflow.com/questions/11633595/how-to-apply-a-modifier-in-python-creating-a-new-mesh
+- https://docs.blender.org/manual/sr/3.3/modeling/geometry_nodes/instances/realize_instances.html
+- https://devtalk.blender.org/t/convert-face-corner-attribute-to-uv-map/22132
+- https://docs.blender.org/manual/en/latest/modeling/geometry_nodes/geometry/join_geometry.html
+- https://blender.stackexchange.com/questions/292640/separate-material-on-each-geometry-nodes-instance-without-realizing
+- 
