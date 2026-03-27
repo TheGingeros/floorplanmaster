@@ -34,7 +34,7 @@
 - v Geometry Nodes jsou UV mapy reprezentovány jako 2D vektory uložené v doméně Face Corner
 - pro export do herních enginů je však nezbytné, aby tyto atributy byly korektně identifikovány jako "UV vrstvy", jinak je exportéry jako FBX nebo glTF ignorují
 - při finalizaci geometrie dochází často k situaci, kdy jsou UV data po aplikaci Geometry Nodes uložena pouze jako pojmenované atributy, aby se z nich staly funkční UV mapy editovatelné v UV Editoru, je nutné provést konverzi
-- [Problém s pořadím UV map pro herní enginy](./02_01_finalization_tool.md#problém-s-pořadím-uv-map-pro-herní-enginy)
+- [Problém s pořadím UV map pro herní enginy](./06_ta_uv_maps.md)
 ## Správa materiálových slotů a konsolidace geometrie
 - při realizaci instancí v rámci Geometry Nodes dochází k procesu slučování geometrií, které mohou mít různé materiálové definice
 - Blender v tomto případě agreguje všechny materiálové sloty ze všech vstupních geometrií do jednoho seznamu u výstupního meshe
@@ -44,4 +44,3 @@
 1. **Analýza slotů:** skript projde všechny sloty objektu a identifikuje duplicitní materiály
 2. **Přemapování indexů:** v rámci BMesh se změní index materiálu u všech polygonů tak, aby odkazovaly na první výskyt daného materiálu v seznamu slotů
 3. **Odstranění prázdných slotů:** po přemapování se volá operace pro odstranění nepoužívaných slotů, čímž vznikne čistá materiálová definice
-
