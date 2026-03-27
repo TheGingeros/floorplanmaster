@@ -6,6 +6,6 @@
 ## [Reprezentace geometrie](./06_ta_geometry_representation.md)
 ## [Datová reprezentace logické struktury sítě místností](./06_ta_geometry_representation.md)
 ## [Tvorba otvorů pro okna a dveře](./06_ta_holes_creation.md)
-## Ukládání dat a správa metadat
+## [Ukládání dat a správa metadat](./06_ta_saving_metadata.md)
 ## Uživatelského rozhraní
 ## Finalizační nástroj
