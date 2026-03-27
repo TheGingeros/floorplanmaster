@@ -50,3 +50,5 @@
 - **offscreen rendering** - možnost generování náhledů prvků ještě před tím než jsou umístěny do scény
     - využití `gpu.types.GPUOffScreen` objektu, do kterého je vykreslena geometrie okna nebo dvěří
     - textura je pak zobrazena ve 3D viewportu pod kurzorem myši jako průhledný objekt
+
+[Zdroje](./00_sources.md#uživatelského-rozhraní)

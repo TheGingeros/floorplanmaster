@@ -9,3 +9,4 @@ DONE - reprezentace geometrie, topologie v blenderu
 - analýza formátu exportu
 - analýza architektury addonu
 DONE - prejmenovat soubory v ./docs/files na anglické schéma
+- přesunout Vykreslování vlastního UI ve scéně - FP7 do kapitoly o UI

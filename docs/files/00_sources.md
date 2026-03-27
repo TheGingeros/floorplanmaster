@@ -160,3 +160,11 @@ https://gist.github.com/semagnum/2604c2a4e37ddafe1845f9d0116fc4dc
 - https://docs.blender.org/manual/en/latest/modeling/meshes/editing/vertex/hooks.html
 - https://docs.blender.org/api/current/bpy.app.handlers.html
 https://developer.blender.org/docs/release_notes/2.80/python_api/scene_and_object_api/
+
+## Uživatelského rozhraní
+- https://docs.blender.org/api/current/bpy.types.Gizmo.html
+- https://docs.blender.org/api/current/bpy.types.GizmoGroup.html
+- https://extensions.blender.org/add-ons/contextpie/
+- https://docs.blender.org/manual/en/latest/interface/controls/buttons/menus.html
+- https://blenderartists.org/t/context-sensitive-pie-menu/1480331
+- https://developer.blender.org/docs/features/gpu/
