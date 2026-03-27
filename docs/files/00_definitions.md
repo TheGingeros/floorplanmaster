@@ -217,6 +217,8 @@
 - poskytuje vysoko úrovňový popis datových struktur Blenderu a souvisejících funkcí, který je využíván pro běh UI, animací, knihovních přepisů a python API - bpy
 - většina blender python api je automaticky generována z RNA, např. ```bpy.data.meshes["Cube"].vertices[0].co``` spoléhá na RNA jak popíše, co ```vertices``` a ```co``` jsou a jak k nim přistupovat a jaké by měli být jejich typy a chování
 
+[Zdroje](./00_sources.md#modularita-systém-dna-a-rna)
+
 ### Vzor MVC - Model-View-Controller
 - architektonický navrhovací vzor v SI
 - cílem je oddělit datovou logiku aplikace od uživatelského rozhraní

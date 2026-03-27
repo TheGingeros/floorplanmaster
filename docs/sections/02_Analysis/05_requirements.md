@@ -3,6 +3,7 @@
 ## [Funkční požadavky](./05_func_requirements.md)
 ## [Nefunkční požadavky](./05_nonfunc_requirements.md)
 ## Tabulka požadavků a scénářů použití
+úvod here
 
 | Požadavek | UC 1.1 | UC 1.2 | UC 2.1 | UC 2.2 | UC 3.1 | UC 3.2 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -14,6 +15,7 @@
 | **FP6 - Interaktivní 3D manipulátory** |  | Ano |  | | | |
 | **FP7 - Automatické kótování** | Ano | Ano |  | | | |
 ## Tabulka požadavků a jejich priorit
+úvod here
 
 | Požadavek | Architekti | 3D Vizualizátoři | Game Designeři | Vážený průměr | Výsledná priorita |
 | :--- | :--- | :--- | :--- | :--- | :--- |
