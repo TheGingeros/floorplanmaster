@@ -1,29 +1,5 @@
 # Analýza - Blender add-on pro parametrické modelování prostorových dispozic
 
-## Definice problému
-- Blender je primárně obecný 3D polygonální modelovací nástroj, nikoliv specializovaný CAD/BIM software
-- nabízí obrovskou flexibilitu, pro specifické potřeby architektonického navrhování avšak postrádá nativní nástroje, což vede k neefektivně a zdlouhavosti pracovních postupů
-- tvorba půdorysů a 3D dispozic budov je v čistém Blenderu zdlouhavá a destruktivní
-
-## Cíl projektu
-- vytvoření rozšiřovacího modulu pro Blender zaměřený na parametrické modelování prostorových dispozic
-- uživatel bude moci prostorové dispozice intuitivně vytvářet a nedestruktivně upravovat pomocí parametrů
-- cílem je primárně urychlit ranou fázi architektonického návrhu
-
-## Informační analýza
-
-### Parametrické modelování
-- [Definice](./files/definice.md#parametrické-modelování)
-- [Problematika parametrického modelování](./files/definice.md#problematika-parametrického-modelování-v-architektuře)
-
-### Prostorové dispozice
-- [Definice](./files/definice.md#prostorová-dispozice)
-
-
-### Analýza existujících řešení
-- [Současné hlavní architektonické rozšiřující moduly pro Blender](./files/existujici_reseni.md#současné-hlavní-architektonické-rozšiřující-moduly-pro-blender)
-- [Hlavní architektonické nástroje mimo Blender](./files/existujici_reseni.md#hlavní-architektonické-nástroje-mimo-blender)
-
 ## Cílové skupiny
 ### Uživatelé
 1. [Architekti](./files/cilove_skupiny.md#architekti)

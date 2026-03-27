@@ -1,5 +1,6 @@
 # 2. Analýza
-## 2.1 Doménová analýza
+úvod todo
+## 2.1 [Doménová analýza](./01_domain_analysis.md)
 ## 2.2 Cílové skupiny
 ## 2.3 Vstupy a výstupy
 ## 2.4 Scénáře použití

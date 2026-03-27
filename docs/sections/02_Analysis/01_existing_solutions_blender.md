@@ -1,7 +1,4 @@
-Analýza existujících řešení
-
 # Současné hlavní architektonické rozšiřující moduly pro Blender
-## Úvod
 - blender za posledních 10 let prošel dramatickou evolucí
 - původně vnimán jako nástroj pro organické modelování, animace a vizuální efekty
 - díky open source a robustní Python API transformován v platformu schopnou realizovat komplexní architektonické projekty
@@ -52,26 +49,10 @@ Analýza existujících řešení
 - oproti Archimeshi a Archipacku je navržen jako nativní platforma pro tvorbu a správu informačních modelů budov, založena na mezinárodním standardu IFC - ISO 16739
 
 ### BonsaiBIM - IFC
-- [IFC](./definice.md#ifc---industry-foundation-classses)
+- [IFC](../../files/00_definitions.md#ifc---industry-foundation-classses)
 
 ## Shrnutí
 - archimesh a archipeck jsou nástavby nad standardním modelovacím procesem
 - data jsou spjata s .blend souborem
 - bonsai naproti tomu umožňuje Blenderu fungovat jako prohlížeč a editor databáze IFC
 
-## [Více informací](./existujici_reseni_rozsahlejsi)
-
-# Hlavní architektonické nástroje mimo Blender
-## Sketchup
-- postaven na principu přímého modelování ploch
-- prioritou je rychlost a intuitivní transformace myšlenky do 3D formy
-
-## Autocad
-- standard pro 2D dokumentaci a detailní rýsování
-- funguje jako digitální rýsovací prkno
-- nepostradatelný pro technické výkresy 
-
-## Revit
-- robustní parametrický BIM nástroj
-- každý prvek v modelu je instancí v databázi s definovanými funkčními vztahy
-- změna v jednom zobrazení se automaticky promítně do všech výkresů a výkazů
