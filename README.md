@@ -16,6 +16,6 @@
 ### 3. Návrh
 ### 4. Implementace
 ### 5. Testování
-### 6. Závěr
+### 6. Závěr 
 
 
