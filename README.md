@@ -12,7 +12,7 @@
 
 ## Obsah - Rozcestník
 ### 1. Úvod
-### 2. Analýza
+### [2. Analýza](./docs/02_analysis.md)
 ### 3. Návrh
 ### 4. Implementace
 ### 5. Testování
