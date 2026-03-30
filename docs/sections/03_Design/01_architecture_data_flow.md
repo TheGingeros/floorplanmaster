@@ -12,7 +12,8 @@ Modální vstup do stavu DRAWING (čeká na vstup)
             ↓
 Uživatel klikne na bod 1 (vytvoření propojovacího bodu)
   • Operátor ověří pozici (přichycování, mřížka)
-  • Vrstva 1: Přidá uzel do strukturálního grafu
+  • Zjistí aktuálně aktivní podlaží (Model budovy)
+  • Vrstva 1 (aktivního podlaží): Přidá uzel do strukturálního grafu
   • Vrstva 3 (BMesh): Vytvoří reálný vrchol (vertex) v základní síti Blenderu
   • Vrstva 3 (Atributy): Zapíše/aktualizuje pojmenované atributy na tomto vrcholu
             ↓
@@ -23,7 +24,7 @@ Uživatel pohne myší (generování náhledu)
             ↓
 Uživatel klikne na bod 2 (potvrzení stěny)
   • Modální ověří stěnu (délka, úhly)
-  • Vrstva 1: Přidá hranu do strukturálního grafu
+  • Vrstva 1 (aktivního podlaží): Přidá hranu do strukturálního grafu
   • Vrstva 3 (BMesh): Vytvoří reálnou hranu v základní síti Blenderu spojující dané vrcholy
   • Vrstva 3 (Atributy): Zapíše pojmenované atributy na tuto hranu (např. `wall_id`, `wall_thickness`)
   • NetworkX detekuje nové cykly

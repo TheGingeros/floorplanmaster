@@ -79,14 +79,16 @@ V praxi systém funguje kaskádovitě: Vrstva 1 (Topologie) spravuje exaktní so
 
 | Doména | Název atributu | Typ | Hodnota | Účel |
 |--------|---|---|---|---|
-| **Vertex** | `junction_id` | String | UUID z vrstvy 1 | Sledujte, který propojovací bod každý vrchol představuje |
-| **Edge** | `wall_id` | String | UUID z vrstvy 1 | Sledujte identitu stěny přes úpravy |
+| **Vertex** | `junction_id` | Integer | Unikátní index z vrstvy 1 | Sledujte, který propojovací bod každý vrchol představuje |
+| **Edge** | `wall_id` | Integer | Unikátní index z vrstvy 1 | Sledujte identitu stěny přes úpravy |
 | **Edge** | `wall_thickness` | Float | metry | Šířka stěny pro 3D generování |
 | **Edge** | `wall_height` | Float | metry | Výška stěny |
-| **Face** | `room_id` | String | UUID z vrstvy 2 | Která místnost vlastní tuto plochu |
+| **Face** | `room_id` | Integer | Unikátní index z vrstvy 2 | Která místnost vlastní tuto plochu |
 | **Face** | `room_area` | Float | čtvereční metry | Vypočítaná plocha místnosti |
-| **Face** | `floor_type` | String | ID materiálu | Materiál podlahy |
-| **Face** | `ceiling_type` | String | ID materiálu | Materiál stropu |
+| **Face** | `floor_type` | Integer | ID materiálu | Materiál podlahy |
+| **Face** | `ceiling_type` | Integer | ID materiálu | Materiál stropu |
+
+*(Poznámka: Vrstva 1 a 2 používají UUID stringy, ale pro Vrstvu 3 se převádí na Integery kvůli optimalizaci v Geometry Nodes).*
 
 **Vlastní vlastnosti objektu (Custom Properties)**:
 Celoobjektová metadata se neukládají jako pojmenované atributy sítě, ale jako standardní Custom Properties na samotném Blender objektu (dostupné v GN přes uzel Object Info).

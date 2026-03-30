@@ -8,10 +8,11 @@ Tok dat je v této architektuře navržen s ohledem na maximální rychlost. Hla
 ## Diagram MVC
 ```
 ┌──────────────────────────────────────────┐
-│              MODEL                       │
+│              MODEL (Budova)              │
 │  ─────────────────────────────────────   │
-│  • Vrstva 1: Strukturální graf (NetworkX)│
-│  • Vrstva 2: Graf místností (NetworkX)   │
+│  • Aktivní podlaží (Z kontextu UI)       │
+│  • Vrstva 1: Strukturální graf patra     │
+│  • Vrstva 2: Graf místností patra        │
 │  • Vrstva 3: Pojmenované atributy (Bl.)  │
 └──────────────────────────────────────────┘
            ↑                    │
