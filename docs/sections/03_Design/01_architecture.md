@@ -28,55 +28,12 @@ Systém přímo aplikuje návrhový vzor MVC, kde Python grafy tvoří nezávisl
 - 2. Úprava vlastností místnosti
 - 3. Finalizace (FP4 - Převod na trvalou geometrii)
 
-## Principy návrhu
+## [Principy návrhu](./01_architecture_design_principles.md)
+- Oddělení zájmů
+- Nedestruktivní úpravy
+- Zpětná vazba v reálném čase
+- Modularita
+- Osvědčené postupy Blenderu
 
-1. **Oddělení zájmů**
-   - Logika grafu (vrstvy 1, 2) nezávislá na Blenderu/GN (vrstva 3)
-   - Operátory fungují jako tenké řadiče, ne složitá logika
-   - Utility jsou bezstavové a opakovaně použitelné
-
-2. **Nedestruktivní úpravy**
-   - Identity místností/stěn přetrvávají přes změny parametrů
-   - Undo/Redo podporováno přes systém operátorů Blenderu
-   - Parametry lze upravovat nekonečně
-
-3. **Zpětná vazba v reálném čase**
-   - Náhled během kreslení (modul GPU)
-   - Živé aktualizace při změně vlastností (GN drivers)
-   - Responzivní UX i se složitými dispozicemi
-
-4. **Modularita**
-   - Každá vrstva se dá testovat nezávisle
-   - Operace grafu nepotřebují Blenderův kontext
-   - Snadné přidávání nových funkcí (okna, dveře, poznámky)
-
-5. **Osvědčené postupy Blenderu**
-   - Dodržujte konvence pojmenování Blenderu
-   - Používejte modální operátory pro interaktivní nástroje
-   - Využívejte Geometry Nodes pro nedestruktivní geometrii
-   - Správná podpora undo/redo
-
-## Technická rozhodnutí a zdůvodnění
-
-| Rozhodnutí | Proč | Alternativa | Kompromis |
-|----------|-----|-------------|-----------|
-| Použití NetworkX pro grafy | Algoritmy planárních grafů, detekce cyklů, prostorová analýza | Vlastní třída grafu | Externí závislost, ale obrovský nárůst výkonu |
-| Geometry Nodes pro 3D | Vykreslování v reálném čase, GPU akcelerované, nedestruktivní | Modifikátory Bmesh | GN obtížnější ladění, ale nedestruktivní |
-| Most pojmenovaných atributů | Minimální režie synchronizace, nativní Blender | Ukládání v vlastních vlastnostech | Atributy bezproblémově integrují s GN drivers |
-| Modální operátory | Hladká, responzivní interakce uživatele | Samostatné nástroje | Vyšší složitost správy stavů |
-| Omezení planárního grafu | Validuje topologii půdorysu, umožňuje algoritmy | Povolit neplanární | Vyloučí architektonické nemožnosti |
-
-## Aspekty výkonu
-
-1. **Operace grafu**: Složitost O(n) přijatelná pro typické půdorysy (< 100 místností)
-2. **Synchronizace atributů**: Serializuje pouze změněné uzly/hrany, aby se minimalizovaly aktualizace sítě
-3. **Geometry Nodes**: Opětovné vyhodnocení GN je automatické; lze optimalizovat pomocí ukládání uzlů do mezipaměti
-4. **Vykreslování náhledu**: Používejte lehké GPU čáry pro náhled, ne plnou geometrii
-5. **Aktualizace pohledu**: Dávkové aktualizace, aby se zabránilo opětovnému vykreslení na událost
-
-## Zabezpečení a validace
-
-- **Validace topologie**: Zajistěte planární grafy, žádné vlastní průniky
-- **Rozsahy parametrů**: Validujte tloušťku stěny, výšku v rozumných mezích
-- **V/V souboru**: Validujte serializovaná data před načtením
-- **Vstup uživatele**: Dezinfikujte jména místností, ID materiálů
+## [Technická rozhodnutí a zdůvodnění](./01_architecture_technical_decisions.md)
+- tabulka rozhodnutí
