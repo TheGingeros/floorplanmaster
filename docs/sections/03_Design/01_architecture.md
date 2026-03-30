@@ -15,55 +15,13 @@ Systém přímo aplikuje návrhový vzor MVC, kde Python grafy tvoří nezávisl
 - Vrstva 2: Sémantický graf místností (Duální graf)
 - Vrstva 3: Most synchronizace (Pojmenované atributy)
 
-## Vzor MVC v Blenderu
+## [Vzor MVC v Blenderu](./01_architecture_mvc.md)
+- diagram MVC
 
 
-## Organizace modulů
+## [Organizace modulů](./01_architecture_modules_struct.md)
+- reprezentace organizace modulů
 
-```
-floorplanmaster/
-│
-├── __init__.py                       # Registrace addonu a vstupní bod
-│
-├── core/
-│   ├── __init__.py
-│   ├── structural_graph.py           # Vrstva 1: Operace grafu NetworkX
-│   ├── room_graph.py                 # Vrstva 2: Sémantický graf místností
-│   └── parameters.py                 # Definice parametrů a validace
-│
-├── geometry/
-│   ├── __init__.py
-│   ├── attribute_sync.py             # Vrstva 3: Synchronizace do pojmenovaných atributů
-│   ├── geometry_nodes_setup.py       # Vytvoření stromu uzlů GN
-│   └── bmesh_utils.py                # Nízkoúrovňové operace geometrie
-│
-├── operators/
-│   ├── __init__.py
-│   ├── pencil_tool.py                # FP1: Modální operátor kreslení
-│   ├── finalize_tool.py              # FP4: Finalizace geometrie
-│   ├── edit_room.py                  # Operátor úpravy místnosti
-│   └── context_menu.py               # FP5: Kontextová nabídka
-│
-├── ui/
-│   ├── __init__.py
-│   ├── properties.py                 # Panely vlastností UI
-│   ├── menus.py                      # Integrace hlavní nabídky
-│   └── manipulators.py               # FP6: 3D manipulátory/rukojeti
-│
-├── utils/
-│   ├── __init__.py
-│   ├── snapping.py                   # Systém přichycování (osa, bod, mřížka)
-│   ├── validation.py                 # Validace topologie a geometrie
-│   ├── calculations.py               # Výpočty plochy, objemu, vzdálenosti
-│   ├── constants.py                  # Konstanty a výchozí hodnoty
-│   └── serialization.py              # Ukládání/načítání půdorysů
-│
-└── tests/
-    ├── test_structural_graph.py
-    ├── test_room_graph.py
-    ├── test_operators.py
-    └── test_calculations.py
-```
 
 ## Tok dat: Základní operace
 
