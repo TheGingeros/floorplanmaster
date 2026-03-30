@@ -17,39 +17,6 @@ Systém přímo aplikuje návrhový vzor MVC, kde Python grafy tvoří nezávisl
 
 ## Vzor MVC v Blenderu
 
-```
-┌─────────────────────────────────────────┐
-│              MODEL                       │
-│  ─────────────────────────────────────  │
-│  • Vrstva 1: Strukturální graf (NetworkX)│
-│  • Vrstva 2: Graf místností (NetworkX)   │
-│  • Vrstva 3: Pojmenované atributy (Bl.)  │
-└─────────────────────────────────────────┘
-           ↑                    ↑
-           │ serializace        │ (čtení přes GN driver)
-           │                    ↓
-         Python      ┌──────────────────┐
-         API         │  Geometry Nodes  │
-                     └──────────────────┘
-                            ↓
-                      Síť/Geometrie
-           ┌───────────────────────────┐
-           │        VIEW                │
-           │  ───────────────────────  │
-           │  • Vykreslování pohledu   │
-           │  • Zobrazení GPU           │
-           │  • Vizualizace uživatele   │
-           └───────────────────────────┘
-           ↑
-           │ (zobrazení)
-┌─────────────────────────────────────────┐
-│         CONTROLLER                       │
-│  ─────────────────────────────────────  │
-│  • Modální operátory (Tužka, Finalizace)│
-│  • Obslužné programy událostí (myš, kl.)│
-│  • Logika stavového automatu             │
-└─────────────────────────────────────────┘
-```
 
 ## Organizace modulů
 
