@@ -1,26 +1,13 @@
 # 3.1 Architektura systému
 
-Tento dokument popisuje třívrstvou hybridní architekturu FloorPlanMaster. Je to klíč k pochopení, jak se data proudí mezi jednotlivými komponenty a jak se udržuje konzistence při interakci uživatele.
-
-FloorPlanMaster není jen běžné GUI - je to komplexní datový systém, který kombinuje tři odlišné reprezentace půdorysu:
+Tato sekce popisuje třívrstvou hybridní architekturu FloorPlanMaster. Je to klíč k pochopení, jak se data proudí mezi jednotlivými komponenty a jak se udržuje konzistence při interakci uživatele. FloorPlanMaster není jen běžné GUI - je to komplexní datový systém, který kombinuje tři odlišné reprezentace půdorysu:
 - **Vrstva 1 (Topologie)**: čistý graf propojovacích bodů a stěn - to, co měří a propojuje
 - **Vrstva 2 (Sémantika)**: graf místností a jejich vztahů - to, co architekt chápe a používá
 - **Vrstva 3 (Synchronizace)**: Blender atributy a Geometry Nodes - to, co vidí na obrazovce
 
-Tato architektura zajišťuje, že můžete upravovat půdorys bez ztráty informací, že vše je nedestruktivní a že se geometrie aktualizuje v reálném čase. Každá vrstva má svou odpovědnost a nejsou na sobě závislé.
+Tato architektura zajišťuje nedestruktivní úpravy půdorysu bez ztráty informací a aktualizaci geometrie v reálném čase. Komunikace vrstev je striktně jednosměrná: grafy v Pythonu vypočítají nová data a skrze pojmenované atributy (Named Attributes) je předají do Blender sítě, kde je Geometry Nodes okamžitě vykreslí.
 
-V tomto dokumentu se dozvíte:
-- Jak všechny tři vrstvy fungují a jak spolu komunikují
-- Proč jsme zvolili tuto architekturu místo alternativ
-- Jak se MVC vzor aplikuje v Blender prostředí
-- Jak se organizují moduly a jaká je jejich závislost
-- Jak data proudí od uživatele kliknutí na propojovací bod až po vykreslení geometrie
-
-To je základ pro veškerou implementaci - pokud nebudete rozumět architektuře, ztrácíte se později.
-
-## Přehled
-
-FloorPlanMaster používá **třívrstvou hybridní architekturu** kombinující grafové datové struktury s nativními systémy Blenderu (Geometry Nodes, pojmenované atributy).
+Systém přímo aplikuje návrhový vzor MVC, kde Python grafy tvoří nezávislý Model, Blender UI a 3D pohled fungují jako View a modální operátory zachytávající kliknutí myší slouží jako Controller. Celý datový tok tak začíná uživatelským vstupem, který změní čistou topologii, což automaticky vyvolá přepočet sémantiky místností a končí instantním překreslením 3D geometrie, aniž by se tyto vrstvy do sebe funkčně zamotaly.
 
 ## Vrstvy architektury
 
@@ -29,7 +16,7 @@ FloorPlanMaster používá **třívrstvou hybridní architekturu** kombinující
 **Účel**: Reprezentovat čistě topologickou strukturu půdorysů - propojovací body stěn a jejich konektivitu.
 
 **Datová struktura**:
-- **Typ grafu**: NetworkX planární multigraf (`networkx.MultiGraph`)
+- **Typ grafu**: NetworkX planární graf (`networkx.Graph`)
 - **Uzly**: Propojovací body, kde se stěny setkávají
   - `id`: Jedinečný identifikátor
   - `position`: (x, y) souřadnice v 3D prostoru
@@ -58,7 +45,7 @@ FloorPlanMaster používá **třívrstvou hybridní architekturu** kombinující
 **Účel**: Reprezentovat sémantické chápání prostorů - místnosti a jejich vztahy.
 
 **Datová struktura**:
-- **Typ grafu**: NetworkX orientovaný graf (`networkx.DiGraph`)
+- **Typ grafu**: NetworkX neorientovaný graf (`networkx.DiGraph`)
 - **Uzly**: Místnosti/prostory
   - `id`: Jedinečný identifikátor místnosti (perzistentní přes úpravy)
   - `cycle_id`: Odkaz na cyklus z vrstvy 1
@@ -81,6 +68,7 @@ FloorPlanMaster používá **třívrstvou hybridní architekturu** kombinující
 - Identita místnosti přetrvá, i když se geometrie změní
 - Aktualizují se pouze atributy (plocha, konektivita), identity uzlů zůstávají stabilní
 - Obousměrné vztahy s vrstvou 1
+- Sousedství místností je obousměrné (hrany nemají směr), data o průchodech jsou sdílena
 
 **Klíčové operace**:
 - Vytvoření místnosti z cyklu
@@ -93,8 +81,10 @@ FloorPlanMaster používá **třívrstvou hybridní architekturu** kombinující
 **Účel**: Synchronizovat sémantická data z vrstev 1-2 do Blenderovy sítě pro Geometry Nodes a vykreslování v reálném čase.
 
 **Implementace**:
-- Serializovat data grafu z Pythonu do **pojmenovaných atributů** sítě Blenderu
-- Geometry Nodes čtou tyto atributy a dynamicky generují 3D geometrii
+- **Pravidlo geometrie**: Každá místnost je v základní Blender síti reprezentována jako jediný N-gon (Face). Vztah je striktně 1 místnost = 1 Face.
+- Změny v grafech (Python) se nejprve přes BMesh propíšou do základní topologie Blender sítě (vytvoření/smazání vertexů a hran).
+- Následně se serializují data grafu z Pythonu do **pojmenovaných atributů** této sítě.
+- Geometry Nodes čtou tyto atributy a dynamicky generují 3D geometrii.
 
 **Domény atributů**:
 
@@ -108,8 +98,11 @@ FloorPlanMaster používá **třívrstvou hybridní architekturu** kombinující
 | **Face** | `room_area` | Float | čtvereční metry | Vypočítaná plocha místnosti |
 | **Face** | `floor_type` | String | ID materiálu | Materiál podlahy |
 | **Face** | `ceiling_type` | String | ID materiálu | Materiál stropu |
-| **Object** | `floor_unit` | String | "m", "cm", "ft" | Jednotka zvolená uživatelem |
-| **Object** | `structure_version` | Int | Číslo verze | Pro zneplatnění/obnovení |
+
+**Vlastní vlastnosti objektu (Custom Properties)**:
+Celoobjektová metadata se neukládají jako pojmenované atributy sítě, ale jako standardní Custom Properties na samotném Blender objektu (dostupné v GN přes uzel Object Info).
+- `floor_unit` (String): "m", "cm", "ft" - Jednotka zvolená uživatelem
+- `structure_version` (Int): Číslo verze pro zneplatnění/obnovení mezipaměti
 
 **Tok synchronizace**:
 ```
@@ -218,12 +211,13 @@ floorplanmaster/
 ```
 Uživatel aktivuje nástroj Tužka (modální operátor)
             ↓
-Modální vstupí do stavu DRAWING (čeká na vstup)
+Modální vstup do stavu DRAWING (čeká na vstup)
             ↓
 Uživatel klikne na bod 1 (vytvoření propojovacího bodu)
   • Operátor ověří pozici (přichycování, mřížka)
   • Vrstva 1: Přidá uzel do strukturálního grafu
-  • Aktualizuje pojmenované atributy
+  • Vrstva 3 (BMesh): Vytvoří reálný vrchol (vertex) v základní síti Blenderu
+  • Vrstva 3 (Atributy): Zapíše/aktualizuje pojmenované atributy na tomto vrcholu
             ↓
 Uživatel pohne myší (generování náhledu)
   • Modální je ve stavu DRAWING
@@ -233,6 +227,8 @@ Uživatel pohne myší (generování náhledu)
 Uživatel klikne na bod 2 (potvrzení stěny)
   • Modální ověří stěnu (délka, úhly)
   • Vrstva 1: Přidá hranu do strukturálního grafu
+  • Vrstva 3 (BMesh): Vytvoří reálnou hranu v základní síti Blenderu spojující dané vrcholy
+  • Vrstva 3 (Atributy): Zapíše pojmenované atributy na tuto hranu (např. `wall_id`, `wall_thickness`)
   • NetworkX detekuje nové cykly
             ↓
 Vrstva 2 AUTOMATICKÁ AKTUALIZACE: Graf místností aktualizován
