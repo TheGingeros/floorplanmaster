@@ -1,23 +1,9 @@
 # 3.2 Specifikace datových modelů
+Zatímco předchozí kapitola definovala procesy a tok dat (architekturu MVC), tato sekce představuje exaktní „slovník“ celého addonu. Definuje fyzické struktury, pravidla a hranice, ve kterých se data mohou pohybovat. Slouží jako striktní programátorský kontrakt mezi matematickým jádrem v Pythonu a 3D prostředím Blenderu.
 
-Tento dokument detailně specifikuje všechny datové struktury v jednotlivých vrstvách. Zde se definují Junction, Wall, Room, jejich atributy, metody a omezení pro práci s daty.
+Abychom předešli zhroucení planárních algoritmů při navrhování komplexních objektů, neukládají se data do jedné ploché struktury, ale podléhají přísné hierarchii podlaží. Na samém vrcholu stojí zastřešující model Budovy (Správce podlaží), který izoluje jednotlivá patra do zcela nezávislých 2D vesmírů. Teprve uvnitř těchto pater žijí naše tři známé vrstvy: Strukturální graf uchovávající 2D topologii (Vrstva 1), Graf místností definující sémantiku a sousedství (Vrstva 2) a Pojmenované atributy sloužící jako optimalizovaný číselný most pro grafickou kartu (Vrstva 3).
 
-Pokud je architektura "co" (co se dělá), pak datové modely jsou "jak konkrétně" (jak se to ukládá a manipuluje). Každá vrstva má své modely a svá pravidla.
-
-**Vrstva 1 (Topologie)** - Strukturální graf: Definuje, jak se uchovávají propojovací body a stěny. Junction je bod s pozicí, Wall je spojnice mezi dvěma body s tloušťkou a výškou. NetworkX graf udržuje topologické vztahy.
-
-**Vrstva 2 (Sémantika)** - Graf místností: Definuje, jak se místnosti tvoří z cyklů topologického grafu. Room je polygon ohraničený stěnami, RoomGraph udržuje sousedství a vazby mezi místnostmi. Zde se počítají plochy a délky obvodu.
-
-**Vrstva 3 (Synchronizace)** - Atributy Blenderu: Definuje, jak se data z vrstev 1-2 mapují na Blender pojmenované atributy tak, aby je Geometry Nodes mohly číst. Tato vrstva je "most" mezi čistými daty a 3D geometrií.
-
-V tomto dokumentu se dozvíte:
-- Kompletní specifikaci tříd Junction, Wall, Room s atributy
-- Validační pravidla (co je dovoleno, co ne)
-- API operace (co s tím můžete dělat)
-- Jak se data serializují a deserializují
-- Jak se vrstvy komunikují bez porušení oddělení
-
-Toto je referenční materiál - když si nejste jistí, jak reprezentovat nějaké data, hledejte zde.
+Následující specifikace neslouží jen jako přehled proměnných. Detailně definuje povolené datové typy, API metody, a především tvrdá validační omezení, která garantují, že uživatel nemůže vytvořit architektonicky neplatný stav.
 
 ## Hierarchie budovy (Zastřešující modely)
 
@@ -206,10 +192,6 @@ Adjacency:
   # Otvory na tomto připojení
   - openings: list[UUID]         # ID dveří/oken
   - total_opening_width: float   # Celková šířka otvorů
-  
-  # Analýza
-  - is_soundproof: bool          # Akustické vlastnosti
-  - is_fireproof: bool           # Požární třída
 ```
 
 ### Operace grafu místností
