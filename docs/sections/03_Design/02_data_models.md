@@ -19,6 +19,33 @@ V tomto dokumentu se dozvíte:
 
 Toto je referenční materiál - když si nejste jistí, jak reprezentovat nějaké data, hledejte zde.
 
+## Hierarchie budovy (Zastřešující modely)
+
+Tato nejvyšší úroveň organizuje jednotlivé grafy tak, aby byla zachována 2D planarita.
+
+### Model budovy
+```python
+Building:
+  - id: UUID
+  - name: str                    # Název projektu
+  - floors: list[Floor]          # Seznam podlaží (seřazený odspodu nahoru)
+  - active_floor_index: int      # Index patra, které uživatel aktuálně upravuje
+  - project_settings: dict       # Globální nastavení (např. výchozí výška stěn)
+```
+
+### Model podlaží
+```python
+Floor:
+  - id: UUID
+  - name: str                    # např. "Přízemí", "1. Patro"
+  - elevation: float             # Z-výška, na které podlaží začíná (např. 0.0m, 3.2m)
+  - is_visible: bool             # Stav zobrazení v UI/Viewportu
+  
+  # Datové jádro podlaží (izolované instance)
+  - structural_graph: StructuralGraph  # Vlastní Vrstva 1
+  - room_graph: RoomGraph              # Vlastní Vrstva 2
+```
+
 ## Vrstva 1: Strukturální graf - Detailní specifikace
 
 ### Model uzlu propojovacího bodu
@@ -27,9 +54,9 @@ Toto je referenční materiál - když si nejste jistí, jak reprezentovat něja
 # Propojovací bod (uzel ve vrstvě 1)
 Junction:
   - id: UUID                    # Jedinečný identifikátor (např. "j_001")
-  - position: (x: float, y: float, z: float)
-    * z je typicky 0 pro plánování v top-view
-    * 3D prostorové souřadnice v jednotkách Blenderu
+  - position: (x: float, y: float)
+    * Striktní 2D souřadnice pro planární graf
+    * Při zápisu do Blender sítě (BMesh) se osa Z implicitně doplňuje jako 0.0
   - snap_priority: int          # Pro prioritu algoritmu přichycování
   - custom_data: dict           # Uživatelem definovaná metadata
     * created_at: timestamp
@@ -73,7 +100,7 @@ Wall:
 - `junction_start` != `junction_end`
 - `thickness` > 0
 - `height` > 0
-- Více hran mezi stejnými spojovacími body povoleno (multi-hrany) pro paralelní stěny
+- Mezi dvěma konkrétními uzly může vést maximálně jedna hrana (odpovídá prostému grafu).
 
 ### Operace strukturálního grafu
 
@@ -174,6 +201,7 @@ Adjacency:
     * "door": průchod dveřmi
     * "window": vizuální připojení oknem
     * "passage": otevřený průchod
+    * "stairs": vertikální logické propojení do jiného podlaží
   
   # Otvory na tomto připojení
   - openings: list[UUID]         # ID dveří/oken
@@ -262,67 +290,67 @@ Vrstva 1 (Strukturální)          Vrstva 2 (Místnost)
 
 | Název atributu | Doména | Typ | Výchozí | Použití | Spouštěč aktualizace |
 |---|---|---|---|---|---|
-| `junction_id` | Vertex | String (UUID) | - | Odkaz na propojovací bod vrstvy 1 | Vytvoření propojovacího bodu |
-| `junction_x` | Vertex | Float | 0.0 | X souřadnice | Přesun propojovacího bodu |
-| `junction_y` | Vertex | Float | 0.0 | Y souřadnice | Přesun propojovacího bodu |
-| `wall_id` | Edge | String (UUID) | - | Odkaz na stěnu vrstvy 1 | Vytvoření stěny |
+| `junction_id` | Vertex | Integer | 0 | Unikátní číselný index propojovacího bodu | Vytvoření propojovacího bodu |
+| `wall_id` | Edge | Integer | 0 | Unikátní číselný index stěny | Vytvoření stěny |
 | `wall_thickness` | Edge | Float | 0.2 | Šířka stěny (m) | Změna tloušťky stěny |
 | `wall_height` | Edge | Float | 3.0 | Výška stěny (m) | Změna výšky stěny |
-| `wall_material_id` | Edge | String | "default" | Odkaz na materiál | Změna materiálu |
+| `wall_material_id` | Edge | Integer | 0 | Číselný index materiálu | Změna materiálu |
 | `wall_offset_x` | Edge | Float | 0.0 | Asymetrický posun | Změna posunu |
 | `wall_offset_y` | Edge | Float | 0.0 | Asymetrický posun | Změna posunu |
-| `room_id` | Face | String (UUID) | - | Odkaz na místnost vrstvy 2 | Vytvoření místnosti |
+| `room_id` | Face | Integer | 0 | Unikátní číselný index místnosti | Vytvoření místnosti |
 | `room_area` | Face | Float | 0.0 | Vypočítaná plocha (m²) | Změna geometrie místnosti |
 | `room_perimeter` | Face | Float | 0.0 | Vypočítaný obvod | Změna geometrie místnosti |
-| `room_name` | Face | String | "Room" | Uživatelsky přívětivé jméno | Přejmenování místnosti |
-| `room_type` | Face | String | "general" | Klasifikace místnosti | Změna typu |
-| `floor_material_id` | Face | String | "default" | Materiál podlahy | Změna materiálu podlahy |
-| `floor_color_r` | Face | Float | 0.8 | Barva podlahy R kanál | Změna barvy |
-| `floor_color_g` | Face | Float | 0.8 | Barva podlahy G kanál | Změna barvy |
-| `floor_color_b` | Face | Float | 0.8 | Barva podlahy B kanál | Změna barvy |
-| `ceiling_material_id` | Face | String | "default" | Materiál stropu | Změna materiálu stropu |
-| `is_room_enclosed` | Face | Boolean | True | Stav místnosti | Změna geometrie místnosti |
-| `unit_system` | Object | String | "m" | Systém měření | Uživatelská preference |
-| `addon_version` | Object | String | "1.0" | Pro kompatibilitu | Aktualizace addonu |
-| `structure_version` | Object | Int | 0 | Čítač zneplatnění | Jakákoliv změna |
+| `room_type` | Face | Integer | 0 | Číselný index klasifikace místnosti | Změna typu |
+| `floor_material_id` | Face | Integer | 0 | Číselný index materiálu podlahy | Změna materiálu podlahy |
+| `floor_color` | Face | Color | (0.8, 0.8, 0.8, 1) | RGBA barva podlahy | Změna barvy |
+| `ceiling_material_id` | Face | Integer | 0 | Číselný index materiálu stropu | Změna materiálu stropu |
+| `is_room_enclosed` | Face | Boolean| True | Stav místnosti | Změna geometrie místnosti |
+
+*(Poznámka k ID: Zatímco Vrstva 1 a 2 v Pythonu používají UUID stringy pro spolehlivou identifikaci, před zápisem do Vrstvy 3 se tato UUID mapují na unikátní Integery, protože Geometry Nodes jsou optimalizovány pro rychlé výpočty nad celými čísly).*
+
+**Vlastní vlastnosti objektu (Custom Properties)**:
+Celoobjektová metadata se neukládají jako pojmenované atributy sítě, ale jako standardní Custom Properties na samotném Blender objektu.
+- `unit_system` (String): "m", "cm", "ft" - Systém měření
+- `addon_version` (String): "1.0" - Pro kompatibilitu souboru
+- `structure_version` (Int): Čítač pro zneplatnění mezipaměti GN
 
 ### Formát serializace
 
 ```python
-# Slovník Pythonu (reprezentace v paměti)
+# Slovník Pythonu (reprezentace dat připravených pro síť)
 attributes_dict = {
     "vertex": {
-        "junction_id": [val_v0, val_v1, ...],
-        "junction_x": [x0, x1, ...],
-        "junction_y": [y0, y1, ...],
+        "junction_id": [idx_v0, idx_v1, ...],
     },
     "edge": {
-        "wall_id": [val_e0, val_e1, ...],
+        "wall_id": [idx_e0, idx_e1, ...],
         "wall_thickness": [thick_e0, thick_e1, ...],
-        ...
+        # ...
     },
     "face": {
-        "room_id": [val_f0, val_f1, ...],
+        "room_id": [idx_f0, idx_f1, ...],
         "room_area": [area_f0, area_f1, ...],
-        ...
-    },
-    "object": {
-        "unit_system": "m",
-        "addon_version": "1.0",
-        "structure_version": 42,
+        "floor_color": [(r,g,b,a), (r,g,b,a), ...]
     }
 }
 
-# Pojmenované atributy Blenderu (na objektu sítě)
-bpy.data.meshes["FloorPlan"].attributes["junction_id"]  # Vertex atribut
-bpy.data.meshes["FloorPlan"].attributes["wall_id"]      # Edge atribut
-bpy.data.meshes["FloorPlan"].attributes["room_id"]      # Face atribut
+# Zápis do Blender objektu
+mesh = bpy.data.meshes["FloorPlan"]
+obj = bpy.data.objects["FloorPlan"]
+
+# 1. Pojmenované atributy sítě (pro Geometry Nodes)
+mesh.attributes["junction_id"].data.foreach_set("value", attributes_dict["vertex"]["junction_id"])
+mesh.attributes["room_id"].data.foreach_set("value", attributes_dict["face"]["room_id"])
+
+# 2. Celoobjektová metadata (Custom Properties)
+obj["unit_system"] = "m"
+obj["structure_version"] = 42
 ```
 
 ### Časování synchronizace
 
 - **Čtení**: Geometry Nodes drivers čtou atributy každý frame
-- **Zápis**: Python addon zapisuje atributy po každé změně grafu
+- **Zápis**: Python addon nejprve synchronizuje novou topologii přes BMesh (vytvoří/smaže vertexy a hrany) a až následně na ně zapíše/aktualizuje atributy.
 - **Frekvence**: Dávkové zápisy za operaci (ne za prvek)
 - **Validace**: Kontrola konzistence atributů po zápisu
 
