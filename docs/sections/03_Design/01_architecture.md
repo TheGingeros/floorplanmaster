@@ -23,81 +23,10 @@ Systém přímo aplikuje návrhový vzor MVC, kde Python grafy tvoří nezávisl
 - reprezentace organizace modulů
 
 
-## Tok dat: Základní operace
-
-### 1. Kreslení půdorysu (FP1 - Nástroj Tužka)
-
-```
-Uživatel aktivuje nástroj Tužka (modální operátor)
-            ↓
-Modální vstup do stavu DRAWING (čeká na vstup)
-            ↓
-Uživatel klikne na bod 1 (vytvoření propojovacího bodu)
-  • Operátor ověří pozici (přichycování, mřížka)
-  • Vrstva 1: Přidá uzel do strukturálního grafu
-  • Vrstva 3 (BMesh): Vytvoří reálný vrchol (vertex) v základní síti Blenderu
-  • Vrstva 3 (Atributy): Zapíše/aktualizuje pojmenované atributy na tomto vrcholu
-            ↓
-Uživatel pohne myší (generování náhledu)
-  • Modální je ve stavu DRAWING
-  • Vypočítá geometrii náhledu stěny
-  • Vykreslí náhled přes modul GPU
-            ↓
-Uživatel klikne na bod 2 (potvrzení stěny)
-  • Modální ověří stěnu (délka, úhly)
-  • Vrstva 1: Přidá hranu do strukturálního grafu
-  • Vrstva 3 (BMesh): Vytvoří reálnou hranu v základní síti Blenderu spojující dané vrcholy
-  • Vrstva 3 (Atributy): Zapíše pojmenované atributy na tuto hranu (např. `wall_id`, `wall_thickness`)
-  • NetworkX detekuje nové cykly
-            ↓
-Vrstva 2 AUTOMATICKÁ AKTUALIZACE: Graf místností aktualizován
-  • Detekce cyklů identifikuje nové místnosti
-  • Přiřadí perzistentní ID místností
-  • Vypočítá plochu, sousedství
-            ↓
-Vrstva 3: Serializace do pojmenovaných atributů
-  • Aktualizuje atributy sítě
-  • Geometry Nodes spustí obnovení
-            ↓
-Pohled se aktualizuje s 3D geometrií
-            ↓
-Opakování nebo stisk Enter/ESC pro ukončení
-```
-
-### 2. Úprava vlastností místnosti
-
-```
-Uživatel otevře panel Vlastnosti
-            ↓
-Vybere místnost ze seznamu nebo klikne na místnost v 3D
-            ↓
-Upraví parametr (např. tloušťka stěny, barva)
-            ↓
-Vrstva 1 nebo 2: Aktualizuje data grafu
-            ↓
-Vrstva 3: Serializuje atribut do pojmenovaných atributů
-            ↓
-Driver Geometry Nodes se aktualizuje
-            ↓
-Pohled se znovu vykreslí s novým parametrem
-(ID místnosti nezměněno → nedestruktivní úprava)
-```
-
-### 3. Finalizace (FP4 - Převod na trvalou geometrii)
-
-```
-Uživatel klikne na tlačítko "Finalizace"
-            ↓
-Operátor čte pojmenované atributy
-            ↓
-Geometry Nodes vypečeí výstup do sítě
-            ↓
-Volitelné: Vytvoří jednotlivé objekty místností
-            ↓
-Volitelné: Sloučí do jednoho objektu
-            ↓
-Uloží do souboru (Blender .blend soubor obsahuje všechny vrstvy)
-```
+## [Tok dat: Základní operace](./01_architecture_data_flow.md)
+- 1. Kreslení půdorysu (FP1 - Nástroj Tužka)
+- 2. Úprava vlastností místnosti
+- 3. Finalizace (FP4 - Převod na trvalou geometrii)
 
 ## Principy návrhu
 
