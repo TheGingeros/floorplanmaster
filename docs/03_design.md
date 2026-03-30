@@ -1,12 +1,16 @@
 # 3. Návrh (Design)
-FloorPlanMaster je postaven na třívrstvé hybridní architektuře, kterou jsme zkoumali v předchozí kapitole v rámci technické analýzy. Tyto vrstvy kombinují grafové datové struktury s nativními systémy Blenderu. První vrstu tvoří topologické kostry stěn místností. V této vrstvě se řeší spojování stěn, detekce cyklů, resp. místností a jejich uzavřenost. Druhá vrstva obsahuje sématické grafy místností a jejich sousednosti. Tato vrsta zkoumá propojení místností, jak funkční(dveře nebo okna), tak nefuknční(sousedící stěny místností). Tyto dvě vrsty jsou propojeny třetí vrstvou, která představuje sychronizační most. Stará se o serializaci grafů do Blender mesh atributů. Ty pak Geometry nodes čtou v reálném čase a provádí nedestruktivní generování geometrie. 
+Tato kapitola představuje kompletní návrh addonu FloorPlanMaster. Zatímco předchozí analytická část definovala, co má systém umět, tento návrh exaktně specifikuje, jak toho bude technicky dosaženo. Základním stavebním kamenem celého řešení je sice třívrstvá hybridní architektura, která elegantně odděluje prostorovou matematiku v Pythonu od nedestruktivního 3D vykreslování v Blenderu, dokument však pokrývá kompletní životní cyklus aplikace.
+
+Návrh detailně mapuje celou cestu od uživatelského rozhraní až po nízkoúrovňový kód. Definuje vizuální filozofii a ergonomii UI/UX, včetně panelů vlastností, klávesových zkratek a interaktivních 3D manipulátorů (gizmo) přímo ve viewportu. Tyto ovládací prvky jsou úzce navázány na detailní specifikaci funkcí, která překládá hrubé požadavky do konkrétních algoritmů – ať už jde o kreslení nástrojem Tužka, automatické kótování nebo závěrečnou finalizaci geometrie.
+
+Pro zajištění absolutní stability v interaktivním prostředí Blenderu se návrh rigorózně věnuje správě stavů. Rozepisuje chování modálních operátorů pomocí stavových automatů, navrhuje robustní systém přichycování (snapping) a řeší korektní integraci do nativního Undo/Redo systému. Celou kapitolu pak uzavírá specifikace API, která definuje přesné popisy metod, datové modely a strukturu modulů, čímž vytváří jasný a jednoznačný podklad pro samotnou implementaci doplňku.
 
 ## [3.1 Architektura systému](./sections/03_Design/01_architecture.md)
 - Třívrstvá hybridní architektura (Strukturální graf, Graf místností, Pojmenované atributy)
 - MVC vzor v Blenderu
 - Organizace modulů
 - Diagramy toku dat
-- Principy návrhu a technická rozhodnutí
+- Technická rozhodnutí
 
 ## [3.2 Specifikace datových modelů](./sections/03_Design/02_data_models.md)
 - **Vrstva 1**: Strukturální graf (uzly propojení, hrany stěn)
