@@ -49,7 +49,7 @@ Pro zajištění absolutní stability v interaktivním prostředí Blenderu se n
 - Zpracování chyb a obnovení
 
 ## [3.6 API rozhraní a specifikace modulů](./sections/03_Design/06_api_interfaces.md)
-- API jádra s úplnými podpisy metod
+- API jádra s úplnými popisy metod
 - `core.structural_graph.StructuralGraph`
 - `core.room_graph.RoomGraph`
 - `geometry.attribute_sync.AttributeSync`
