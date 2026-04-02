@@ -1,7 +1,7 @@
 # Principy návrhu
 Vývoj robustního nástroje pro Blender vyžaduje více než jen funkční kód; vyžaduje jasně definovanou architektonickou filozofii. Návrh FloorPlanMaster stojí na pěti základních pilířích, které zajišťují, že systém zůstane stabilní, snadno udržovatelný a uživatelsky responzivní i při zpracování velmi komplexních půdorysů.
 
-Základním stavebním kamenem je striktní oddělení zájmů a modularita. Izolace matematického jádra od 3D prostředí nejen zpřehledňuje kód, ale umožňuje bleskové nezávislé testování a snadné přidávání nových funkcí. Z pohledu koncového uživatele je pak absolutní prioritou nedestruktivní workflow a okamžitá vizuální odezva. Toho je dosaženo chytrým rozložením zátěže mezi rychlé GPU vykreslování pro dočasné náhledy a výkonné Geometry Nodes pro stabilní geometrii. Celý tento moderní přístup je navíc plně podřízen nativním standardům a osvědčeným postupům Blenderu, což zaručuje, že se addon chová jako přirozená součást ekosystému, včetně bezchybné podpory historie kroků (Undo/Redo).
+Základním stavebním kamenem je oddělení zájmů a modularita. Izolace matematického jádra od 3D prostředí nejen zpřehledňuje kód, ale umožňuje nezávislé testování a snadné přidávání nových funkcí. Z pohledu koncového uživatele je pak absolutní prioritou nedestruktivní workflow a okamžitá vizuální odezva. Toho je dosaženo rozložením zátěže mezi rychlé GPU vykreslování pro dočasné náhledy a výkonné Geometry Nodes pro stabilní geometrii. Celý tento moderní přístup je navíc plně podřízen nativním standardům a osvědčeným postupům Blenderu, což zaručuje, že se addon chová jako přirozená součást ekosystému, včetně podpory historie kroků (Undo/Redo).
 
 ## 1. Oddělení zájmů
    - Logika grafu (vrstvy 1, 2) nezávislá na Blenderu/GN (vrstva 3)

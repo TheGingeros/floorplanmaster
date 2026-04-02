@@ -18,15 +18,13 @@ Aby byla matematicky zaručena striktní planarita topologických grafů i u ví
 ## [Vzor MVC v Blenderu](./01_architecture_mvc.md)
 - diagram MVC
 
-
 ## [Organizace modulů](./01_architecture_modules_struct.md)
 - reprezentace organizace modulů
 
-
 ## [Tok dat: Základní operace](./01_architecture_data_flow.md)
-- 1. Kreslení půdorysu (FP1 - Nástroj Tužka)
-- 2. Úprava vlastností místnosti
-- 3. Finalizace (FP4 - Převod na trvalou geometrii)
+- Kreslení půdorysu (FP1 - Nástroj Tužka)
+- Úprava vlastností místnosti
+- Finalizace (FP4 - Převod na trvalou geometrii)
 
 ## [Principy návrhu](./01_architecture_design_principles.md)
 - Oddělení zájmů
