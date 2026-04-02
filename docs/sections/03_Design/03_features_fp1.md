@@ -1,8 +1,8 @@
 # FP1: Nástroj Tužka - Interaktivní kreslení půdorysů
-Nástroj Tužka představuje absolutní jádro uživatelského rozhraní addonu. Jde o komplexní modální operátor (Controller), který překládá kliknutí myší ve 3D viewportu do exaktních topologických dat uvnitř aktuálně aktivního podlaží. Zajišťuje plynulé interaktivní kreslení s okamžitou vizuální odezvou (přes modul `gpu`), aniž by během tažení myší zbytečně přetěžoval a přepisoval hlavní datové modely. K fyzickému zápisu do grafů a synchronizaci dochází až po potvrzení bodu.
+Nástroj Tužka představuje jádro uživatelského rozhraní addonu. Jde o komplexní modální operátor (Controller), který překládá kliknutí myší ve 3D viewportu do exaktních topologických dat uvnitř aktuálně aktivního podlaží. Zajišťuje plynulé interaktivní kreslení s okamžitou vizuální odezvou (přes modul `gpu`), aniž by během tažení myší zbytečně přetěžoval a přepisoval hlavní datové modely. K fyzickému zápisu do grafů a synchronizaci dochází až po potvrzení bodu.
 
 ## Must-Have - součástí MVP
-Následující seznam definuje kritické funkce, bez kterých nelze nástroj považovat za provozuschopný. Tvoří absolutní základ (Minimum Viable Product) a zajišťují, že uživatel dokáže nakreslit přesný, spojený a matematicky validní půdorys.
+Následující seznam definuje funkce, bez kterých nelze nástroj považovat za provozuschopný. Tvoří absolutní základ (Minimum Viable Product) a zajišťují, že uživatel dokáže nakreslit přesný, spojený a matematicky validní půdorys.
 
 1. **Modální operátor se stavovým automatem**
    - Operátor vstupí do modálního stavu po aktivaci

@@ -25,11 +25,11 @@ Pro zajištění absolutní stability v interaktivním prostředí Blenderu se n
 - FP1: Nástroj Tužka - Interaktivní kreslení půdorysů
 - FP2: Parametrické generování a úprava
 - FP3: Správa prostoru a metadat
-- FP4: Nástroj finalizace
-- FP5: Kontextová nabídka
-- FP6: Interaktivní 3D manipulátory (Gizma)
-- FP7: Automatické kótování
-- Nefunkční požadavky (NP1, NP2, NP3)
+- TODO FP4: Nástroj finalizace
+- TODO FP5: Kontextová nabídka
+- TODO FP6: Interaktivní 3D manipulátory (Gizma)
+- TODO FP7: Automatické kótování
+- TODO Nefunkční požadavky (NP1, NP2, NP3)
 
 ## 3.4 Design uživatelského rozhraní
 

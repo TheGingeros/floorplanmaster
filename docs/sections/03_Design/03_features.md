@@ -1,7 +1,7 @@
 # 3.3 Specifikace funkcí
-Zatímco předchozí kapitoly definovaly „podvozek a motor“ celého systému (třívrstvou architekturu a exaktní datové modely), tato sekce popisuje samotné „ovládací prvky“. Definuje kompletní sadu nástrojů a funkcí, prostřednictvím kterých uživatel s datovým jádrem interaguje. Architektura MVC (Model-View-Controller) je zde převedena do praxe: modální operátory, gizma a panely představují Controllers, které přijímají uživatelské vstupy a bezpečně je překládají do příkazů pro manipulaci s grafy.
+Zatímco předchozí kapitoly definovaly jádro celého systému (třívrstvou architekturu a exaktní datové modely), tato sekce popisuje samotné ovládací prvky. Definuje kompletní sadu nástrojů a funkcí, prostřednictvím kterých uživatel s datovým jádrem interaguje. Architektura MVC je zde převedena do praxe: modální operátory, gizma a panely představují Controllers, které přijímají uživatelské vstupy a bezpečně je překládají do příkazů pro manipulaci s grafy.
 
-Následující specifikace rozděluje schopnosti addonu do sedmi logických bloků (FP1 až FP7). Jádrem celého zážitku je nástroj Tužka (FP1), který transformuje složité zadávání souřadnic do intuitivního interaktivního kreslení. Další funkce pak pokrývají celý životní cyklus architektonického návrhu – od parametrických úprav a správy sémantických metadat, přes vizuální pomůcky (automatické kótování a 3D manipulátory), až po nevratnou finalizaci (zapečení) matematického modelu do statické 3D sítě. 
+Následující specifikace rozděluje schopnosti addonu do sedmi logických bloků (FP1 až FP7) podle nadefinovaných funkčních požadavků v kapitole analýzy cílových skupin. Jádremu je nástroj Tužka (FP1), který transformuje složité zadávání souřadnic do intuitivního interaktivního kreslení. Další funkce pak pokrývají celý životní cyklus architektonického návrhu – od parametrických úprav a správy sémantických metadat, přes vizuální pomůcky (automatické kótování a 3D manipulátory), až po nevratnou finalizaci (zapečení) matematického modelu do statické 3D sítě. 
 
 Každá funkce je pro přehlednost rozdělena na kritické požadavky (Must-Have), které tvoří minimální životaschopný produkt (MVP), a rozšiřující schopnosti (Should-Have), které zvyšují efektivitu a uživatelský komfort.
 
@@ -21,7 +21,6 @@ Každá funkce je pro přehlednost rozdělena na kritické požadavky (Must-Have
 - Should-Have
 
 ## FP4: Nástroj finalizace
-
 Zatímco všechny předchozí nástroje udržují půdorys v dynamickém, matematicky řízeném stavu, FP4 slouží k jednosměrnému „zapečení“ (Baking) této parametrické struktury do běžné, fixní 3D geometrie. Tento modální operátor je klíčový pro fázi, kdy architekt dokončí návrh a potřebuje model předat k dalšímu zpracování (např. ručnímu modelování detailů, exportu do herního enginu nebo renderovací pipeline).
 
 ### Funkční požadavky
