@@ -1,9 +1,7 @@
 # Vrstva 1: Strukturální graf - Detailní specifikace
-
 Tato sekce definuje nízkoúrovňové datové jádro addonu. Vrstva 1 (Strukturální graf) je čistě matematická reprezentace půdorysu postavená na knihovně NetworkX. Nemá ponětí o místnostech ani o 3D geometrii – vnímá prostor pouze jako množinu bodů (uzlů) spojených úsečkami (hranami). Striktní dodržování pravidel v této vrstvě je naprosto kritické, protože na planaritě a validitě tohoto grafu závisí veškeré další výpočty, zejména následná detekce uzavřených prostorů ve Vrstvě 2.
 
 ## Model uzlu propojovacího bodu
-
 Model `Junction` reprezentuje vrchol (node) v topologickém grafu. Fyzicky odpovídá místu, kde stěna začíná, končí, nebo kde se setkává s jinými stěnami (roh, T-křižovatka). Aby byla zaručena matematická planarita grafu (2D průmět bez prostorových klamů), jsou souřadnice uzlu striktně dvoudimenzionální (x, y). Slouží také jako primární záchytný bod pro algoritmy přichycování (snapping).
 
 ```python
@@ -25,7 +23,6 @@ Junction:
 - Typ propojovacího bodu (roh, T, křížení) se určuje podle připojených hran
 
 ## Model hrany stěny
-
 Model `Wall` reprezentuje hranu (edge) propojující právě dva existující uzly. Zatímco z pohledu grafové logiky jde o abstraktní spojnici, tento datový model v sobě zapouzdřuje klíčové parametrické vlastnosti (tloušťku, výšku, výřezy pro okna a dveře). Tato metadata si stěna nese s sebou, dokud nejsou ve Vrstvě 3 přeložena pro Geometry Nodes. Návrh striktně dodržuje pravidla prostého grafu.
 
 ```python
@@ -61,7 +58,6 @@ Wall:
 - Mezi dvěma konkrétními uzly může vést maximálně jedna hrana (odpovídá prostému grafu).
 
 ## Operace strukturálního grafu
-
 Třída `StructuralGraph` slouží jako jediné autoritativní API pro manipulaci s topologií podlaží. Bezpečně zapouzdřuje přímá volání knihovny NetworkX. Poskytuje vysokoúrovňové metody pro CRUD operace (vytváření a mazání uzlů/hran) a zajišťuje, že graf po každé změně zůstane validní. Největší přidanou hodnotou této třídy je sekce analýzy topologie, která dokáže na zavolání identifikovat cykly potřebné pro detekci místností.
 
 ```python

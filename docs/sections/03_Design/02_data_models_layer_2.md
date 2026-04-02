@@ -1,10 +1,8 @@
 # Vrstva 2: Graf místností - Detailní specifikace
-
-Tato sekce definuje sémantickou vrstvu addonu, z matematického hlediska takzvaný duální graf k Vrstvě 1. Zatímco první vrstva řeší pouze čáry a body, Vrstva 2 dává těmto tvarům architektonický význam. Zde se z pouhých uzavřených polygonů stávají plnohodnotné „místnosti“ s vlastní identitou, uživatelským jménem a vizuálními vlastnostmi. Systém spravuje tuto vrstvu primárně automaticky na základě detekovaných cyklů z Vrstvy 1. Změny v topologii (například posunutí zdi) se sem dynamicky propisují, čímž vzniká robustní a nedestruktivní datový model.
+Tato sekce definuje sémantickou vrstvu addonu, z matematického hlediska takzvaný duální graf k Vrstvě 1. Zatímco první vrstva řeší pouze čáry a body, Vrstva 2 dává těmto tvarům architektonický význam. Zde se z pouhých uzavřených polygonů stávají plnohodnotné místnosti s vlastní identitou, uživatelským jménem a vizuálními vlastnostmi. Systém spravuje tuto vrstvu primárně automaticky na základě detekovaných cyklů z Vrstvy 1. Změny v topologii (například posunutí zdi) se sem dynamicky propisují, čímž vzniká robustní a nedestruktivní datový model.
 
 ## Model uzlu místnosti
-
-Model `Room` představuje vrchol (node) v grafu místností a tvoří páteř uživatelského zážitku. Fyzicky odpovídá jednomu uzavřenému prostoru. Zásadním architektonickým rozhodnutím je zde oddělení perzistentního `id` (které definuje identitu místnosti a nemění se ani při drastické změně tvaru) a `cycle_id` (které ukazuje na aktuální topologickou hranici z Vrstvy 1). Tento model v sobě zároveň agreguje veškerá vizuální a sémantická metadata (barvy, materiály, výpočty plochy), ze kterých následně Vrstva 3 generuje finální 3D podlahy a stropy v Blenderu.
+Model `Room` představuje vrchol (node) v grafu místností a tvoří základ uživatelského zážitku. Fyzicky odpovídá jednomu uzavřenému prostoru. Zásadním architektonickým rozhodnutím je zde oddělení perzistentního `id` (které definuje identitu místnosti a nemění se ani při drastické změně tvaru) a `cycle_id` (které ukazuje na aktuální topologickou hranici z Vrstvy 1). Tento model v sobě zároveň agreguje veškerá vizuální a sémantická metadata (barvy, materiály, výpočty plochy), ze kterých následně Vrstva 3 generuje finální 3D podlahy a stropy v Blenderu.
 
 ```python
 # Místnost (uzel ve vrstvě 2)
@@ -55,8 +53,7 @@ Room:
 - Minimálně 3 vrcholy (minimální trojúhelník)
 
 ## Model hrany sousedství
-
-Model `Adjacency` reprezentuje hranu (edge) v grafu místností. Na rozdíl od strukturálního grafu zde hrana neznamená fyzickou zeď, ale logické „propojení“ či „sousedství“ dvou prostorů. Tento model je kritický pro architektonickou analýzu a definuje propustnost celého půdorysu. Určuje nejen to, zda dvě místnosti sdílejí stěnu, ale jakého typu je jejich propojení (např. dveře, otevřený průchod). Právě díky typu `stairs` umožňuje tento model vytvářet logické vazby i mimo vlastní 2D rovinu a propojovat místnosti napříč různými podlažími.
+Model `Adjacency` reprezentuje hranu (edge) v grafu místností. Na rozdíl od strukturálního grafu zde hrana neznamená fyzickou zeď, ale logické propojení či „ousedství dvou prostorů. Tento model je kritický pro architektonickou analýzu a definuje propustnost celého půdorysu. Určuje nejen to, zda dvě místnosti sdílejí stěnu, ale jakého typu je jejich propojení (např. dveře, otevřený průchod). Právě díky typu `stairs` umožňuje tento model vytvářet logické vazby i mimo vlastní 2D rovinu a propojovat místnosti napříč různými podlažími.
 
 ```python
 # Sousedství (hrana v grafu místností)
@@ -79,8 +76,7 @@ Adjacency:
 ```
 
 ## Operace grafu místností
-
-Třída `RoomGraph` slouží jako hlavní rozhraní pro dotazování a manipulaci se sémantickými daty. Na rozdíl od nízkoúrovňových operací v první vrstvě se zde řeší architektonická logika. Kromě standardní správy životního cyklu místností (jejich automatické zakládání při detekci cyklu a aktualizace jejich vypočtených vlastností) poskytuje třída výkonné analytické nástroje. Umožňuje například hledat nejkratší průchozí cestu budovou (využitím Dijkstrova algoritmu přes hrany sousedství) nebo okamžitě detekovat, které místnosti přiléhají k exteriéru.
+Třída `RoomGraph` slouží jako hlavní rozhraní pro dotazování a manipulaci se sémantickými daty. Na rozdíl od nízkoúrovňových operací v první vrstvě se zde řeší architektonická logika. Kromě standardní správy životního cyklu místností (jejich automatické zakládání při detekci cyklu a aktualizace jejich vypočtených vlastností) poskytuje třída výkonné analytické nástroje. Umožňuje například okamžitě detekovat, které místnosti přiléhají k exteriéru.
 
 ```python
 class RoomGraph:

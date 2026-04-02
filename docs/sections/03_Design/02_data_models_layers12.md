@@ -1,5 +1,5 @@
 # Vztah mezi vrstvou 1 a 2
-Tato sekce definuje převodník mezi nízkoúrovňovou topologií a architektonickou sémantikou. Vrstva 1 a Vrstva 2 neexistují ve vakuu; jsou úzce provázány. Tento vztah je přísně asymetrický: Vrstva 1 (geometrie) diktuje tvar a existenci Vrstvy 2 (místností). Zatímco tvar a hranice se mohou neustále měnit, Vrstva 2 si drží svá perzistentní metadata (ID, název, materiály) nezávisle na těchto geometrických úpravách.
+Tato sekce definuje převod mezi nízkoúrovňovou topologií a architektonickou sémantikou. Vrstva 1 a Vrstva 2 neexistují ve vakuu; jsou úzce provázány. Tento vztah je přísně asymetrický: Vrstva 1 (geometrie) diktuje tvar a existenci Vrstvy 2 (místností). Zatímco tvar a hranice se mohou neustále měnit, Vrstva 2 si drží svá perzistentní metadata (ID, název, materiály) nezávisle na těchto geometrických úpravách.
 
 ## Mapování
 Následující diagram znázorňuje princip takzvaného duálního grafu. Ukazuje, jak se strukturní prvky z první vrstvy logicky překládají do sémantických prvků vrstvy druhé.

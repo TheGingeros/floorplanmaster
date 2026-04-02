@@ -1,8 +1,8 @@
 # Hierarchie budovy (Zastřešující modely)
-Aby bylo možné v addonu navrhovat vícepodlažní objekty, aniž by došlo ke zhroucení planárních algoritmů (křížení stěn různých pater v jednom 2D prostoru), je celá datová struktura zabalena do striktní ochranné hierarchie. Tato úroveň nedefinuje transformační vrstvy, ale slouží jako **organizační kontejner**. Zajišťuje, že matematické jádro každého podlaží běží ve svém vlastním izolovaném prostoru a data se vzájemně neovlivňují.
+Aby bylo možné v addonu navrhovat vícepodlažní objekty, aniž by došlo ke zhroucení planárních algoritmů (křížení stěn různých pater v jednom 2D prostoru), je celá datová struktura zabalena do ochranné hierarchie. Tato úroveň nedefinuje transformační vrstvy, ale slouží jako organizační kontejner. Zajišťuje, že matematické jádro každého podlaží běží ve svém vlastním izolovaném prostoru a data se vzájemně neovlivňují.
 
 ## Model budovy
-Tento model funguje jako hlavní kořenový objekt (root) celého projektu půdorysu. Jeho nejdůležitější architektonickou rolí, kromě uchovávání globálních parametrů, je správa seznamu pater a striktní udržování informace o tom, ve kterém patře uživatel aktuálně pracuje (`active_floor_index`). Všechny uživatelské vstupy odchycené Controllerem (např. kliknutí nástrojem Tužka) jsou vždy směrovány výhradně do datového jádra tohoto aktivního podlaží.
+Tento model funguje jako hlavní kořenový objekt (root) celého projektu půdorysu. Jeho nejdůležitější architektonickou rolí, kromě uchovávání globálních parametrů, je správa seznamu pater a udržování informace o tom, ve kterém patře uživatel aktuálně pracuje (`active_floor_index`). Všechny uživatelské vstupy odchycené Controllerem (např. kliknutí nástrojem Tužka) jsou vždy směrovány výhradně do datového jádra tohoto aktivního podlaží.
 ```python
 Building:
   - id: UUID
