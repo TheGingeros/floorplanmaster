@@ -24,11 +24,9 @@ Následující specifikace neslouží jen jako přehled proměnných. Detailně 
 - Pravidla synchronizace
 
 ## [Vrstva 3: Pojmenované atributy - Kompletní specifikace](./02_data_models_layer_3.md)
-
 - Tabulka atributů
 - Formát serializace
 - Časování synchronizace
-
 ## [Pravidla validace parametrů](./02_data_models_rules.md)
 
 - Parametry stěny

@@ -1,6 +1,6 @@
 # 3.6 API rozhraní a třídy
 
-Tento dokument je referenční dokumentace pro všechny Python třídy, jejich metody a signatury. Obsahuje kompletní specifikaci API pro třídy StructuralGraph, RoomGraph, AttributeSync a operátory. Slouží jako bible pro implementátora.
+Tento dokument je referenční dokumentace pro všechny Python třídy, jejich metody a signatury. Obsahuje kompletní specifikaci API pro třídy StructuralGraph, RoomGraph, AttributeSync a operátory.
 
 Toto je **API dokumentace**. Nenajdete zde dlouhé vysvětlování "proč" - najdete zde "co" a "jak".
 
