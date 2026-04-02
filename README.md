@@ -13,7 +13,7 @@
 ## Obsah - Rozcestník
 ### 1. Úvod
 ### [2. Analýza](./docs/02_analysis.md)
-### 3. Návrh
+### [3. Návrh](./docs/03_design.md)
 ### 4. Implementace
 ### 5. Testování
 ### 6. Závěr 
