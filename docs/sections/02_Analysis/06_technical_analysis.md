@@ -8,4 +8,5 @@
 ## [Tvorba otvorů pro okna a dveře](./06_ta_holes_creation.md)
 ## [Ukládání dat a správa metadat](./06_ta_saving_metadata.md)
 ## [Uživatelského rozhraní](./06_ta_ui.md)
+## [UI vzory v architektonických nástrojích](./06_ta_ui_patterns.md)
 ## [Finalizační nástroj](./06_ta_finalize_tool.md)

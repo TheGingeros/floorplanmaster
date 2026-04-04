@@ -50,5 +50,6 @@
     - inteligentní objevování u kurzoru myši a zobrazují pouze data relevantní pro daný objekt
 
 ## [GPU Modul - Hardwarově akcelerované vykreslování](./06_ta_ui_gpu.md)
+## [UI vzory v architektonických nástrojích](./06_ta_ui_patterns.md)
 
 [Zdroje](../../files/00_sources.md#uživatelského-rozhraní)
