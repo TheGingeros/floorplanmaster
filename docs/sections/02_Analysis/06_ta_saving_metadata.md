@@ -3,5 +3,6 @@
 ## [Systémy pro správu metadat a uživatelských parametrů](./06_ta_systems_metada.md)
 ## [Vazby dat, Scéna, Objekt, Mesh](./06_ta_data_scene_objekt_mesh.md)
 ## [Systém prostorových závislostí](./06_ta_system_space_depend.md)
+## [Přístupy k perzistenci grafových dat](./06_ta_persistence_approaches.md)
 
 [Zdroje](../../files/00_sources.md#ukládání-dat-a-správa-metadat)
