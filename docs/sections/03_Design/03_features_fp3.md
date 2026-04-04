@@ -1,5 +1,5 @@
 # FP3 — Detekce místností a metadata
-Analýza (FP3) definovala požadavek na automatickou detekci uzavřených prostorů a správu jejich metadat. Architektura (kapitola 3.1) zvolila **lazy detekci** — místnosti (Vrstva 2) vznikají pouze při detekci uzavřeného cyklu ve Vrstvě 1, ne při nakreslení první stěny. Tato sekce popisuje detekční algoritmus, správu metadat a perzistenci dat.
+Technická analýza ([lazy vs. eager strategie detekce místností](../../02_Analysis/06_ta_hybrid_connection.md#strategie-detekce-místností-lazy-vs-eager)) zvolila **lazy detekci** — místnosti (Vrstva 2) vznikají výhradně při detekci uzavřeného cyklu ve Vrstvě 1. Tato sekce popisuje jak je detekční algoritmus aplikován, správu metadat a perzistenci dat.
 
 ## Detekce cyklů → Vrstva 2
 
