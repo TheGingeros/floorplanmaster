@@ -1,139 +1,50 @@
-# FP1: Nástroj Tužka - Interaktivní kreslení půdorysů
-Nástroj Tužka představuje jádro uživatelského rozhraní addonu. Jde o komplexní modální operátor (Controller), který překládá kliknutí myší ve 3D viewportu do exaktních topologických dat uvnitř aktuálně aktivního podlaží. Zajišťuje plynulé interaktivní kreslení s okamžitou vizuální odezvou (přes modul `gpu`), aniž by během tažení myší zbytečně přetěžoval a přepisoval hlavní datové modely. K fyzickému zápisu do grafů a synchronizaci dochází až po potvrzení bodu.
+# FP1 — Interaktivní kreslení (Pencil Tool)
+Nástroj Tužka je primární vstupní rozhraní addonu — modální operátor (Controller), který zachytává vstupy z myši a klávesnice a překládá je na operace nad Vrstvou 1 strukturálního grafu. Veškerá logika kreslení probíhá v 2D rovině (XY), Z-souřadnice je ignorována. Vizuální náhled (préview stěny, HUD s délkou a úhlem) kreslí GPU overlay nezávisle na datovém modelu — zápis do Vrstvy 1 nastane až po potvrzení bodu uživatelem, ne průběžně.
 
-## Must-Have - součástí MVP
-Následující seznam definuje funkce, bez kterých nelze nástroj považovat za provozuschopný. Tvoří absolutní základ (Minimum Viable Product) a zajišťují, že uživatel dokáže nakreslit přesný, spojený a matematicky validní půdorys.
+## Stavový automat
 
-1. **Modální operátor se stavovým automatem**
-   - Operátor vstupí do modálního stavu po aktivaci
-   - Následuje přechody stavů: START → DRAWING → CONFIRMING → RECORDING → finished/cancelled
-   - Reaguje na pohyb myši, kliknutí a vstup z klávesnice
+Operátor je řízen striktním stavovým automatem, který garantuje, že stěna nikdy nevznikne bez platného počátečního bodu a že nelze skončit v nekonzistentním stavu (např. při vícenásobném stisku ESC).
 
-2. **Umístění bodů (2D Projekce)**
-   - Kliknutí ve 3D pohledu se okamžitě promítne do striktní 2D roviny (x, y) aktuálně aktivního podlaží.
-   - Z-ová souřadnice z myši je ignorována (výška se řeší na úrovni podlaží/místnosti), čímž se chrání planární graf před deformací.
-   - Validace: Žádné duplicitní propojovací body v toleranci v rámci jednoho podlaží.
-
-3. **Vytváření stěn**
-   - Po prvním bodu: Zobrazit náhledovou linii sledující myš
-   - Kliknutí na druhý bod: Vytvoří stěnu mezi propojovacími body
-   - Stěna je přidána do strukturálního grafu vrstvy 1
-   - Automatická detekce cyklů aktualizuje vrstvu 2
-
-4. **Základní přichycování** (Should-Have zvýšeno na Must-Have)
-   - **Přichycování osy**: Přichytit k osám X, Y v případě, že je kurzor v 10 pixelech
-   - **Přichycování bodu**: Přichytit na existující propojovací body v rámci 15 pixelů
-   - Vizuální indikátor (kruh) když je přichycování aktivní
-   - Uživatel může přichycování přepnout klávesou modifikátoru (Shift)
-
-5. **Vykreslování náhledu**
-   - Zobrazit ducha/náhledovou stěnu před potvrzením
-   - Náhled v reálném čase při pohybu myši
-   - Barva náhledu odlišná od potvrzených stěn
-   - Používá modul `gpu` pro výkon
-
-6. **Potvrzení a zrušení**
-   - Stiskněte **Enter/LMB**: Potvrdit bod
-   - Stiskněte **Esc/RMB**: Zrušit aktuální akci
-   - Stiskněte **Z** pak Enter: Vrátit poslední bod
-   - Přechody stavů se zpracovávají bez chyb
-
-7. **Vizuální zpětná vazba**
-   - Zobrazování souřadnic v reálném čase (HUD overlay)
-   - Zobrazení délky stěny během kreslení
-   - Zobrazení úhlu (stupně)
-   - Stavové zprávy v levém horním rohu pohledu
-
-## Should-Have (Schopnosti)
-Tato sada rozšiřujících funkcí posouvá základní kreslení na úroveň profesionálních CAD nástrojů. Nejsou sice nezbytné pro fungování architektury, ale drasticky zrychlují workflow, minimalizují chybovost uživatele a umožňují zadávat přesné hodnoty z klávesnice již během samotného kreslení.
-
-1. **Vstup tloušťky stěny**
-   - Po druhém bodu: Umožnit uživateli zadržet hodnotu tloušťky
-   - Stiskněte Enter pro potvrzení, ESC pro výchozí
-   - Zobrazena hodnota v aktuálním systému jednotek
-
-2. **Vstup výšky stěny**
-   - Podobně jako tloušťka, umožnit přizpůsobení výšky
-   - Výchozí 3.0m, uživatel může přepsat
-
-3. **Nepřetržité kreslení**
-   - Po potvrzení stěny je připraven automaticky pro další stěnu
-   - Předchozí koncový bod se stane novým počátečním bodem
-   - Uživatel může stisknout ESC pro ukončení režimu kreslení
-
-4. **Přichycování úhlu**
-   - Možnost přichycovat k 45°, 90°, 135°, atd.
-   - Přepnout klávesou **A**
-   - Vizuální indikátor úhlu při přichycování
-
-5. **Přichycování mřížky**
-   - Volitelná mřížka (0.1m, 0.5m, 1.0m)
-   - Přepnout klávesou **G**
-   - Kurzor přichytit na nejbližší bod mřížky
-
-6. **Vrácení během kreslení**
-   - Stiskněte **Z** pro vrácení poslední bodu v aktuální relaci kreslení
-   - Opakovat s **Y**
-   - Omezeno na aktuální relaci (do Esc/Enter)
-
-## Diagram stavového automatu
-Aby modální operátor bezpečně zvládal nejrůznější kombinace uživatelských vstupů a nikdy neskončil v chybovém stavu (například pokusem o vytvoření stěny bez existujícího počátečního bodu), je jeho běh řízen striktním stavovým automatem (State Machine). Následující diagram mapuje povolené přechody mezi jednotlivými fázemi interakce.
-
-```
-        ┌─────────────┐
-        │   START     │
-        └──────┬──────┘
-               │
-         (Uživatel klikne)
-               │
-               ▼
-        ┌─────────────┐
-        │   DRAWING   │◄────┐
-        │             │     │
-        │ (show prev) │     │ (pohyb myši)
-        └──────┬──────┘     │
-               │            │
-        (klik/Enter)    ┌───┘
-               │        │
-               ▼        │
-        ┌─────────────┐ │
-        │ CONFIRMING  ├─┘
-        │             │
-        │ (add wall)  │
-        └──────┬──────┘
-               │
-        (Opakovat nebo Esc)
-               │
-               ▼
-        ┌─────────────┐
-        │  FINISHED   │
-        │ (cleanup)   │
-        └─────────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> NEAKTIVNÍ
+    NEAKTIVNÍ --> ČEKÁNÍ : aktivace nástroje
+    ČEKÁNÍ --> KRESLENÍ : umístění počátečního junctionu
+    KRESLENÍ --> KRESLENÍ : potvrzení stěny,\nkoncový bod = nový počáteční
+    KRESLENÍ --> KRESLENÍ : Z — vrácení posledního bodu
+    KRESLENÍ --> ČEKÁNÍ : zrušení aktuální čáry
+    ČEKÁNÍ --> NEAKTIVNÍ : deaktivace nástroje
+    NEAKTIVNÍ --> [*]
 ```
 
-## Zpracování událostí
-Tato tabulka slouží jako přesná implementační matice pro metodu `modal()`. Definuje, jak operátor reaguje na specifické události (Eventy) z klávesnice a myši v závislosti na tom, ve kterém stavu se právě nachází, a určuje, jaký stav bude bezprostředně následovat.
+- **NEAKTIVNÍ** — nástroj je registrován, ale nepřijímá vstupy; jiné nástroje Blenderu fungují normálně
+- **ČEKÁNÍ** — nástroj aktivní, kurzor sleduje myš, žádný počáteční bod není umístěn; GPU overlay zobrazuje mřížku a snap indikátory
+- **KRESLENÍ** — první junction umístěn; GPU overlay kreslí náhled stěny od počátečního bodu ke kurzoru v reálném čase; HUD zobrazuje délku a úhel
 
-| Událost | Stav | Akce | Příští stav |
-|---------|------|--------|-----------|
-| LMB Kliknutí | START | Přidat propojovací bod | DRAWING |
-| Pohyb myši | DRAWING | Aktualizovat náhled | DRAWING |
-| LMB Kliknutí | DRAWING | Přidat stěnu, detekovat cykly | CONFIRMING |
-| Zadejte číslo | CONFIRMING | Nastavit tloušťku stěny | CONFIRMING |
-| Enter | CONFIRMING | Potvrdit stěnu | DRAWING |
-| Esc (1x) | DRAWING | Odebrat poslední bod | START |
-| Esc (2x) | START | Ukončit operátor | FINISHED |
-| Z | Libovolný | Vrátit bod | Předchozí |
-| Y | Libovolný | Znovu vytvořit bod | Příští |
-| Scroll | Libovolný | Zoom (PASS_THROUGH) | Aktuální |
-| Střední myš | Libovolný | Pan (PASS_THROUGH) | Aktuální |
+## Snapping
 
-## Poznámky k implementaci
-- **Modální handler**: Zaregistrovat s `context.window_manager.modal_handler_add(self)`
-- **Návratové hodnoty**:
-  - `RUNNING_MODAL`: Pokračovat v zpracování vstupů
-  - `PASS_THROUGH`: Umožnit interakci pohledu (zoom, pan)
-  - `FINISHED`: Operace úspěšná, vytvořit krok vrácení
-  - `CANCELLED`: Přerušit operaci
-- **Vykreslování GPU**: Použít `gpu.types.GPUBatch` a shadery pro náhled
-- **Výkon**: Ukládat geometrické výpočty do mezipaměti, aktualizovat pouze na významný pohyb
+Snapping je výpočet provedený nad pozicí kurzoru před každým zápisem do Vrstvy 1. Priorita od nejvyšší:
+1. **Snap na existující junction** — pokud je kurzor do 15 pixelů od existujícího junctionu ve Vrstvě 1, přichytí se na jeho přesné souřadnice
+2. **Snap na osu** — pokud je odchylka kurzoru od osy X nebo Y menší než 10 pixelů relativně k poslednímu junctionu, souřadnice se zarovná na přímku
+3. **Snap na mřížku** (should-have) — volitelné zarovnání na konfigurovaný rastr (0.1 m, 0.5 m, 1.0 m)
+4. **Snap na úhel** (should-have) — zarovnání na násobky 45°
+
+Aktivní snap se vizuálně indikuje kruhem u kurzoru. Uživatel může snap dočasně potlačit podržením Shift.
+
+## Interakce s datovým modelem
+
+Zápis do Vrstvy 1 nastane vždy až po potvrzení, nikdy průběžně při pohybu myši:
+
+- **Potvrzení bodu** → `L1.add_junction(x, y)` nebo reuse existujícího junctionu v toleranci → vrátí `junction_id`
+- **Potvrzení stěny** → `L1.add_wall(j_start, j_end, thickness, height, material)` → spustí detekci cyklů → Vrstva 2 aktualizuje místnosti → Vrstva 3 synchronizační cyklus (fáze 1 + fáze 2)
+- **Vrácení** → `L1.remove_wall(last_wall_id)` + odstranění osiřelých junctionů → L2 + L3 sync
+- **Zrušení** → žádný zápis do dat; GPU overlay se vypne
+
+## Vizuální zpětná vazba (GPU overlay)
+
+Veškeré kreslení préview probíhá v GPU draw_handler registrovaném na 3D Viewport — neukládá se do geometrie ani datového modelu:
+
+- náhled stěny: čára od posledního junctionu ke kurzoru; odlišná barva od potvrzených stěn
+- HUD: délka navrhované stěny a úhel k poslednímu úseku (aktualizováno při každém pohybu myši)
+- snap indikátor: barevný kruh u kurzoru při aktivním snapu
+- stavová zpráva: text v levém horním rohu viewportu (LMB = potvrdit, ESC = zrušit, Z = vrátit)
