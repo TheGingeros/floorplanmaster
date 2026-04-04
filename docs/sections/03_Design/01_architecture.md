@@ -8,35 +8,16 @@ Základem návrhu je třívrstvá hybridní architektura, která striktně oddě
 ## Vzor MVC v kontextu Blenderu
 Architektura přirozeně odpovídá vzoru Model-View-Controller přizpůsobenému prostředí Blenderu:
 
-```
-┌─────────────────────────────────────────────────┐
-│                  CONTROLLER                     │
-│   Modální operátory + UI panely (bpy)           │
-│   Zachytávají uživatelské vstupy                │
-│   a volají metody Modelu                        │
-└──────────────────┬──────────────────────────────┘
-                   │ volání metod
-                   ▼
-┌─────────────────────────────────────────────────┐
-│                    MODEL                        │
-│   Vrstva 1: Strukturální graf (topologie)       │
-│   Vrstva 2: Graf místností (sémantika)          │
-│   Čistý Python, bez závislosti na bpy           │
-└──────────────────┬──────────────────────────────┘
-                   │ synchronizační modul
-                   ▼
-┌─────────────────────────────────────────────────┐
-│          VRSTVA 3 — Synchronizační most         │
-│   Pojmenované atributy na Blender mesh          │
-│   (junction_id, wall_id, room_id, ...)          │
-└──────────────────┬──────────────────────────────┘
-                   │ čtení atributů
-                   ▼
-┌─────────────────────────────────────────────────┐
-│                     VIEW                        │
-│   Geometry Nodes — generuje 3D geometrii        │
-│   3D Viewport + GPU overlay (kreslicí náhled)   │
-└─────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    C["**CONTROLLER**<br/>Modální operátory + UI panely<br/>Zachytávají vstupy a volají metody Modelu"]
+    M["**MODEL**<br/>Vrstva 1: Strukturální graf (topologie)<br/>Vrstva 2: Graf místností (sémantika)<br/>Čistý Python, bez závislosti na bpy"]
+    V3["**VRSTVA 3 — Synchronizační most**<br/>Pojmenované atributy na Blender mesh"]
+    V["**VIEW**<br/>Geometry Nodes — generuje 3D geometrii<br/>3D Viewport + GPU overlay"]
+
+    C -->|"volání metod"| M
+    M -->|"synchronizační modul"| V3
+    V3 -->|"čtení atributů"| V
 ```
 
 - **Model** — vrstvy 1 a 2 jsou čistě Python grafové struktury bez závislosti na Blender API; obsahují veškerou logiku: topologii stěn, sémantiku místností, validaci parametrů

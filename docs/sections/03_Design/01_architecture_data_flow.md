@@ -3,59 +3,36 @@ Komunikace mezi vrstvami je striktně jednosměrná a hierarchická: změny vžd
 
 ## Přidání hrany (nová stěna)
 
-```
-Vrstva 1
-  → přidán uzel (junction) nebo použit existující
-  → přidána hrana (stěna) s atributy: thickness, height, material
-  → spuštění detekce minimálních cyklů
-        ↓
-Vrstva 2
-  → každý nový cyklus → nový uzel místnosti s unikátním ID
-  → výpočet metriky: area, perimeter
-  → každá sdílená hrana dvou cyklů → nová hrana sousedství
-        ↓
-Vrstva 3 — fáze 1: aktualizace topologie base mesh
-  → přidání/aktualizace vrcholu pro každý junction
-  → přidání hrany mezi příslušnými vrcholy
-  → přidání plochy pro každý nový uzavřený cyklus
-Vrstva 3 — fáze 2: serializace atributů
-  → zápis identifikátorů a parametrů na vrcholy, hrany a plochy
-  → Geometry Nodes reevaluace → přegenerování 3D geometrie
+```mermaid
+flowchart TD
+    V1["**Vrstva 1**<br/>Přidán junction nebo použit existující<br/>Přidána stěna s atributy (thickness, height, material)<br/>Detekce minimálních cyklů"]
+    V2["**Vrstva 2**<br/>Nový cyklus -> nová místnost s unikátním ID<br/>Výpočet metriky: area, perimeter<br/>Sdílená hrana dvou cyklů -> nové sousedství"]
+    V3F1["**Vrstva 3 — fáze 1: topologie**<br/>Přidán vrchol pro každý junction<br/>Přidána hrana mezi vrcholy<br/>Přidána plocha pro každý uzavřený cyklus"]
+    V3F2["**Vrstva 3 — fáze 2: atributy**<br/>Zápis ID a parametrů na vrcholy, hrany a plochy<br/>Geometry Nodes reevaluace"]
+
+    V1 --> V2 --> V3F1 --> V3F2
 ```
 
 ## Odebrání hrany (smazání stěny)
 
-```
-Vrstva 1
-  → odebrána hrana (stěna) z grafu
-  → spuštění detekce cyklů — které cykly zanikly nebo se sloučily
-        ↓
-Vrstva 2
-  → zánik cyklu → odebrání uzlu místnosti (místnost zmizí)
-  → sloučení dvou cyklů → node fusion: jeden uzel místnosti zůstane,
-    druhý se odstraní, metadata i ID zachovaného uzlu přetrvají
-  → aktualizace sousedství a metrik dotčených místností
-        ↓
-Vrstva 3 — fáze 1: aktualizace topologie base mesh
-  → odebrání hrany a případných osiřelých vrcholů
-  → odebrání nebo sloučení dotčených ploch
-Vrstva 3 — fáze 2: serializace atributů
-  → přepsání atributů na plochy podle nového stavu Vrstvy 2
-  → Geometry Nodes reevaluace
+```mermaid
+flowchart TD
+    V1["**Vrstva 1**<br/>Odebrána stěna z grafu<br/>Detekce: které cykly zanikly nebo se sloučily"]
+    V2["**Vrstva 2**<br/>Zánik cyklu -> odebrání místnosti<br/>Sloučení cyklů -> node fusion (ID zachovaného uzlu přetrvá)<br/>Aktualizace sousedství a metrik"]
+    V3F1["**Vrstva 3 — fáze 1: topologie**<br/>Odebrání hrany a osiřelých vrcholů<br/>Odebrání nebo sloučení dotčených ploch"]
+    V3F2["**Vrstva 3 — fáze 2: atributy**<br/>Přepsání atributů dle Vrstvy 2<br/>Geometry Nodes reevaluace"]
+
+    V1 --> V2 --> V3F1 --> V3F2
 ```
 
 ## Změna atributu (parametrická úprava)
 
-```
-Vrstva 1 nebo Vrstva 2
-  → aktualizace hodnoty atributu hrany nebo uzlu
-    (např. wall_thickness, room_height, material)
-  → pokud změna ovlivní metrii → Vrstva 2 přepočítá area, perimeter
-  (topologie grafu se nemění — žádná detekce cyklů)
-        ↓
-Vrstva 3
-  → serializace pouze změněného atributu na příslušnou doménu
-  → Geometry Nodes reevaluace → vizuální aktualizace bez změny topologie mesh
+```mermaid
+flowchart TD
+    V12["**Vrstva 1 nebo Vrstva 2**<br/>Aktualizace hodnoty atributu hrany nebo uzlu<br/>Pokud ovlivní metriku -> Vrstva 2 přepočítá area, perimeter<br/>Topologie grafu se nemění"]
+    V3["**Vrstva 3**<br/>Serializace změněného atributu na příslušnou doménu<br/>Geometry Nodes reevaluace"]
+
+    V12 --> V3
 ```
 
 - nejlevnější operace v systému — nemění strukturu grafů, pouze číselné hodnoty

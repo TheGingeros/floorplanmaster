@@ -9,18 +9,19 @@ Datový model operuje na úrovni jednoho podlaží. Vrstva 1 uchovává topologi
 ## Vztah mezi vrstvami
 Vrstva 1 a Vrstva 2 jsou úzce provázány asymetrickým vztahem: Vrstva 1 (topologie) diktuje tvar a existenci Vrstvy 2 (sémantika). Synchronizace je automatická a jednosměrná.
 
-```
-┌─────────────────────────┐                 ┌─────────────────────────┐
-│ VRSTVA 1 (Strukturální) │                 │ VRSTVA 2 (Sémantická)   │
-├─────────────────────────┤                 ├─────────────────────────┤
-│                         │                 │                         │
-│ Uzavřený cyklus stěn    ├───── tvoří ───▶│ UZEL: Místnost          │
-│ (geometrická hranice)   │                 │ (nese metadata a ID)    │
-│                         │                 │                         │
-│ Sdílená stěna (hrana)   ├──── definuje ─▶│ HRANA: Sousedství       │
-│ (fyzický oddělovač)     │                 │ (dveře, okna, průchody) │
-│                         │                 │                         │
-└─────────────────────────┘                 └─────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph V1["VRSTVA 1 — Strukturální"]
+        C1["Uzavřený cyklus stěn<br/>(geometrická hranice)"]
+        C2["Sdílená stěna<br/>(fyzický oddělovač)"]
+    end
+    subgraph V2["VRSTVA 2 — Sémantická"]
+        R1["UZEL: Místnost<br/>(nese metadata a ID)"]
+        R2["HRANA: Sousedství<br/>(dveře, okna, průchody)"]
+    end
+
+    C1 -->|"tvoří"| R1
+    C2 -->|"definuje"| R2
 ```
 
 - přidání stěny do Vrstvy 1 → detekce nových cyklů → založení nové místnosti ve Vrstvě 2 s perzistentním ID
