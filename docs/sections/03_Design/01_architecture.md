@@ -10,14 +10,20 @@ Architektura přirozeně odpovídá vzoru Model-View-Controller přizpůsobeném
 
 ```mermaid
 flowchart TD
-    C["**CONTROLLER**<br/>Modální operátory + UI panely<br/>Zachytávají vstupy a volají metody Modelu"]
-    M["**MODEL**<br/>Vrstva 1: Strukturální graf (topologie)<br/>Vrstva 2: Graf místností (sémantika)<br/>Čistý Python, bez závislosti na bpy"]
-    V3["**VRSTVA 3 — Synchronizační most**<br/>Pojmenované atributy na Blender mesh"]
-    V["**VIEW**<br/>Geometry Nodes — generuje 3D geometrii<br/>3D Viewport + GPU overlay"]
+    C["**CONTROLLER**<br/>Modální operátory + UI panely<br/>Zachytávají vstupy a volají metody Modelu"]:::ctrl
+    M["**MODEL**<br/>Vrstva 1: Strukturální graf (topologie)<br/>Vrstva 2: Graf místností (sémantika)<br/>Čistý Python, bez závislosti na bpy"]:::model
+    V3["**VRSTVA 3 — Synchronizační most**<br/>Pojmenované atributy na Blender mesh"]:::bridge
+    V["**VIEW**<br/>Geometry Nodes — generuje 3D geometrii<br/>3D Viewport + GPU overlay"]:::view
 
     C -->|"volání metod"| M
     M -->|"synchronizační modul"| V3
     V3 -->|"čtení atributů"| V
+
+    classDef ctrl   stroke:#d97c4a,stroke-width:2px
+    classDef model  stroke:#4a90d9,stroke-width:2px
+    classDef bridge stroke:#9b4ad9,stroke-width:2px
+    classDef view   stroke:#4ad97c,stroke-width:2px
+    linkStyle default stroke-width:2px
 ```
 
 - **Model** — vrstvy 1 a 2 jsou čistě Python grafové struktury bez závislosti na Blender API; obsahují veškerou logiku: topologii stěn, sémantiku místností, validaci parametrů

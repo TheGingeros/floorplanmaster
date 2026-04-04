@@ -12,16 +12,20 @@ Vrstva 1 a Vrstva 2 jsou úzce provázány asymetrickým vztahem: Vrstva 1 (topo
 ```mermaid
 flowchart LR
     subgraph V1["VRSTVA 1 — Strukturální"]
-        C1["Uzavřený cyklus stěn<br/>(geometrická hranice)"]
-        C2["Sdílená stěna<br/>(fyzický oddělovač)"]
+        C1["Uzavřený cyklus stěn<br/>(geometrická hranice)"]:::v1
+        C2["Sdílená stěna<br/>(fyzický oddělovač)"]:::v1
     end
     subgraph V2["VRSTVA 2 — Sémantická"]
-        R1["UZEL: Místnost<br/>(nese metadata a ID)"]
-        R2["HRANA: Sousedství<br/>(dveře, okna, průchody)"]
+        R1["UZEL: Místnost<br/>(nese metadata a ID)"]:::v2
+        R2["HRANA: Sousedství<br/>(dveře, okna, průchody)"]:::v2
     end
 
     C1 -->|"tvoří"| R1
     C2 -->|"definuje"| R2
+
+    classDef v1 stroke:#4a90d9,stroke-width:2px
+    classDef v2 stroke:#9b4ad9,stroke-width:2px
+    linkStyle default stroke-width:2px
 ```
 
 - přidání stěny do Vrstvy 1 → detekce nových cyklů → založení nové místnosti ve Vrstvě 2 s perzistentním ID
