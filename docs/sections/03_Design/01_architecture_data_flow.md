@@ -1,79 +1,62 @@
-# Tok dat: Základní operace
-Zatímco předchozí kapitoly definovaly statickou strukturu systému, tato sekce ukazuje architekturu FloorPlanMaster v pohybu. Představuje přesný chronologický tok dat během tří nejčastějších uživatelských interakcí a ilustruje, jak se teoretický vzor MVC a třívrstvý datový model propisují do plynulého uživatelského zážitku.
+# Tok dat mezi vrstvami
+Komunikace mezi vrstvami je striktně jednosměrná a hierarchická: změny vždy iniciuje Vrstva 1, která automaticky spouští reakci Vrstvy 2, a teprve po ustálení obou grafů se data serializují do Vrstvy 3. Zpětný tok (Vrstva 3 → Vrstva 2 nebo Vrstva 1) neexistuje — Blender mesh je vždy jen odrazem aktuálního stavu grafů, nikdy zdrojem pravdy.
 
-Každá z těchto operací využívá architekturu jiným způsobem. Při kreslení půdorysu (změna topologie) vykonává systém nejkomplexnější kaskádu kroků: modální operátor řídí dočasný GPU náhled a postupně buduje strukturální graf, což automaticky spouští detekci nových místností a generování fyzické BMesh sítě. Naopak úprava vlastností (např. změna tloušťky stěny) je extrémně lehká operace – nemění základní síť, pouze aktualizuje číselné hodnoty v grafech a serializuje je do pojmenovaných atributů pro překreslení přes Geometry Nodes. Celý tento nedestruktivní ekosystém pak uzavírá proces finalizace, který na vyžádání uživatele odstřihne dynamické vazby a trvale zapeče vygenerovanou geometrii do standardních 3D objektů připravených pro export či render.
-
-## 1. Kreslení půdorysu (FP1 - Nástroj Tužka)
+## Přidání hrany (nová stěna)
 
 ```
-Uživatel aktivuje nástroj Tužka (modální operátor)
-            ↓
-Modální vstup do stavu DRAWING (čeká na vstup)
-            ↓
-Uživatel klikne na bod 1 (vytvoření propojovacího bodu)
-  • Operátor ověří pozici (přichycování, mřížka)
-  • Zjistí aktuálně aktivní podlaží (Model budovy)
-  • Vrstva 1 (aktivního podlaží): Přidá uzel do strukturálního grafu
-  • Vrstva 3 (BMesh): Vytvoří reálný vrchol (vertex) v základní síti Blenderu
-  • Vrstva 3 (Atributy): Zapíše/aktualizuje pojmenované atributy na tomto vrcholu
-            ↓
-Uživatel pohne myší (generování náhledu)
-  • Modální je ve stavu DRAWING
-  • Vypočítá geometrii náhledu stěny
-  • Vykreslí náhled přes modul GPU
-            ↓
-Uživatel klikne na bod 2 (potvrzení stěny)
-  • Modální ověří stěnu (délka, úhly)
-  • Vrstva 1 (aktivního podlaží): Přidá hranu do strukturálního grafu
-  • Vrstva 3 (BMesh): Vytvoří reálnou hranu v základní síti Blenderu spojující dané vrcholy
-  • Vrstva 3 (Atributy): Zapíše pojmenované atributy na tuto hranu (např. `wall_id`, `wall_thickness`)
-  • NetworkX detekuje nové cykly
-            ↓
-Vrstva 2 AUTOMATICKÁ AKTUALIZACE: Graf místností aktualizován
-  • Detekce cyklů identifikuje nové místnosti
-  • Přiřadí perzistentní ID místností
-  • Vypočítá plochu, sousedství
-            ↓
-Vrstva 3: Serializace do pojmenovaných atributů
-  • Aktualizuje atributy sítě
-  • Geometry Nodes spustí obnovení
-            ↓
-Pohled se aktualizuje s 3D geometrií
-            ↓
-Opakování nebo stisk Enter/ESC pro ukončení
+Vrstva 1
+  → přidán uzel (junction) nebo použit existující
+  → přidána hrana (stěna) s atributy: thickness, height, material
+  → spuštění detekce minimálních cyklů
+        ↓
+Vrstva 2
+  → každý nový cyklus → nový uzel místnosti s unikátním ID
+  → výpočet metriky: area, perimeter
+  → každá sdílená hrana dvou cyklů → nová hrana sousedství
+        ↓
+Vrstva 3 — fáze 1: aktualizace topologie base mesh
+  → přidání/aktualizace vrcholu pro každý junction
+  → přidání hrany mezi příslušnými vrcholy
+  → přidání plochy pro každý nový uzavřený cyklus
+Vrstva 3 — fáze 2: serializace atributů
+  → zápis identifikátorů a parametrů na vrcholy, hrany a plochy
+  → Geometry Nodes reevaluace → přegenerování 3D geometrie
 ```
 
-## 2. Úprava vlastností místnosti
+## Odebrání hrany (smazání stěny)
 
 ```
-Uživatel otevře panel Vlastnosti
-            ↓
-Vybere místnost ze seznamu nebo klikne na místnost v 3D
-            ↓
-Upraví parametr (např. tloušťka stěny, barva)
-            ↓
-Vrstva 1 nebo 2: Aktualizuje data grafu
-            ↓
-Vrstva 3: Serializuje atribut do pojmenovaných atributů
-            ↓
-Driver Geometry Nodes se aktualizuje
-            ↓
-Pohled se znovu vykreslí s novým parametrem
-(ID místnosti nezměněno → nedestruktivní úprava)
+Vrstva 1
+  → odebrána hrana (stěna) z grafu
+  → spuštění detekce cyklů — které cykly zanikly nebo se sloučily
+        ↓
+Vrstva 2
+  → zánik cyklu → odebrání uzlu místnosti (místnost zmizí)
+  → sloučení dvou cyklů → node fusion: jeden uzel místnosti zůstane,
+    druhý se odstraní, metadata i ID zachovaného uzlu přetrvají
+  → aktualizace sousedství a metrik dotčených místností
+        ↓
+Vrstva 3 — fáze 1: aktualizace topologie base mesh
+  → odebrání hrany a případných osiřelých vrcholů
+  → odebrání nebo sloučení dotčených ploch
+Vrstva 3 — fáze 2: serializace atributů
+  → přepsání atributů na plochy podle nového stavu Vrstvy 2
+  → Geometry Nodes reevaluace
 ```
 
-## 3. Finalizace (FP4 - Převod na trvalou geometrii)
+## Změna atributu (parametrická úprava)
 
 ```
-Uživatel klikne na tlačítko "Finalizace"
-            ↓
-Operátor čte pojmenované atributy
-            ↓
-Geometry Nodes zapečou výstup do sítě
-            ↓
-Volitelné: Vytvoří jednotlivé objekty místností
-            ↓
-Volitelné: Sloučí do jednoho objektu
-            ↓
-Volitelné: Uloží do souboru (Blender .blend soubor obsahuje všechny vrstvy)
+Vrstva 1 nebo Vrstva 2
+  → aktualizace hodnoty atributu hrany nebo uzlu
+    (např. wall_thickness, room_height, material)
+  → pokud změna ovlivní metrii → Vrstva 2 přepočítá area, perimeter
+  (topologie grafu se nemění — žádná detekce cyklů)
+        ↓
+Vrstva 3
+  → serializace pouze změněného atributu na příslušnou doménu
+  → Geometry Nodes reevaluace → vizuální aktualizace bez změny topologie mesh
 ```
+
+- nejlevnější operace v systému — nemění strukturu grafů, pouze číselné hodnoty
+- ID místností a stěn zůstávají nezměněna, úprava je vždy nedestruktivní

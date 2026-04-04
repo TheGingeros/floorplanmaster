@@ -1,37 +1,68 @@
 # 3.1 Architektura systému
-Tato sekce popisuje třívrstvou hybridní architekturu FloorPlanMaster. Je to klíč k pochopení, jak se data proudí mezi jednotlivými komponenty a jak se udržuje konzistence při interakci uživatele. FloorPlanMaster není jen běžné GUI - je to komplexní datový systém, který kombinuje tři odlišné reprezentace půdorysu:
-- **Vrstva 1 (Topologie)**: čistý graf propojovacích bodů a stěn - to, co měří a propojuje
-- **Vrstva 2 (Sémantika)**: graf místností a jejich vztahů - to, co architekt chápe a používá
-- **Vrstva 3 (Synchronizace)**: Blender atributy a Geometry Nodes - to, co vidí na obrazovce
+Technická analýza (kapitola 2.6) identifikovala klíčové technologické volby pro realizaci addonu: Geometry Nodes jako výpočetní jádro pro generování 3D geometrie, strukturální graf a NRG pro datovou reprezentaci půdorysu, modální operátory pro interaktivní kreslení a pojmenované atributy jako synchronizační most mezi Pythonem a Blenderem. Tato sekce překládá analytické závěry do konkrétní softwarové architektury.
 
-Tato architektura zajišťuje nedestruktivní úpravy půdorysu bez ztráty informací a aktualizaci geometrie v reálném čase. Komunikace vrstev je striktně jednosměrná: grafy v Pythonu vypočítají nová data a skrze pojmenované atributy (Named Attributes) je předají do Blender sítě, kde je Geometry Nodes okamžitě vykreslí.
+Základem návrhu je třívrstvá hybridní architektura, která striktně odděluje matematickou logiku v Pythonu od vizualizace v Blenderu. Python addon vlastní veškerou logiku — topologii stěn, sémantiku místností i validaci parametrů. Blender slouží výhradně jako zobrazovací engine, který skrze Geometry Nodes čte data z pojmenovaných atributů a generuje 3D geometrii v reálném čase. Komunikace je jednosměrná: Python → Blender, nikdy naopak. Scope návrhu je omezen na jedno podlaží — architektura je navržena tak, aby ji bylo v budoucnu možné rozšířit o hierarchii budov a pater, ale současný MVP pracuje s jedním půdorysem.
 
-Systém přímo aplikuje návrhový vzor MVC, kde Python grafy tvoří nezávislý Model, Blender UI a 3D pohled fungují jako View a modální operátory zachytávající kliknutí myší slouží jako Controller. Celý datový tok tak začíná uživatelským vstupem, který změní čistou topologii, což automaticky vyvolá přepočet sémantiky místností a končí instantním překreslením 3D geometrie, aniž by se tyto vrstvy do sebe funkčně zamotaly.
+## [Třívrstvá hybridní architektura](./01_architecture_layers.md)
 
-Aby byla matematicky zaručena striktní planarita topologických grafů i u vícepodlažních objektů, zavádí architektura zastřešující hierarchii - budovu. Každé podlaží budovy (Přízemí, 1. Patro) funguje jako zcela nezávislý ekosystém se svou vlastní Vrstvou 1 a Vrstvou 2. Uživatel v UI vždy pracuje v kontextu aktivního podlaží, čímž se zabraňuje neplatnému křížení stěn mezi patry. Pro optimalizaci a snadnou správu viditelnosti (skrývání pater ve viewportu) se pak každé podlaží generuje jako samostatný 3D objekt s vlastním Geometry Nodes modifikátorem.
+## Vzor MVC v kontextu Blenderu
+Architektura přirozeně odpovídá vzoru Model-View-Controller přizpůsobenému prostředí Blenderu:
 
-## [Vrstvy architektury](./01_architecture_layers.md)
-- Vrstva 1: Topologický skelet (Strukturální graf)
-- Vrstva 2: Sémantický graf místností (Duální graf)
-- Vrstva 3: Most synchronizace (Pojmenované atributy)
+```
+┌─────────────────────────────────────────────────┐
+│                  CONTROLLER                     │
+│   Modální operátory + UI panely (bpy)           │
+│   Zachytávají uživatelské vstupy                │
+│   a volají metody Modelu                        │
+└──────────────────┬──────────────────────────────┘
+                   │ volání metod
+                   ▼
+┌─────────────────────────────────────────────────┐
+│                    MODEL                        │
+│   Vrstva 1: Strukturální graf (topologie)       │
+│   Vrstva 2: Graf místností (sémantika)          │
+│   Čistý Python, bez závislosti na bpy           │
+└──────────────────┬──────────────────────────────┘
+                   │ synchronizační modul
+                   ▼
+┌─────────────────────────────────────────────────┐
+│          VRSTVA 3 — Synchronizační most         │
+│   Pojmenované atributy na Blender mesh          │
+│   (junction_id, wall_id, room_id, ...)          │
+└──────────────────┬──────────────────────────────┘
+                   │ čtení atributů
+                   ▼
+┌─────────────────────────────────────────────────┐
+│                     VIEW                        │
+│   Geometry Nodes — generuje 3D geometrii        │
+│   3D Viewport + GPU overlay (kreslicí náhled)   │
+└─────────────────────────────────────────────────┘
+```
 
-## [Vzor MVC v Blenderu](./01_architecture_mvc.md)
-- diagram MVC
+- **Model** — vrstvy 1 a 2 jsou čistě Python grafové struktury bez závislosti na Blender API; obsahují veškerou logiku: topologii stěn, sémantiku místností, validaci parametrů
+- **Vrstva 3 (most)** — pojmenované atributy uložené na Blender mesh; synchronizační modul do nich zapisuje výsledky Modelu, Geometry Nodes je čtou jako vstupy; jednosměrný a jednoúčelový datový channel
+- **View** — Geometry Nodes modifikátor generuje 3D geometrii čtením atributů z vrstvy 3; GPU overlay vykresluje kreslicí náhled a HUD nezávisle na GN
+- **Controller** — modální operátory zachytávají uživatelské vstupy a překládají je na volání metod Modelu; UI panely zobrazují a umožňují editaci parametrů
 
-## [Organizace modulů](./01_architecture_modules_struct.md)
-- reprezentace organizace modulů
+## [Tok dat](./01_architecture_data_flow.md)
 
-## [Tok dat: Základní operace](./01_architecture_data_flow.md)
-- Kreslení půdorysu (FP1 - Nástroj Tužka)
-- Úprava vlastností místnosti
-- Finalizace (FP4 - Převod na trvalou geometrii)
+## [Organizace modulů](./01_architecture_modules.md)
 
-## [Principy návrhu](./01_architecture_design_principles.md)
-- Oddělení zájmů
-- Nedestruktivní úpravy
-- Zpětná vazba v reálném čase
-- Modularita
-- Osvědčené postupy Blenderu
+## Principy návrhu
+- **Oddělení zájmů** — grafová logika (Model) nezávisí na Blender API; lze ji testovat izolovaně jednotkovými testy
+- **Nedestruktivní úpravy** — změna parametru nepřepisuje geometrii, ale vyvolá přegenerování skrze Geometry Nodes; uživatel může kdykoli vrátit zpět nebo upravit libovolný parametr
+- **Zpětná vazba v reálném čase** — každá změna v Modelu se okamžitě projeví ve View díky automatické reevaluaci Geometry Nodes modifikátoru
+- **Modularita** — každý funkční požadavek (FP1–FP7) je realizován v samostatném Python modulu s jasně definovaným rozhraním
+- **Konvence Blenderu** — addon dodržuje konvence pojmenování a registrace operátorů a panelů, integraci do nativního Undo/Redo systému a standardní strukturu addonu
 
-## [Technická rozhodnutí a zdůvodnění](./01_architecture_technical_decisions.md)
-- tabulka rozhodnutí
+## Klíčová technická rozhodnutí
+
+| Rozhodnutí | Volba | Zdůvodnění (viz technická analýza) |
+| :--- | :--- | :--- |
+| Reprezentace geometrie | Geometry Nodes | Výkonnostně převyšují BMesh — paralelní zpracování, real-time feedback, multithreading ([2.6](../02_Analysis/06_ta_geometry_representation.md)) |
+| Grafová knihovna | NetworkX (bundled) | Planární embedding, detekce cyklů, prostorové analýzy; knihovna je distribuována přímo s addonem pro splnění NP1 ([2.6](../02_Analysis/06_ta_data_model.md)) |
+| Synchronizace Python↔Blender | Pojmenované atributy | Efektivní dávková serializace, přímé čtení v Geometry Nodes bez kopírování dat ([2.6](../02_Analysis/06_ta_saving_metadata.md)) |
+| Interaktivní kreslení | Modální operátory | Jediný mechanismus pro kontinuální zachycení myši ve viewportu ([2.6](../02_Analysis/06_ta_modal_operators.md)) |
+| Detekce místností | Lazy (po uzavření cyklu) | Místnost vzniká až při détekci uzavřeného cyklu ve Vrstvě 1, nikoli při nakreslení první stěny. Okamžité svázání stěny s "proto-místností" (eager binding) by bylo matematicky nekonzistentní — Layer 2 je definována jako duální graf cyklů Layer 1, takže bez cyklu neexistuje platná místnost. Navíc by eager přístup znemožnil deterministické přiřazení u T-junkcí a větvení a hrozilo by rozbití identity místnosti při uzavření více cyklů najednou. Lazy detekce odpovídá standardnímu chování nástrojů jako ArchiCAD nebo Revit ([2.6](../02_Analysis/06_ta_hybrid_connection.md)) |
+| Tvorba otvorů | Curve Trimming + GN Boolean | Optimální topologie pro standardní otvory, flexibilita pro atypické ([2.6](../02_Analysis/06_ta_holes_creation.md)) |
+| Delegování výpočtů | Dávkové operace + GN backend | Překonání limitů interpretovaného Pythonu delegováním náročných výpočtů na C++ jádro Blenderu ([2.6](../02_Analysis/06_ta_limits_python_blender.md)) |

@@ -1,113 +1,58 @@
-# Vrstvy architektury
-Jádro systému FloorPlanMaster stojí na oddělení abstraktní datové logiky od samotného 3D zobrazení. Tohoto oddělení je dosaženo prostřednictvím tří specializovaných vrstev. Zatímco první dvě vrstvy běží čistě na pozadí v Pythonu a starají se o prostorovou matematiku, třetí vrstva funguje jako fyzický most do vykreslovacího jádra Blenderu.
+# Třívrstvá hybridní architektura
+Systém stojí na oddělení abstraktní datové logiky od 3D zobrazení pomocí tří specializovaných vrstev. První dvě vrstvy běží čistě v Pythonu a starají se o topologii a sémantiku půdorysu. Třetí vrstva funguje jako jednosměrný most do vykreslovacího jádra Blenderu.
 
-V praxi systém funguje kaskádovitě: Vrstva 1 (Topologie) spravuje exaktní souřadnice spojů a délky stěn jako 2D graf. Jakmile stěny vytvoří uzavřený prostor, Vrstva 2 (Sémantika) jej automaticky detekuje jako novou místnost, přiřadí jí identitu a vypočítá její vlastnosti (plochu, sousedství). Tato čerstvě spočítaná data se následně jednosměrně zrcadlí do Vrstvy 3 (Synchronizace). Ta je zapíše do základní sítě Blender objektu ve formě pojmenovaných atributů (Named Attributes). Na tyto atributy už čekají Geometry Nodes, které z nich okamžitě a v reálném čase vygenerují finální 3D geometrii. Tento přístup zajišťuje, že samotný 3D model je vždy jen vizuálním odrazem podkladových grafů, což umožňuje bezpečné a zcela nedestruktivní úpravy.
+V praxi systém funguje kaskádovitě: Vrstva 1 spravuje exaktní souřadnice spojů a stěn jako planární 2D graf. Jakmile stěny vytvoří uzavřený prostor, Vrstva 2 jej automaticky detekuje jako novou místnost a vypočítá její vlastnosti. Tato data se jednosměrně zrcadlí do Vrstvy 3, která je zapíše do Blender mesh ve formě pojmenovaných atributů. Na tyto atributy čekají Geometry Nodes, které z nich v reálném čase vygenerují finální 3D geometrii. 3D model je tak vždy jen vizuálním odrazem podkladových grafů, což umožňuje zcela nedestruktivní úpravy.
 
 ## Vrstva 1: Topologický skelet (Strukturální graf)
-**Účel**: Reprezentovat čistě topologickou strukturu půdorysů - propojovací body stěn a jejich konektivitu.
+- realizována jako planární graf ([2.6 - Datový model](../02_Analysis/06_ta_data_model.md))
+- **uzly** ($V_s$) reprezentují propojovací body (junctions) — místa setkání stěn
+    - `id`: unikátní identifikátor (UUID interně, integer v serializaci)
+    - `position`: 2D souřadnice $(x, y)$ v prostoru scény
+- **hrany** ($E_s$) reprezentují osy stěn propojující dva uzly
+    - `id`: unikátní identifikátor
+    - `thickness`: tloušťka stěny v metrech
+    - `height`: výška stěny v metrech
+    - `material`: identifikátor materiálu
+    - `openings`: seznam otvorů (okna, dveře) s pozicí a rozměry
+- planarita grafu garantuje, že se stěny v rámci podlaží nekříží — odpovídá fyzické realitě ([2.6 - Strukturální graf](../02_Analysis/06_ta_structural_graph.md))
+- klíčová operace: detekce minimálních cyklů pro automatickou identifikaci místností ([2.6 - Hybridní spojení](../02_Analysis/06_ta_hybrid_connection.md))
 
-**Datová struktura**:
-- **Typ grafu**: NetworkX planární graf (`networkx.Graph`)
-- **Uzly**: Propojovací body, kde se stěny setkávají
-  - `id`: Jedinečný identifikátor
-  - `position`: (x, y) souřadnice v 3D prostoru
-  - `type`: "junction" nebo "corner"
-- **Hrany**: Segmenty stěn propojující spojovací body
-  - `id`: Jedinečný identifikátor
-  - `wall_data`: Slovník obsahující:
-    - `thickness`: Šířka stěny (metry, přizpůsobitelné jednotky)
-    - `height`: Výška stěny (pro 3D generování)
-    - `material`: Identifikátor materiálu/textury
-    - `openings`: Seznam oken/dveří na této stěně
+## Vrstva 2: Sémantický graf místností (NRG)
+- duální graf odvozený z Vrstvy 1 pomocí algoritmu detekce minimálních cyklů ([2.6 - NRG](../02_Analysis/06_ta_nrg.md))
+- **uzly** ($V_r$) reprezentují místnosti — každá mapována na uzavřený cyklus ve Vrstvě 1
+    - `id`: unikátní identifikátor místnosti, perzistentní přes úpravy geometrie
+    - `cycle_id`: odkaz na odpovídající cyklus ve Vrstvě 1
+    - `name`: uživatelský název (např. „Obývací pokoj")
+    - `area`: vypočítaná plocha v $m^2$
+    - `perimeter`: vypočítaný obvod v metrech
+    - `height`: výška místnosti
+    - `room_type`: typ místnosti (obytná, technická, komunikace)
+    - `materials`: podlaha, strop, výchozí barva stěn
+- **hrany** ($E_r$) reprezentují relace sousednosti nebo prostupnosti
+    - `wall_id`: odkaz na sdílenou stěnu ve Vrstvě 1
+    - `connection_type`: "wall" (uzavřená), "door", "passage" (otevřená)
+- identita místnosti přetrvává i při změně geometrie — aktualizují se pouze metriky (plocha, obvod), ID zůstává stabilní
+- umožňuje prostorové dotazy: sousedství, konektivita, celková plocha dle typu
 
-**Matematické vlastnosti**:
-- Musí být planární (lze nakreslit na 2D rovině bez křížících se hran)
-- NetworkX automaticky identifikuje všechny cykly/plochy
-- Každý cyklus představuje uzavřený prostor (potenciální místnost)
+## Vrstva 3: Synchronizační most (Pojmenované atributy)
+- jednosměrný bridge mezi Python grafy a vizualizací v Blenderu ([2.6 - Metadata](../02_Analysis/06_ta_saving_metadata.md))
+- synchronizační modul serializuje grafová data do pojmenovaných atributů na Blender mesh dávkovými operacemi pro výkon ([2.6 - Limity Pythonu](../02_Analysis/06_ta_limits_python_blender.md))
+- Geometry Nodes modifikátor čte tyto atributy a generuje 3D geometrii v reálném čase
+- UUID identifikátory z Vrstvy 1 a 2 se převádějí na celá čísla pro optimalizaci GPU zpracování
 
-**Klíčové operace**:
-- Přidávání/odebírání propojovacích bodů
-- Přidávání/odebírání stěn
-- Detekce a validace cyklů
-- Hledání průsečíků pro přichycování
+| Doména | Atribut | Typ | Účel |
+| :--- | :--- | :--- | :--- |
+| Vertex | `junction_id` | Integer | identifikace propojovacího bodu |
+| Edge | `wall_id` | Integer | identifikace stěny |
+| Edge | `wall_thickness` | Float | tloušťka stěny pro 3D generování |
+| Edge | `wall_height` | Float | výška stěny |
+| Face | `room_id` | Integer | identifikace místnosti |
+| Face | `room_area` | Float | plocha místnosti v $m^2$ |
+| Face | `floor_type` | Integer | ID materiálu podlahy |
+| Face | `ceiling_type` | Integer | ID materiálu stropu |
 
-## Vrstva 2: Sémantický graf místností (Duální graf)
-**Účel**: Reprezentovat sémantické chápání prostorů - místnosti a jejich vztahy.
-
-**Datová struktura**:
-- **Typ grafu**: NetworkX neorientovaný graf (`networkx.Graph`)
-- **Uzly**: Místnosti/prostory
-  - `id`: Jedinečný identifikátor místnosti (perzistentní přes úpravy)
-  - `cycle_id`: Odkaz na cyklus z vrstvy 1
-  - `name`: Uživatelsky přívětivé jméno (např. "Obývací pokoj")
-  - `properties`: Slovník
-    - `area`: Vypočítané čtvereční metry
-    - `perimeter`: Vypočítaný obvod v metrech
-    - `height`: Výška místnosti
-    - `floor_type`: Identifikátor materiálu
-    - `ceiling_type`: Identifikátor materiálu stropu
-    - `wall_color`: Výchozí barva stěny
-    - `custom_data`: Uživatelem definovaná metadata
-
-- **Hrany**: Vztahy sousedství mezi místnostmi
-  - `wall_id`: Odkaz na stěnu z vrstvy 1, která odděluje místnosti
-  - `openings`: Dveře, okna, atd.
-  - `connection_type`: "door", "passage", "closed", atd.
-
-**Klíčové vlastnosti**:
-- Identita místnosti přetrvá, i když se geometrie změní
-- Aktualizují se pouze atributy (plocha, konektivita), identity uzlů zůstávají stabilní
-- Obousměrné vztahy s vrstvou 1
-- Sousedství místností je obousměrné (hrany nemají směr), data o průchodech jsou sdílena
-
-**Klíčové operace**:
-- Vytvoření místnosti z cyklu
-- Aktualizace plochy/obvodu místnosti
-- Nalezení sousedních místností
-- Dotaz na cesty konektivity
-
-## Vrstva 3: Most synchronizace (Pojmenované atributy)
-**Účel**: Synchronizovat sémantická data z vrstev 1-2 do Blenderovy sítě pro Geometry Nodes a vykreslování v reálném čase.
-
-**Implementace**:
-- **Pravidlo geometrie**: Každá místnost je v základní Blender síti reprezentována jako jediný N-gon (Face). Vztah je striktně 1 místnost = 1 Face.
-- Změny v grafech (Python) se nejprve přes BMesh propíšou do základní topologie Blender sítě (vytvoření/smazání vertexů a hran).
-- Následně se serializují data grafu z Pythonu do **pojmenovaných atributů** této sítě.
-- Geometry Nodes čtou tyto atributy a dynamicky generují 3D geometrii.
-
-**Domény atributů**:
-
-| Doména | Název atributu | Typ | Hodnota | Účel |
-|--------|---|---|---|---|
-| **Vertex** | `junction_id` | Integer | Unikátní index z vrstvy 1 | Sledujte, který propojovací bod každý vrchol představuje |
-| **Edge** | `wall_id` | Integer | Unikátní index z vrstvy 1 | Sledujte identitu stěny přes úpravy |
-| **Edge** | `wall_thickness` | Float | metry | Šířka stěny pro 3D generování |
-| **Edge** | `wall_height` | Float | metry | Výška stěny |
-| **Face** | `room_id` | Integer | Unikátní index z vrstvy 2 | Která místnost vlastní tuto plochu |
-| **Face** | `room_area` | Float | čtvereční metry | Vypočítaná plocha místnosti |
-| **Face** | `floor_type` | Integer | ID materiálu | Materiál podlahy |
-| **Face** | `ceiling_type` | Integer | ID materiálu | Materiál stropu |
-
-*(Poznámka: Vrstva 1 a 2 používají UUID stringy, ale pro Vrstvu 3 se převádí na Integery kvůli optimalizaci v Geometry Nodes).*
-
-**Vlastní vlastnosti objektu (Custom Properties)**:
-Celoobjektová metadata se neukládají jako pojmenované atributy sítě, ale jako standardní Custom Properties na samotném Blender objektu (dostupné v GN přes uzel Object Info).
-- `floor_unit` (String): "m", "cm", "ft" - Jednotka zvolená uživatelem
-- `structure_version` (Int): Číslo verze pro zneplatnění/obnovení mezipaměti
-
-**Tok synchronizace**:
-```
-Vrstva 1 & 2 v Pythonu
-        ↓ (serializace)
-Pojmenované atributy (síť)
-        ↓ (čtení přes GN driver)
-Geometry Nodes
-        ↓ (generování)
-3D geometrie v pohledu
-```
-
-**Když se atributy aktualizují**:
-- Uživatel upraví tloušťku stěny → Python aktualizuje atribut `wall_thickness`
-- Geometry Nodes automaticky detekuje změnu atributu (přes driver)
-- Strom GN se znovu vyhodnotí → 3D geometrie se aktualizuje v reálném čase
-- ID místnosti zůstává nezměněno → nedestruktivní úprava
+- celoobjektová metadata (jednotky, verze) se ukládají jako vlastnosti objektu dostupné pro Geometry Nodes
+- synchronizační modul má dvě odpovědnosti, které musí proběhnout v tomto pořadí:
+    1. **Udržování topologie base mesh** — synchronizuje strukturu mesh s Vrstvou 1: přidává/odebírá vertexy (junctions), hrany (stěny) a face (místnosti = uzavřené cykly); pojmenované atributy nelze zapsat na element, který v mesh neexistuje
+    2. **Serializace atributů** — teprve po aktualizaci topologie zapisuje hodnotové atributy z Vrstev 1 a 2 na příslušné elementy mesh
+- Geometry Nodes čtou tuto base mesh (2D plochá síť odpovídající půdorysu) jako vstupní geometrii a generují z ní 3D objem stěn a prostorů
