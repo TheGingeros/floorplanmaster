@@ -1,34 +1,34 @@
-# FP2: Parametrické generování a úprava
-Tato funkce zajišťuje, že půdorys nezůstane jen statickou kresbou, ale stává se plně responzivním modelem. Umožňuje uživatelům nedestruktivně upravovat parametry stěn, otvorů a místností uvnitř aktivního podlaží. Model není reprezentován jako obyčejná statická síť (mesh) polygonů, ale jako dynamický matematický systém řízený vstupními parametry (délka, výška, tloušťka). Jakákoliv změna parametru v UI vyvolá přepočet a bezprostředně se propíše přes Pojmenované atributy do Geometry Nodes.
+# FP2 — Parametrické objekty a otvory
+Analýza (FP2) definovala požadavek na dynamickou, nedestruktivní reprezentaci stěn a otvorů — model řízený parametry, ne statická polygonová síť. Návrhové rozhodnutí (kapitola 3.1) zvolilo Geometry Nodes jako výpočetní backend a pojmenované atributy jako datový bridge. Tato sekce popisuje, jak se parametrické chování realizuje v interakci Vrstvy 1, Vrstvy 3 a View.
 
-## Must-Have - součástí MVP
-Následující požadavky definují absolutní technologický základ pro parametrické chování addonu. Bez těchto bodů by se jednalo pouze o obyčejný kreslící nástroj. Zajišťují, že systém správně reaguje na změny hodnot, udržuje logické vazby mezi nadřazenými a podřízenými objekty (stěna a její otvory) a garantuje, že žádná úprava nezničí původní data.
+## Parametry stěny a update mechanismus
 
-1. **Dynamická reprezentace a úprava stěn**
-   - Stěny si pamatují své parametry (tloušťka: 0.05m - 1.0m, výška: 1.0m - 10.0m, materiál, posun na ose).
-   - Úpravy probíhají přes panel vlastností (Properties) nebo 3D manipulátory ve viewportu.
-   - Geometrie stěny se generuje dynamicky, není to destruktivní polygonový model.
+Každá stěna ve Vrstvě 1 nese atributy `thickness`, `height` a `material_id`. Změna kteréhokoli parametru přes UI panel nebo 3D manipulátor (FP6) spustí přesně definovaný update cyklus:
 
-2. **Dynamický posun otvorů (Oken a Dveří)**
-   - Systém musí datově a matematicky svázat otvor s konkrétní stěnou ve Vrstvě 1.
-   - Pokud uživatel posune roh stěny (změní její délku nebo úhel), všechny závislé otvory na této stěně se musí automaticky posunout a zrotovat spolu s ní (např. udržením relativní pozice na úsečce).
+1. Validace nové hodnoty vůči povoleným rozsahům (viz datový model, kapitola 3.2)
+2. Zápis aktualizované hodnoty do Vrstvy 1
+3. Pokud změna ovlivňuje metriku místnosti (`height` → maximální výška) → Vrstva 2 přepočítá dotčené místnosti
+4. Vrstva 3 fáze 2: serializace pouze změněného atributu na příslušnou doménu mesh elementu
+5. Geometry Nodes reevaluace → okamžitá vizuální aktualizace bez změny topologie
 
-3. **Zachycení změn (Update Callbacks)**
-   - Všechny posuvníky a textová pole v UI Blenderu mají navázanou funkci `update`.
-   - Když uživatel změní hodnotu parametru, addon tuto změnu okamžitě zachytí, propíše novou hodnotu do datového modelu (Vrstva 1 nebo 2) a vyvolá synchronizační cyklus.
+Tento update je levnější než přidání/odebrání stěny — neprovádí se detekce cyklů ani fáze 1 sync (topologie mesh se nemění).
 
-4. **Úprava parametrů místnosti**
-   - Jméno, typ místnosti, materiál podlahy/stropu, barvy.
-   - Perzistentní ID místností zůstávají nedotčena i při masivní změně parametrů (metadata se neztratí).
+## Otvory — GN Mesh Boolean
 
-5. **Zpětná vazba v reálném čase a nedestruktivnost**
-   - Geometry Nodes drivers automaticky čtou aktualizované atributy.
-   - 3D pohled se překresluje okamžitě, bez nutnosti manuálního refreshe sítě.
-   - Plná podpora Blender Undo/Redo systému pro každý posun posuvníku.
+Otvory (dveře, okna) jsou definovány jako závislé objekty vázané na konkrétní stěnu ve Vrstvě 1. Každý otvor nese pozici na stěně (relativní parametr $t \in [0, 1]$), šířku a výšku. Tvorba otvorů probíhá výhradně ve View vrstvě — Python předá poziční data jako pojmenované atributy a Geometry Nodes uzly díru dynamicky vyříznou.
 
-## Should-Have (Schopnosti)
-Tato rozšiřující funkce posouvá technickou eleganci a výkon addonu. Přestože vyřezávání otvorů lze řešit i primitivnějšími metodami, přesun této zodpovědnosti přímo do vizualizační vrstvy zamezuje vzniku chyb v topologii a drasticky zjednodušuje Python kód.
+Architektura addonu reprezentuje stěny jako **hrany base meshe** s pojmenovanými atributy — Curve Trimming by vyžadovalo Blender Curve objekty jako vstup do GN stromu, což je neslučitelné s touto reprezentací. Správnou volbou je proto **GN Mesh Boolean**:
 
-1. **Chytrá správa vytváření otvorů (Geometry Nodes Booleans)**
-   - Místo složitého a náchylného dělení polygonů v Pythonu (pomocí BMesh booleans) se ořezávání otvorů pro okna a dveře řeší zcela dynamicky až ve Vrstvě 3.
-   - Python předá pouze poziční data (bounding boxy otvorů) a uzel *Mesh Boolean* v Geometry Nodes se postará o vizuálně čisté vyříznutí díry do stěny v reálném čase.
+- uzel Mesh Boolean v GN stromu zpracovává celou kolekci cutter objektů (bounding boxy otvorů) jako jeden sloučený vstup — výrazně méně reevaluací než API modifikátory
+- Python předá pouze poziční data otvorů (střed, šířka, výška) jako pojmenované atributy na přilehlé hrany Vrstvy 3; GN je čte a sestaví cutter geometrii interně
+- pro zamezení artefaktů z coplanárních ploch se cuttery vytvářejí s nepatrným přesahem přes oba lícní povrchy stěny
+
+Python nikdy nemanipuluje s polygony stěny přímo — veškerá geometrie otvorů je generována a aktualizována v GN modifikátoru v reálném čase.
+
+## Vazba otvorů na stěnu
+
+Závislost otvoru na stěně je uložena ve Vrstvě 1 jako atribut hrany `opening_refs` (seznam referencí). Po posunu junctionu nebo změně délky stěny:
+
+- relativní pozice otvoru $t$ zůstává nezměněna → absolutní souřadnice se přepočítá automaticky z nové délky stěny
+- orientace otvoru se přepočítá z nového směrového vektoru stěny
+- Vrstva 3 fáze 2 serializuje nové poziční atributy → GN reevaluace posune otvor vizuálně
