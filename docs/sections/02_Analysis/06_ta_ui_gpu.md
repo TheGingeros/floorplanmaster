@@ -37,6 +37,17 @@
 - ideální pro zobrazení délek stěn, úhlů a ploch místností
 - pro kótování ve 3D prostoru je nutné kombinovat blf s utilitami pro transformaci souřadnic
 
+## Porovnání přístupů k vykreslování kótovacího textu
+
+Pro zobrazení kótovacích popisků ve 3D viewportu připadají v úvahu dva přístupy:
+
+| Přístup | Princip | Výhody | Nevýhody |
+| :--- | :--- | :--- | :--- |
+| **GPU draw_handler + BLF** | 2D text vykreslován přes viewport v `POST_PIXEL` režimu | Vždy čitelný nezávisle na úhlu kamery; nulová geometrická zátěž scény; registrace/odregistrace za běhu | Nutná ruční správa draw_handleru a správa paměti |
+| **Geometry Nodes** (String to Curves) | Textová geometrie generována GN stromem z named attributes | Integrován v GN pipeline; bez extra kódu | Text je 3D mesh — při šikmém pohledu hůře čitelný; přidává geometrii do finalizované sítě |
+
+Pro kótovací overlay je rozhodující čitelnost nezávislá na úhlu pohledu — architektonický půdorys se prohlíží z různých zoomů i os, přičemž text musí zůstat vždy ortogonálně čitelný. GPU `POST_PIXEL` overlay tuto podmínku splňuje; GN String to Curves nikoli. Zvolený přístup je proto **GPU draw_handler + BLF**.
+
 [Zdroje](../../files/00_sources.md#typografie-a-dynamické-kótování-s-modulem-blf)
 
 ## Prostorová matematika a transformace souřadnic - FP1
