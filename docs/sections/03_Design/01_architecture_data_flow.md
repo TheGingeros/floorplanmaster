@@ -1,5 +1,5 @@
 # Tok dat mezi vrstvami
-Komunikace mezi vrstvami je striktně jednosměrná a hierarchická: změny vždy iniciuje Vrstva 1, která automaticky spouští reakci Vrstvy 2, a teprve po ustálení obou grafů se data serializují do Vrstvy 3. Zpětný tok (Vrstva 3 → Vrstva 2 nebo Vrstva 1) neexistuje — Blender mesh je vždy jen odrazem aktuálního stavu grafů, nikdy zdrojem pravdy.
+Komunikace mezi vrstvami je striktně jednosměrná a hierarchická: změny vždy iniciuje Vrstva 1, která automaticky spouští reakci Vrstvy 2, a teprve po ustálení obou grafů se data serializují do Vrstvy 3. Zpětný tok (Vrstva 3 → Vrstva 2 nebo Vrstva 1) neexistuje — Blender mesh je vždy jen odrazem aktuálního stavu grafů, nikoliv jejich výchozím bodem.
 
 ## Přidání hrany (nová stěna)
 
@@ -22,9 +22,9 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    V1["**Vrstva 1**<br/>Odebrána stěna z grafu<br/>Detekce: které cykly zanikly nebo se sloučily"]:::v1
+    V1["**Vrstva 1**<br/>Odebrána stěny z grafu<br/>Detekce: které cykly zanikly nebo se sloučily"]:::v1
     V2["**Vrstva 2**<br/>Zánik cyklu -> odebrání místnosti<br/>Sloučení cyklů -> node fusion (ID zachovaného uzlu přetrvá)<br/>Aktualizace sousedství a metrik"]:::v2
-    V3F1["**Vrstva 3 — fáze 1: topologie**<br/>Odebrání hrany a osiřelých vrcholů<br/>Odebrání nebo sloučení dotčených ploch"]:::v3
+    V3F1["**Vrstva 3 — fáze 1: topologie**<br/>Odebrání hrany a izolovaných vrcholů<br/>Odebrání nebo sloučení dotčených ploch"]:::v3
     V3F2["**Vrstva 3 — fáze 2: atributy**<br/>Přepsání atributů dle Vrstvy 2<br/>Geometry Nodes reevaluace"]:::v3
 
     V1 --> V2 --> V3F1 --> V3F2

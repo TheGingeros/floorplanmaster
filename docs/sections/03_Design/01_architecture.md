@@ -11,7 +11,7 @@ Architektura přirozeně odpovídá vzoru Model-View-Controller přizpůsobeném
 ```mermaid
 flowchart TD
     C["**CONTROLLER**<br/>Modální operátory + UI panely<br/>Zachytávají vstupy a volají metody Modelu"]:::ctrl
-    M["**MODEL**<br/>Vrstva 1: Strukturální graf (topologie)<br/>Vrstva 2: Graf místností (sémantika)<br/>Čistý Python, bez závislosti na bpy"]:::model
+    M["**MODEL**<br/>Vrstva 1: Strukturální graf (stěny)<br/>Vrstva 2: Graf místností (místnosti)<br/>Čistý Python, bez závislosti na bpy"]:::model
     V3["**VRSTVA 3 — Synchronizační most**<br/>Pojmenované atributy na Blender mesh"]:::bridge
     V["**VIEW**<br/>Geometry Nodes — generuje 3D geometrii<br/>3D Viewport + GPU overlay"]:::view
 
