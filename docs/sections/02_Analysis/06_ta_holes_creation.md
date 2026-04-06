@@ -25,7 +25,7 @@
 | **Topologický výstup** | Často n-gony s artefakty | n-gony, vyžaduje Merge by Distance | Perfektní quads/tris |
 | **Flexibilita** | Vysoká (libovolné tvary) | Vysoká | Omezená na vertikální otvory |
 
-- hint: doporučuje se kombinace curve trimming pro základní stěnové otvory a GN mesh boolean pro atypické otvory, které nelze vyjádřit 2d profilem
+- poznámka: Curve Trimming dosahuje nejlepší topologické kvality a je výpočetně nejlevnější, avšak vyžaduje reprezentaci stěn jako Blender Curve objektů. Tato architektura používá stěny jako **hrany base meshe** s pojmenovanými atributy — Curve objekty jsou neslučitelné s touto reprezentací. Zvolená metoda je proto výhradně **GN Mesh Boolean**, která pracuje přímo nad mesh doménami. Curve Trimming zůstává relevantní pro alternativní architektury, které stěny reprezentují jako Curve objekty.
 ## Problém coplanárních ploch a integrity sítě
 - coplární plocha = plochy oken a stěn ležící v přesně stejné rovině
 - architektonické modely jsou náchylné k chybám Boolean operací díky nim
