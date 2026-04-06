@@ -32,7 +32,7 @@ Zvolený přístup je **rekonstrukce z Vrstvy 3**. Base mesh, který Blender ukl
 
 - **Vrchol + `junction_id`** → junction Vrstvy 1
 - **Hrana + `wall_id`, `wall_thickness`, `wall_height`, `wall_material_id`** → stěna Vrstvy 1
-- **Plocha + `room_id`** → opětovné spuštění detekce cyklů přederivuje Vrstvu 2
+- **Plocha + `room_id`** → opětovné spuštění detekce cyklů serializuje Vrstvu 2
 
 Jediná data, která v meshi nejsou, jsou uživatelská metadata místností (`room_name`, `room_type`). Tato dvě pole se ukládají jako Blender Custom Property na objekt, jako slovník indexovaný přes `room_id`:
 
@@ -40,4 +40,4 @@ Jediná data, která v meshi nejsou, jsou uživatelská metadata místností (`r
 object["room_metadata"] = {42: {"name": "Obývací pokoj", "type": 1}, ...}
 ```
 
-I pokud tato metadata chybí (poškozený soubor), systém mesh načte a grafy přederivuje správně — místnosti pouze ztratí vlastní jména. Blender Undo/Redo ukládá snímky mesh stavu, takže rekonstrukce po Undo je stejný mechanismus jako rekonstrukce po načtení souboru.
+I pokud tato metadata chybí (poškozený soubor), systém mesh načte a grafy serializuje správně — místnosti pouze ztratí vlastní jména. Blender Undo/Redo ukládá snímky mesh stavu, takže rekonstrukce po Undo je stejný mechanismus jako rekonstrukce po načtení souboru.

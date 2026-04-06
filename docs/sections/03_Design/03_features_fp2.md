@@ -17,7 +17,7 @@ Tento update je levnější než přidání/odebrání stěny — neprovádí se
 
 Otvory (dveře, okna) jsou definovány jako závislé objekty vázané na konkrétní stěnu ve Vrstvě 1. Každý otvor nese pozici na stěně (relativní parametr $t \in [0, 1]$), šířku a výšku. Tvorba otvorů probíhá výhradně ve View vrstvě — Python předá poziční data jako pojmenované atributy a Geometry Nodes uzly díru dynamicky vyříznou.
 
-Architektura addonu reprezentuje stěny jako **hrany base meshe** s pojmenovanými atributy — Curve Trimming by vyžadovalo Blender Curve objekty jako vstup do GN stromu, což je neslučitelné s touto reprezentací. Správnou volbou je proto **GN Mesh Boolean**:
+Architektura addonu reprezentuje stěny jako **hrany base meshe** s pojmenovanými atributy:
 
 - uzel Mesh Boolean v GN stromu zpracovává celou kolekci cutter objektů (bounding boxy otvorů) jako jeden sloučený vstup — výrazně méně reevaluací než API modifikátory
 - Python předá pouze poziční data otvorů (střed, šířka, výška) jako pojmenované atributy na přilehlé hrany Vrstvy 3; GN je čte a sestaví cutter geometrii interně
@@ -25,10 +25,9 @@ Architektura addonu reprezentuje stěny jako **hrany base meshe** s pojmenovaný
 
 Python nikdy nemanipuluje s polygony stěny přímo — veškerá geometrie otvorů je generována a aktualizována v GN modifikátoru v reálném čase.
 
-## Vložení pravoúhlé místnosti z parametrů (UC 1.1)
+## Vložení pravoúhlé místnosti z parametrů
 
-Vedle Pencil Toolu (FP1) existuje druhý způsob vložení místnosti: uživatel zadá rozměry přímo v N-panelu a addon automaticky vytvoří pravoúhlou místnost. Tento režim pokrývá scénář UC 1.1 — hmotovou studii, kde uživatel pracuje s plošnými bilancemi, ne s ručním kreslením.
-
+Vedle Pencil Toolu (FP1) existuje druhý způsob vložení místnosti: uživatel zadá rozměry přímo v N-panelu a addon automaticky vytvoří pravoúhlou místnost.
 Vstupní parametry (zadané v N-panelu, sekce Nástroje):
 - **šířka** a **hloubka** místnosti (m) — nebo alternativně **plocha** + **poměr stran**, ze kterých addon šířku a hloubku dopočítá
 - **výška stěn** (přednaplněna výchozí hodnotou ze Scene PropertyGroup)

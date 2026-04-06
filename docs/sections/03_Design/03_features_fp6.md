@@ -1,5 +1,5 @@
 # FP6 — Interaktivní 3D manipulátory
-3D manipulátory (gizma) jsou vizuální rukojeti přímo ve 3D viewportu — umožňují intuitivní úpravy parametrů stěn a junctionů taháním myší, bez zadávání čísel do panelů. Klíčovým návrhovým požadavkem je zachování planarity Vrstvy 1: všechny manipulátory mají geometrické omezení, které vylučuje neplatné přechody (zejména pohyb mimo rovinu XY).
+3D manipulátory (gizma) jsou interaktivní ovládací prvky přímo ve 3D viewportu — umožňují intuitivní úpravy parametrů stěn a junctionů taháním myší, bez zadávání čísel do panelů. Klíčovým návrhovým požadavkem je zachování planarity Vrstvy 1: všechny manipulátory mají geometrické omezení, které vylučuje neplatné přechody (zejména pohyb mimo rovinu XY).
 
 ## Typy manipulátorů
 
