@@ -1,6 +1,6 @@
 # 3.5 MVP scope a rozšiřitelnost
 
-Návrh addonu explicitně vymezuje rozsah první verze (MVP) a zároveň definuje architektonické principy, které umožní budoucí rozšíření bez nutnosti přepisovat jádro systému.
+Předchozí sekce 3.1–3.4 definovaly kompletní návrhové řešení: architekturu, datový model, funkce a uživatelské rozhraní. Tato sekce vymezuje, co z tohoto návrhu patří do první verze (MVP), a dokumentuje architektonické principy, které umožní budoucí rozšíření bez nutnosti přepisovat jádro systému.
 
 ## MVP scope
 

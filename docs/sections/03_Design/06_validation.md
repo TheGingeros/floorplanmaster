@@ -1,5 +1,7 @@
 # 3.6 Validace a chybové stavy
 
+Datový model (3.2) definoval povolené rozsahy atributů a návrh funkcí (3.3) popsal, které operace data mění. Tato sekce specifikuje, jak validace probíhá za běhu — kde se detekuje, jak se propaguje ke View a jak se systém vypořádá s nekonzistentními daty.
+
 Validace probíhá na hranici mezi Controllerem a Modelem — Controller předá uživatelský vstup, Model provede validaci a vrátí výsledek. View (GPU overlay a N-panel) výsledek zobrazí. Žádná vrstva neprovádí validaci za jinou.
 
 ## Typy chyb

@@ -52,6 +52,7 @@ Pojmenované atributy na Blender mesh fungují jako datový bridge mezi Python g
 | Face | `ceiling_material_id` | Integer | 0 | index materiálu stropu | změna materiálu |
 
 - celoobjektová metadata se ukládají jako vlastnosti Blender objektu: systém měření, verze addonu, čítač verze struktury pro invalidaci cache
+- **projektová nastavení addonu** (výchozí tloušťka stěny, výchozí výška, hustota mřížky, systém jednotek, velikost textu kót) jsou uložena jako `Scene PropertyGroup` — jsou součástí `.blend` souboru, takže každý projekt má nezávislé hodnoty; výchozí hodnoty jsou zakódovány v definici PropertyGroup a nepotřebují `AddonPreferences` (viz [technická analýza persistence nastavení](../02_Analysis/06_ta_addon_preferences.md))
 
 ## Validační pravidla
 Validace se aplikuje před zápisem dat do datových modelů. Zabraňuje vzniku degenerované geometrie, která by způsobila vizuální artefakty nebo selhání algoritmů.
