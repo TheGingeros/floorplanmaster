@@ -27,7 +27,7 @@ Python nikdy nemanipuluje s polygony stěny přímo — veškerá geometrie otvo
 
 ## Vložení pravoúhlé místnosti z parametrů (UC 1.1)
 
-Verdle Pencil Toolu (FP1) existuje druhý způsob vložení místnosti: uživatel zadá rozměry přímo v N-panelu a addon automaticky vytvoří pravoúhlou místnost. Tento režim pokrývá scénář UC 1.1 — hmotovou studii, kde uživatel pracuje s plošnými bilancemi, ne s ručním kreslením.
+Vedle Pencil Toolu (FP1) existuje druhý způsob vložení místnosti: uživatel zadá rozměry přímo v N-panelu a addon automaticky vytvoří pravoúhlou místnost. Tento režim pokrývá scénář UC 1.1 — hmotovou studii, kde uživatel pracuje s plošnými bilancemi, ne s ručním kreslením.
 
 Vstupní parametry (zadané v N-panelu, sekce Nástroje):
 - **šířka** a **hloubka** místnosti (m) — nebo alternativně **plocha** + **poměr stran**, ze kterých addon šířku a hloubku dopočítá
@@ -36,7 +36,9 @@ Vstupní parametry (zadané v N-panelu, sekce Nástroje):
 
 Po potvrzení se pravoúhlá místnost vloží se středem v poloze 3D kurzoru Blenderu. Uživatel ručně nastaví pozici 3D kurzoru před vložením (standardní Blender konvence: `Shift+RMB`).
 
-Interakce s datovým modelem je totožná s ručním nakreslením stejné místnosti přes FP1 — addon zavolá sekvenci `L1.add_junction()` a `L1.add_wall()` pro čtyři stěny, detekce cyklů spustí Vrstvu 2, synchronizační cyklus Vrstvu 3. Výsledná místnost je datově nerozeznatelná od místnosti nakreslené tužkou a všechny následné operace (FP2 editace, FP5 kontextová nabídka, FP6 gizmos, FP7 kóty) na ni fungují identicky.
+**MVP — vložení vždy jako samostatná izolovaná místnost.** Addon zavolá sekvenci `L1.add_junction()` a `L1.add_wall()` pro čtyři stěny; vzniklé junctions nikdy nesdílejí vrcholy s existující sítí, takže ve Vrstvě 2 nevznikají žádné nové sousednosti. Detekce cyklů spustí Vrstvu 2 a synchronizační cyklus Vrstvu 3. Výsledná místnost je datově nerozeznatelná od místnosti nakreslené tužkou a všechny navazující operace (FP5 kontextová nabídka, FP6 gizmos, FP7 kóty) na ni fungují identicky.
+
+**Rozšíření (mimo MVP):** výběr existující místnosti, světové strany napojení (sever / jih / východ / západ) a způsobu sdílení stěny; systém by pak sloučil příslušné junctions a společná hrana by se stala sdílenou hranou dvou cyklů ve Vrstvě 2 — viz [5 Rozšiřitelnost](./05_extensibility.md).
 
 Poznámka: pro MVP jsou podporovány pouze pravoúhlé místnosti. Jiné tvary (L, T, polygonální) jsou záměrně vyloučeny — viz [5 Rozšiřitelnost](./05_extensibility.md).
 

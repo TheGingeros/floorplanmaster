@@ -18,6 +18,27 @@ flowchart TD
     linkStyle default stroke-width:2px
 ```
 
+## Přidání samostatné místnosti
+```mermaid
+flowchart TD
+    V1["**Vrstva 1**<br/>Vytvoření čtyř nových junctionů<br/>Přidání čtyř stěn uzavírajících pravoúhlý cyklus<br/>Detekce minimálních cyklů"]:::v1
+    V2["**Vrstva 2**<br/>Nový cyklus → nová místnost s unikátním ID<br/>Výpočet metriky: area, perimeter"]:::v2
+    V3F1["**Vrstva 3 — fáze 1: topologie**<br/>Přidány čtyři vrcholy a čtyři hrany<br/>Přidána plocha pro uzavřený cyklus"]:::v3
+    V3F2["**Vrstva 3 — fáze 2: atributy**<br/>Zápis ID a parametrů na vrcholy, hrany a plochy<br/>Geometry Nodes reevaluace"]:::v3
+
+    V1 --> V2 --> V3F1 --> V3F2
+
+    classDef v1 stroke:#4a90d9,stroke-width:2px
+    classDef v2 stroke:#9b4ad9,stroke-width:2px
+    classDef v3 stroke:#4ad97c,stroke-width:2px
+    linkStyle default stroke-width:2px
+```
+
+- v MVP junctions nové místnosti nikdy nesdílejí vrcholy s existující sítí — nevznikají žádné nové sousednosti ve Vrstvě 2
+- výsledná místnost je datově nerozeznatelná od místnosti nakreslené tužkou; všechny navazující operace (FP5 kontextová nabídka, FP6 gizmos, FP7 kóty) na ni fungují identicky
+
+**Možné rozšíření (mimo MVP):** výběr existující místnosti, světové strany napojení a způsobu sdílení stěny; systém by pak sloučil příslušné junctions a hrana by se stala sdílenou hranou dvou cyklů ve Vrstvě 2 (vznik sousedství).
+
 ## Odebrání hrany (smazání stěny)
 
 ```mermaid
