@@ -25,6 +25,21 @@ Architektura addonu reprezentuje stěny jako **hrany base meshe** s pojmenovaný
 
 Python nikdy nemanipuluje s polygony stěny přímo — veškerá geometrie otvorů je generována a aktualizována v GN modifikátoru v reálném čase.
 
+## Vložení pravoúhlé místnosti z parametrů (UC 1.1)
+
+Verdle Pencil Toolu (FP1) existuje druhý způsob vložení místnosti: uživatel zadá rozměry přímo v N-panelu a addon automaticky vytvoří pravoúhlou místnost. Tento režim pokrývá scénář UC 1.1 — hmotovou studii, kde uživatel pracuje s plošnými bilancemi, ne s ručním kreslením.
+
+Vstupní parametry (zadané v N-panelu, sekce Nástroje):
+- **šířka** a **hloubka** místnosti (m) — nebo alternativně **plocha** + **poměr stran**, ze kterých addon šířku a hloubku dopočítá
+- **výška stěn** (přednaplněna výchozí hodnotou ze Scene PropertyGroup)
+- **tloušťka stěn** (přednaplněna výchozí hodnotou)
+
+Po potvrzení se pravoúhlá místnost vloží se středem v poloze 3D kurzoru Blenderu. Uživatel ručně nastaví pozici 3D kurzoru před vložením (standardní Blender konvence: `Shift+RMB`).
+
+Interakce s datovým modelem je totožná s ručním nakreslením stejné místnosti přes FP1 — addon zavolá sekvenci `L1.add_junction()` a `L1.add_wall()` pro čtyři stěny, detekce cyklů spustí Vrstvu 2, synchronizační cyklus Vrstvu 3. Výsledná místnost je datově nerozeznatelná od místnosti nakreslené tužkou a všechny následné operace (FP2 editace, FP5 kontextová nabídka, FP6 gizmos, FP7 kóty) na ni fungují identicky.
+
+Poznámka: pro MVP jsou podporovány pouze pravoúhlé místnosti. Jiné tvary (L, T, polygonální) jsou záměrně vyloučeny — viz [5 Rozšiřitelnost](./05_extensibility.md).
+
 ## Vazba otvorů na stěnu
 
 Závislost otvoru na stěně je uložena ve Vrstvě 1 jako atribut hrany `opening_refs` (seznam referencí). Po posunu junctionu nebo změně délky stěny:

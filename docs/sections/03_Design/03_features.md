@@ -4,7 +4,7 @@ Analýza (kapitola 2.5) specifikovala sedm funkčních požadavků FP1–FP7 z p
 | Požadavek | Název | Primární vrstva | Mechanismus |
 | :--- | :--- | :--- | :--- |
 | [FP1](./03_features_fp1.md) | Interaktivní kreslení (Pencil Tool) | Controller + Vrstva 1 | Modální operátor + GPU overlay |
-| [FP2](./03_features_fp2.md) | Parametrické objekty a otvory | Vrstva 1 + View | Geometry Nodes + GN Mesh Boolean |
+| [FP2](./03_features_fp2.md) | Parametrické objekty, otvory a vložení místnosti z parametrů | Vrstva 1 + View + Controller | Geometry Nodes + GN Mesh Boolean + N-panel |
 | [FP3](./03_features_fp3.md) | Detekce místností a metadata | Vrstva 2 + Vrstva 3 | Detekce cyklů + pojmenované atributy |
 | [FP4](./03_features_fp4.md) | Finalizační nástroj | View | Aplikace GN modifikátorů |
 | [FP5](./03_features_fp5.md) | Kontextová nabídka | Controller | Raycast + GPU/BLF overlay |

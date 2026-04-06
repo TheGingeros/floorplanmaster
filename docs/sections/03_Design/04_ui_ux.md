@@ -45,6 +45,10 @@ GPU draw_handler overlay vrstva (realizace viz [technická analýza GPU](../../0
 
 Panel je členěn do tří sekcí odpovídajících hierarchii datového modelu (kapitola 3.2). Vzor odpovídá Archipack Auto-manipulate on select — vybráním prvku ve viewportu se jeho parametry okamžitě zobrazí v příslušné sekci panelu.
 
+**Nástroje** — tato sekce obsahuje akce pro vkládání prvků; je oddělena od seznamu existujících prvků, protože nepracuje s výběrem, ale s 3D kurzorem:
+- tlačítko **Nakreslit tužkou** — alternativa k stisku `D`; aktivuje Pencil Tool (FP1)
+- tlačítko **Vložit místnost** — otevře inline formulář se vstupy pro šířku, hloubku (nebo plochu + poměr stran), výšku stěn a tloušťku stěn; po potvrzení vloží pravoúhlou místnost se středem v pozici 3D kurzoru (FP2)
+
 **Místnosti** — seznam uzlů Vrstvy 2 s metrikami (plocha, obvod, typ místnosti); klik na položku vybere místnost ve viewportu a zobrazí gizmos (FP6); inline editace názvu a typu místnosti bez nutnosti otevírat dialog.
 
 **Stěny** — seznam hran Vrstvy 1 filtrovaný pro vybranou místnost; zobrazuje délku a tloušťku; klik vybere stěnu a zobrazí gizmos tloušťky a výšky (FP6).
