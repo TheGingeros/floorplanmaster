@@ -4,8 +4,9 @@
 - logika tvarování geometrie bude díky geometry nodes stromům
 - python bude sloužit jako manažer, které tyto stromy bude připojovat a měnit jejich vstupy
 - oddělení vizuální logiky a aplikační logiky
-- zero dependency - addon nesmí k běhu potřebovat doinstalování externích knihoven - pro běžného uživatele složité
-- vše se musí zvládnout pomocí bpy a standardní knihovny Python
+- minimální závislosti — addon nesmí vyžadovat, aby uživatel doinstaloval externí knihovny ručně; instalace addonu má být jediný krok
+- cílová platforma Blender 4.2+ umožňuje deklarovat závislosti v `blender_manifest.toml` jako wheel soubory přibalené do extension balíčku; Blender je při aktivaci automaticky nainstaluje bez zásahu uživatele
+- pro grafové operace (detekce cyklů, planární embedding) je použita knižovna NetworkX deklarovaná jako wheel závislost; všechny ostatní operace jsou realizovány pomocí `bpy` a standardní knihovny Python
 
 ## NP2 - Výkon a Nedestruktivnost
 - systém musí reagovat plynule, netrhat se a uživatel nesmí ztratit možnost úpravy ani pro komplexních úpravách a generace
