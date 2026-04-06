@@ -1,5 +1,5 @@
 # 3.2 Datový model
-Architektura (kapitola 3.1) definuje třívrstvou hybridní architekturu a tok dat mezi vrstvami. Tato sekce specifikuje konkrétní datové struktury, jejich atributy, operace a omezení — slouží jako exaktní „slovník" celého addonu. Definuje, jaká data systém spravuje, jaké mají typy a povolené rozsahy a jaké operace nad nimi existují.
+Architektura (kapitola 3.1) definuje třívrstvou hybridní architekturu a tok dat mezi vrstvami. Tato sekce specifikuje konkrétní datové struktury, jejich atributy, operace a omezení — slouží jako jednotná definice pojmů celého addonu. Definuje, jaká data systém spravuje, jaké mají typy a povolené rozsahy a jaké operace nad nimi existují.
 
 Datový model operuje na úrovni jednoho podlaží. Vrstva 1 uchovává topologii stěn a propojovacích bodů, Vrstva 2 z ní odvozuje sémantiku místností a vztahů sousedství. Vrstva 3 přenáší data obou grafů do Blender mesh ve formě pojmenovaných atributů, kde je Geometry Nodes čtou a vizualizují.
 

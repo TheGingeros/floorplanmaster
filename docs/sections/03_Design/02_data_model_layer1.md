@@ -31,7 +31,7 @@ Reprezentuje hranu propojující právě dva existující propojovací body. Zap
 - tloušťka a výška musí splňovat validační pravidla (viz [rodičovský soubor](./02_data_model.md))
 
 ## Operace strukturálního grafu
-Graf zapouzdřuje veškerou manipulaci s topologií podlaží. Po každé změně garantuje, že graf zůstane validní.
+Graf zapouzdřuje veškerou manipulaci s topologií podlaží. Po každé změně garantuje, že graf zůstane validní. CRUD = create, read, update, delete
 
 - **Propojovací body (CRUD)**:
     - přidání bodu na zadanou pozici

@@ -50,5 +50,4 @@ Graf slouží jako hlavní rozhraní pro dotazování a manipulaci se sémantick
 - **Analýza a dotazy**:
     - celková plocha všech místností (nebo dle typu)
     - identifikace vnějších místností (dotýkají se exteriéru) a vnitřních
-    - hledání cesty průchodnosti mezi dvěma místnostmi (pro analýzu cirkulace)
     - analýza poměrů stran místností
