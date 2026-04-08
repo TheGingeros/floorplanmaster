@@ -33,8 +33,6 @@ flowchart TD
 
 ## [Tok dat](./01_architecture_data_flow.md)
 
-## [Organizace modulů](./01_architecture_modules.md)
-
 ## Principy návrhu
 - **Oddělení zájmů** — grafová logika (Model) nezávisí na Blender API; lze ji testovat izolovaně jednotkovými testy
 - **Nedestruktivní úpravy** — změna parametru nepřepisuje geometrii, ale vyvolá přegenerování skrze Geometry Nodes; uživatel se může kdykoli vrátit zpět nebo upravit libovolný parametr
