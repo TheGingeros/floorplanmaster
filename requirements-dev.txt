@@ -1,0 +1,9 @@
+# Development dependencies for FloorPlanMaster (pure Python / test phase)
+# Install with: pip install -r requirements-dev.txt
+#
+# Note: NetworkX is NOT bundled in the repository.
+# For Blender addon distribution, NetworkX will be packaged as a wheel
+# dependency using the Blender Extensions manifest (Blender 4.2+).
+
+networkx>=3.3
+pytest>=8.0
