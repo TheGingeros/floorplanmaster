@@ -11,26 +11,26 @@
 
 Při návrhu detekčního mechanismu existují dvě základní strategie.
 
-**Eager přístup** — každá nová stěna dostane při vzniku odkaz na "tentativní místnost" (polotovar); při uzavření polygonu se z ní stane plná místnost, při sloučení se rozhodne, která přežije.
+**Eager přístup** — každá nová stěna je při svém vzniku přiřazena k dočasnému objektu místnosti. Jakmile dojde k uzavření polygonu, je tento objekt validován jako plnohodnotná místnost. V případě sloučení více dočasných objektů algoritmus určí, který z nich bude zachován.
 
 **Lazy přístup** — místnost vznikne výhradně tehdy, kdy je detekován uzavřený cyklus v strukturálním grafu; do té doby žádný objekt místnosti neexistuje.
 
 ### Problémy eager přístupu
 
-**1. Nedefinovaný stav tentativní místnosti**
-Eager přístup vyžaduje zavést objekt "polotovar místnosti" — entitu, která existuje, ale nemá uzavřenou geometrii. Tato entita musí být reprezentována, udržována a odstraňována. Je to celá kategorie stavu navíc s vlastními přechody.
+**1. Nedefinovaný stav dočasného objektu místnosti**
+Eager přístup vyžaduje zavedení „dočasného objektu místnosti“ — entity, která je evidována v paměti, ale nedisponuje uzavřenou geometrií. Tento dočasný objekt musí být systémem průběžně reprezentován, udržován a případně odstraňován. Představuje tak celou novou kategorii stavu s vlastními pravidly pro přechody.
 
-**2. Merge conflict při uzavření cyklu**
-Když uživatel nakreslí uzavírající stěnu (čtvrtá stěna čtverce), existují čtyři stěny, každá s odkazem na jinou tentativní místnost. Systém musí vybrat jednu, přiřadit jejímu uzlu výsledné souřadnice a zbytek zrušit. Toto rozhodnutí nemá přirozené kritérium — závisí na pořadí kreslení.
+**2. Konflikt při slučování (Merge conflict) po uzavření cyklu**
+Když uživatel nakreslí stěnu, která cyklus uzavírá (například čtvrtou stěnu čtverce), vznikne situace, kdy se setkají stěny s odkazy na různé dočasné objekty. Systém musí vybrat jeden z nich, přiřadit mu výslednou geometrii a zbylé objekty zrušit. Pro toto rozhodnutí však neexistuje objektivní kritérium — výsledek závisí čistě na pořadí, v jakém uživatel stěny kreslil.
 
 **3. Simultánní uzavření více cyklů**
-Přidáním jediné T-stěny lze uzavřít dva cykly najednou. Eager přístup musí detekovat a vyřešit $N$ merge operací v jediné transakci, přičemž každá může navzájem ovlivnit tu druhou.
+Přidáním jediné stěny (např. napojením ve tvaru písmene T) lze uzavřít dva či více cyklů současně. Eager přístup pak musí detekovat a vyřešit $N$ slučovacích operací v rámci jediné transakce, přičemž každá z těchto operací může kaskádovitě ovlivnit ty ostatní.
 
-**4. Rozbití Undo**
-Undo vrácení uzavírající stěny musí "rozrozplynout" sloučené tentativní místnosti zpět do původního stavu — tedy uložit pre-merge snapshot. Eager přístup proto vyžaduje vlastní historii stavu, která je oddělená od Blender Undo stacku.
+**4. Narušení kroku zpět (Undo)**
+Aplikace funkce Undo na akci, která uzavřela cyklus, by musela sloučené dočasné objekty místností znovu rozpojit do jejich původního neuzavřeného stavu. To by vyžadovalo uložení přesného snímku stavu před sloučením (pre-merge snapshot). Eager přístup tak zbytečně vyžaduje vlastní komplexní správu historie, která je oddělená od nativního zásobníku historie (Undo stack) v Blenderu.
 
-**5. History-dependence**
-Stejná výsledná topologie lze sestavit různými posloupnostmi editací. V eager přístupu může identická geometrie vést k různým metadatovým stavům podle toho, jakou cestou k ní uživatel dospěl — to je těžko testovatelné a laditelné.
+**5. Závislost na historii editace (History-dependence)**
+Ke stejné výsledné topologii lze dospět různými posloupnostmi kroků. V eager přístupu se může stát, že identická výsledná geometrie povede k různým stavům metadat (např. zachování jiného ID místnosti) čistě v závislosti na tom, jakou cestou k ní uživatel dospěl. Takové nedeterministické chování je ze softwarového hlediska velmi obtížně testovatelné a laditelné.
 
 ### Výhody lazy přístupu
 
