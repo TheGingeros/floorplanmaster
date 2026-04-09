@@ -18,7 +18,7 @@ from .validators import (
 # Representing position of one vertex, two verteces make up one wall
 class Junction:
     def __init__(self, position, snap_priority=0, junction_id=None):
-        self.id = junction_id or str(uuid.uuid4())
+        self.id = junction_id or str(uuid.uuid4()) # assign given ID, if None, create a new one
         self.position = tuple(position)  # (x, y)
         self.snap_priority = snap_priority
 
@@ -40,7 +40,7 @@ class Wall:
         wall_id=None,
     ):
         self.id = wall_id or str(uuid.uuid4())
-        self.junction_start = junction_start_id
+        self.junction_start = junction_start_id # assign given ID, if None, create a new one
         self.junction_end = junction_end_id
         self.thickness = thickness
         self.height = height
