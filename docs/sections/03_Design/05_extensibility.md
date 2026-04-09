@@ -2,24 +2,25 @@
 
 Předchozí sekce 3.1–3.4 definovaly kompletní návrhové řešení: architekturu, datový model, funkce a uživatelské rozhraní. Tato sekce vymezuje, co z tohoto návrhu patří do první verze (MVP), a dokumentuje architektonické principy, které umožní budoucí rozšíření bez nutnosti přepisovat jádro systému.
 
-## MVP scope
+## Rozsah MVP
 
-MVP realizuje kompletní workflow jednoho podlaží: interaktivní kreslení stěn, automatická detekce místností, parametrické otvory, kótování a finalizaci do statické geometrie. Všechny funkční požadavky FP1–FP7 patří do MVP.
+MVP realizuje kompletní workflow jednoho podlaží: interaktivní kreslení stěn, automatická detekce místností, parametrické otvory, kótování a finalizaci do statické geometrie. Každý funkční požadavek FP1–FP7 je v analýze rozčleněn na povinnou část (must-have) a volitelná rozšíření (should-have, nice-to-have). Do MVP patří výlučně must-have části:
 
-Následující funkce jsou záměrně vyloučeny z MVP:
-
-| Funkce | Důvod vyloučení |
+| Požadavek | MVP základ (must-have) |
 | :--- | :--- |
-| Více podlaží a budovy | Vyžaduje hierarchii objektů nad současnou jednopodlažní vrstvou; architektura to umožňuje, ale není součástí MVP |
-| Napojení místnosti z parametrů na existující půdorys | MVP vždy vloží pravoúhlou místnost jako izolovaný objekt; napojení na existující stěnu vyžaduje sloučení junctions a je mimo MVP scope |
-| Import DXF/IFC | Samostatná vstupní pipeline mimo scope kreslicího nástroje |
-| Generování střech a schodišť | Komplexní geometrické úlohy nad rámec půdorysu |
-| Spolupráce více, uživatelů | Blender jako aplikace nepodporuje simultánní editaci |
-| Export do BIM formátů | Definováno jako možné rozšíření po MVP |
+| FP1 | Kreslení půdorysu klikáním bodů v top view; nástroj jako modální operátor |
+| FP2 | Dynamická reprezentace stěn řízená parametry; update geometrie při změně parametrů; svázání otvorů se stěnou |
+| FP3 | Automatická detekce uzavřených místností; zobrazení plochy místnosti |
+| FP4 | Aplikace modifikátorů a finalizace do statické geometrie |
+| FP5 | Kontextová nabídka s akcemi po kliknutí na prvek ve viewportu |
+| FP6 | Interaktivní gizmo pro úpravu parametrů stěny tažením |
+| FP7 | Vizualizace rozměrů přes GPU overlay (BLF) |
+
+Shouldn-have a nice-to-have části požadavků FP1, FP2 a FP3 jsou záměrně odloženy za MVP a jsou popsány v sekci rozšiřitelnosti níže.
 
 ## Rozšiřitelnost architektury
 
-Třívrstvá hybridní architektura je navržena tak, aby klíčová rozšíření nevyžadovala zásah do jádra Vrstvy 1 ani 2:
+MVP záměrně vylučuje should-have a nice-to-have části z analýzy (automatický snapping a náhled stěny z FP1; boolean správa otvorů z FP2; hierarchizace místností z FP3) i funkce nad rámec jednoho podlaží, jako jsou více podlaží, import DXF/IFC, generování střech a schodišť, export do BIM formátů nebo napojení místnosti na existující půdorys. Třívrstvá hybridní architektura je navržena tak, aby tato rozšíření nevyžadovala zásah do jádra Vrstvy 1 ani 2:
 
 **Více podlaží** — Vrstva 1 (StructuralGraph) modeluje jeden půdorys jako planární graf. Hierarchie budov by přidala koordinační vrstvu nad stávající Vrstvy 1 a 2, které by zůstaly beze změny. Každé podlaží by bylo samostatnou instancí grafu.
 
