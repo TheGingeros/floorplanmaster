@@ -1,7 +1,7 @@
 # FP2 — Parametrické objekty a otvory
 Analýza (FP2) definovala požadavek na dynamickou, nedestruktivní reprezentaci stěn a otvorů — model řízený parametry, ne statická polygonová síť. Návrhové rozhodnutí (kapitola 3.1) zvolilo Geometry Nodes jako výpočetní backend a pojmenované atributy jako datový bridge. Tato sekce popisuje, jak se parametrické chování realizuje v interakci Vrstvy 1, Vrstvy 3 a View.
 
-## Parametry stěny a update mechanismus
+## Parametry stěny a update mechanismus *(must-have)*
 
 Každá stěna ve Vrstvě 1 nese atributy `thickness`, `height` a `material_id`. Změna kteréhokoli parametru přes UI panel nebo 3D manipulátor (FP6) spustí přesně definovaný update cyklus:
 
@@ -13,7 +13,7 @@ Každá stěna ve Vrstvě 1 nese atributy `thickness`, `height` a `material_id`.
 
 Tento update je levnější než přidání/odebrání stěny — neprovádí se detekce cyklů ani fáze 1 sync (topologie mesh se nemění).
 
-## Otvory — GN Mesh Boolean
+## Otvory — GN Mesh Boolean *(should-have)*
 
 Otvory (dveře, okna) jsou definovány jako závislé objekty vázané na konkrétní stěnu ve Vrstvě 1. Každý otvor nese pozici na stěně (relativní parametr $t \in [0, 1]$), šířku a výšku. Tvorba otvorů probíhá výhradně ve View vrstvě — Python předá poziční data jako pojmenované atributy a Geometry Nodes uzly díru dynamicky vyříznou.
 
@@ -25,7 +25,7 @@ Architektura addonu reprezentuje stěny jako **hrany base meshe** s pojmenovaný
 
 Python nikdy nemanipuluje s polygony stěny přímo — veškerá geometrie otvorů je generována a aktualizována v GN modifikátoru v reálném čase.
 
-## Vložení pravoúhlé místnosti z parametrů
+## Vložení pravoúhlé místnosti z parametrů *(must-have)*
 
 Vedle Pencil Toolu (FP1) existuje druhý způsob vložení místnosti: uživatel zadá rozměry přímo v N-panelu a addon automaticky vytvoří pravoúhlou místnost.
 Vstupní parametry (zadané v N-panelu, sekce Nástroje):
@@ -41,7 +41,7 @@ Po potvrzení se pravoúhlá místnost vloží se středem v poloze 3D kurzoru B
 
 Poznámka: pro MVP jsou podporovány pouze pravoúhlé místnosti. Jiné tvary (L, T, polygonální) jsou záměrně vyloučeny — viz [5 Rozšiřitelnost](./05_extensibility.md).
 
-## Vazba otvorů na stěnu
+## Vazba otvorů na stěnu *(must-have)*
 
 Závislost otvoru na stěně je uložena ve Vrstvě 1 jako atribut hrany `opening_refs` (seznam referencí). Po posunu junctionu nebo změně délky stěny:
 

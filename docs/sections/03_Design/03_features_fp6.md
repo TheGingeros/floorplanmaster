@@ -1,7 +1,7 @@
 # FP6 — Interaktivní 3D manipulátory
 3D manipulátory (gizma) jsou interaktivní ovládací prvky přímo ve 3D viewportu — umožňují intuitivní úpravy parametrů stěn a junctionů taháním myší, bez zadávání čísel do panelů. Klíčovým návrhovým požadavkem je zachování planarity Vrstvy 1: všechny manipulátory mají geometrické omezení, které vylučuje neplatné přechody (zejména pohyb mimo rovinu XY).
 
-## Typy manipulátorů
+## Typy manipulátorů *(must-have)*
 
 **Manipulátor tloušťky stěny**
 - Obousměrná šipka kolmá na osu vybrané stěny
@@ -20,6 +20,6 @@
 - Pohyb striktně omezen na rovinu XY — Z-složka tahu je zahozena
 - Aktualizuje souřadnice junctionu ve Vrstvě 1 → přepočet délek a úhlů všech připojených stěn → detekce cyklů → L2 + L3 sync (fáze 1 + fáze 2)
 
-## Geometrické omezení (2D lock)
+## Geometrické omezení (2D lock) *(must-have)*
 
 Zámek do roviny XY je kritické bezpečnostní opatření: pokud by uživatel omylem posunul junction mimo rovinu, strukturální graf by přestal být planární a detekce cyklů by selhala. Omezení je vynuceno zpracováním delta pohybu myši — vertikální složka je před zápisem do Vrstvy 1 zahozena. Implementace využívá rozhraní Gizmo API (`bpy.types.Gizmo`, `bpy.types.GizmoGroup`).

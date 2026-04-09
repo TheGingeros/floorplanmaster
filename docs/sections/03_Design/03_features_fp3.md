@@ -13,7 +13,7 @@ Detekce je spuštěna automaticky po každé změně topologie Vrstvy 1 (přidá
 
 Výsledkem je, že Vrstva 2 je vždy deterministicky odvozena z aktuálního stavu Vrstvy 1 — bez manuálního vstupu uživatele.
 
-## Prostorová data a metriky
+## Prostorová data a metriky *(must-have)*
 
 Pro každou místnost ve Vrstvě 2 systém udržuje a aktualizuje:
 
@@ -24,7 +24,7 @@ Pro každou místnost ve Vrstvě 2 systém udržuje a aktualizuje:
 
 Metriky jsou serializovány do Vrstvy 3 jako pojmenované atributy na plochy (`room_area`, `room_perimeter`, `room_type`, `room_id`) a čtou je Geometry Nodes pro vizualizaci.
 
-## Perzistence dat
+## Perzistence dat *(must-have)*
 
 Technická analýza ([přístupy k perzistenci grafových dat](../../02_Analysis/06_ta_persistence_approaches.md)) porovnala tři přístupy — JSON v Custom Property, Pickle a rekonstrukci z meshe — a identifikovala rekonstrukci z meshe jako nejvhodnější pro architekturu s named attributes.
 
