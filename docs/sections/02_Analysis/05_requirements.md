@@ -21,7 +21,7 @@
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **FP1 - Interaktivní tvorba místností a kreslení** | Vysoká | Vysoká | Vysoká | **3,00** | **Vysoká** |
 | **FP2 - Generování a úprava parametrických objektů** | Vysoká | Vysoká | Vysoká | **3,00** | **Vysoká** |
-| **FP6 - Interaktivní 3D manipulátory** | Vysoká | Střední | Vysoká | **2,67** | **Vysoká** |
+| **FP6 - Interaktivní 3D manipulátory** | Střední | Střední | Nízká | **1,83** | **Střední** |
 | **FP3 - Správa prostoru a metadat** | Vysoká | Nízká | Irelevantní | **1,83** | **Střední** |
 | **FP7 - Automatické kótování** | Vysoká | Nízká | Irelevantní | **1,83** | **Střední** |
 | **FP4 - Finalizační nástroj** | Nízká | Střední | Vysoká | **1,67** | **Střední** |
