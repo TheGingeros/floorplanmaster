@@ -1,9 +1,9 @@
-# 3.1 Architektura systému
-Technická analýza (kapitola 2.6) identifikovala klíčové technologické volby pro realizaci addonu: Geometry Nodes jako výpočetní jádro pro generování 3D geometrie, strukturální graf a NRG pro datovou reprezentaci půdorysu, modální operátory pro interaktivní kreslení a pojmenované atributy jako synchronizační most mezi Pythonem a Blenderem. Tato sekce překládá analytické závěry do konkrétní softwarové architektury.
+# 3.2 Architektura systému
+Technická analýza (kapitola 2.6) identifikovala klíčové technologické volby pro realizaci addonu: Geometry Nodes jako výpočetní jádro pro generování 3D geometrie, strukturální graf a NRG pro datovou reprezentaci půdorysu, modální operátory pro interaktivní kreslení a pojmenované atributy jako synchronizační most mezi Pythonem a Blenderem. Tato sekce překládá analytické závěry do konkrétní softwarové architektury a poskytuje ucelený pohled z ptačí perspektivy — z jakých bloků se systém skládá (statika), jak tyto bloky komunikují (dynamika) a jakými pravidly se tato komunikace řídí.
 
-Základem návrhu je třívrstvá hybridní architektura, která striktně odděluje matematickou logiku v Pythonu od vizualizace v Blenderu. Python addon vlastní veškerou logiku — topologii stěn, sémantiku místností i validaci parametrů. Blender slouží výhradně jako zobrazovací engine, který skrze Geometry Nodes čte data z pojmenovaných atributů a generuje 3D geometrii v reálném čase. Komunikace je jednosměrná: Python → Blender, nikdy naopak. Scope návrhu je omezen na jedno podlaží — architektura je navržena tak, aby ji bylo v budoucnu možné rozšířit o hierarchii budov a pater, ale současný MVP pracuje s jedním půdorysem.
+Základem návrhu je třívrstvá hybridní architektura, která striktně odděluje matematickou logiku v Pythonu od vizualizace v Blenderu. Python addon vlastní veškerou logiku — topologii stěn, sémantiku místností i validaci parametrů. Blender slouží výhradně jako zobrazovací engine, který skrze Geometry Nodes čte data z pojmenovaných atributů a generuje 3D geometrii v reálném čase. Komunikace je jednosměrná: Python → Blender, nikdy naopak. Scope návrhu je omezen na jedno podlaží v souladu s definicí MVP (kapitola 3.1) — architektura je navržena tak, aby ji bylo v budoucnu možné rozšířit o hierarchii budov a pater.
 
-## [Třívrstvá hybridní architektura](./01_architecture_layers.md)
+## [Třívrstvá hybridní architektura](./02_architecture_layers.md)
 
 ## Vzor MVC v kontextu Blenderu
 Architektura přirozeně odpovídá vzoru Model-View-Controller přizpůsobenému prostředí Blenderu:
@@ -16,6 +16,7 @@ flowchart TD
     V["**VIEW**<br/>Geometry Nodes — generuje 3D geometrii<br/>3D Viewport + GPU overlay"]:::view
 
     C -->|"volání metod"| M
+    C -->|"dočasné preview nepotvrzených stěn"| V
     M -->|"synchronizační modul"| V3
     V3 -->|"čtení atributů"| V
 
@@ -31,7 +32,7 @@ flowchart TD
 - **View** — Geometry Nodes modifikátor generuje 3D geometrii čtením atributů z vrstvy 3; GPU overlay vykresluje kreslicí náhled a HUD nezávisle na GN
 - **Controller** — modální operátory zachytávají uživatelské vstupy a překládají je na volání metod Modelu; UI panely zobrazují a umožňují editaci parametrů
 
-## [Tok dat](./01_architecture_data_flow.md)
+## [Dynamika systému](./02_architecture_data_flow.md)
 
 ## Principy návrhu
 - **Oddělení zájmů** — grafová logika (Model) nezávisí na Blender API; lze ji testovat izolovaně jednotkovými testy
