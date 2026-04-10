@@ -1,7 +1,7 @@
 # FP5 — Kontextová nabídka
 Kontextová nabídka poskytuje rychlý přístup k nejčastějším operacím bez nutnosti hledat je v panelech. Vyvolává se pravým tlačítkem myši ve 3D viewportu. Klíčovým mechanismem je raycast — addon vrhne paprsek z pozice kurzoru do scény a identifikuje, na jaký element půdorysu uživatel klikl. Podle výsledku raycastu zobrazí relevantní sadu akcí.
 
-## Raycast a detekce kontextu *(must-have)*
+## Raycast a detekce kontextu *(should-have)*
 
 Raycast prochází Vrstvou 3 (Blender mesh) a identifikuje typ elementu:
 
@@ -12,7 +12,7 @@ Raycast prochází Vrstvou 3 (Blender mesh) a identifikuje typ elementu:
 
 Nabídka je vykreslena jako floating panel přes GPU/BLF overlay přímo na pozici kurzoru — jde o vlastní UI vrstvu nezávislou na standardních Blender menu.
 
-## Dostupné akce dle kontextu *(must-have)*
+## Dostupné akce dle kontextu *(should-have)*
 
 **Kontext: místnost**
 - Přejmenovat místnost (editace `room_name` ve Vrstvě 2)

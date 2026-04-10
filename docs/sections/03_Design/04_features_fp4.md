@@ -3,7 +3,7 @@ Technická analýza ([Finalizační nástroj](../../02_Analysis/06_ta_finalize_t
 
 Nástroj Finalizace provede nevratný převod parametrického modelu (grafy + Geometry Nodes) do statické polygonové sítě vhodné pro export, UV mapování nebo herní engine. Jde o jednosměrnou operaci — po finalizaci nelze parametricky upravovat původní datový model. Proto addon před zahájením vygeneruje krok Undo jako záchranný bod.
 
-## Stavový automat *(must-have)*
+## Stavový automat
 
 ```mermaid
 stateDiagram-v2
@@ -28,7 +28,7 @@ Uživatel před zahájením zvolí v dialogu:
 | **Čistění atributů** | Odstranit pojmenované atributy z výsledné sítě (úspora dat pro export) |
 | **Zachovat originál** | Duplikovat a finalizovat kopii vs. finalizovat přímo (destruktivní) |
 
-## Interakce s datovým modelem *(must-have)*
+## Interakce s datovým modelem
 
 Pokud je zvolena možnost „zachovat originál", finalizace **nesmí** modifikovat Vrstvy 1 ani 2:
 

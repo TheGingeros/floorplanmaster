@@ -28,7 +28,7 @@ Metriky jsou serializovány do Vrstvy 3 jako pojmenované atributy na plochy (`r
 
 Technická analýza ([přístupy k perzistenci grafových dat](../../02_Analysis/06_ta_persistence_approaches.md)) porovnala tři přístupy — JSON v Custom Property, Pickle a rekonstrukci z meshe — a identifikovala rekonstrukci z meshe jako nejvhodnější pro architekturu s named attributes.
 
-Zvolený přístup je **rekonstrukce z Vrstvy 3**. Base mesh, který Blender ukládá automaticky, již obsahuje veškerou topologickou informaci v named attributes (kapitola 3.2):
+Zvolený přístup je **rekonstrukce z Vrstvy 3**. Base mesh, který Blender ukládá automaticky, již obsahuje veškerou topologickou informaci v named attributes (kapitola 3.3):
 
 - **Vrchol + `junction_id`** → junction Vrstvy 1
 - **Hrana + `wall_id`, `wall_thickness`, `wall_height`, `wall_material_id`** → stěna Vrstvy 1

@@ -1,7 +1,7 @@
 # FP1 — Interaktivní kreslení (Pencil Tool)
 Nástroj Tužka je primární vstupní rozhraní addonu — modální operátor (Controller), který zachytává vstupy z myši a klávesnice a překládá je na operace nad Vrstvou 1 strukturálního grafu. Veškerá logika kreslení probíhá v 2D rovině (XY), Z-souřadnice je ignorována. Vizuální náhled (préview stěny, HUD s délkou a úhlem) kreslí GPU overlay nezávisle na datovém modelu — zápis do Vrstvy 1 nastane až po potvrzení bodu uživatelem, ne průběžně.
 
-## Stavový automat *(must-have)*
+## Stavový automat
 
 Operátor je řízen striktním stavovým automatem, který garantuje, že stěna nikdy nevznikne bez platného počátečního bodu a že nelze skončit v nekonzistentním stavu (např. při vícenásobném stisku ESC).
 
@@ -31,7 +31,7 @@ Snapping je výpočet provedený nad pozicí kurzoru před každým zápisem do 
 
 Aktivní snap se vizuálně indikuje kruhem u kurzoru. Uživatel může snap dočasně potlačit podržením Shift.
 
-## Interakce s datovým modelem *(must-have)*
+## Interakce s datovým modelem
 
 Zápis do Vrstvy 1 nastane vždy až po potvrzení, nikdy průběžně při pohybu myši:
 

@@ -1,11 +1,11 @@
 # FP2 — Parametrické objekty a otvory
-Analýza (FP2) definovala požadavek na dynamickou, nedestruktivní reprezentaci stěn a otvorů — model řízený parametry, ne statická polygonová síť. Návrhové rozhodnutí (kapitola 3.1) zvolilo Geometry Nodes jako výpočetní backend a pojmenované atributy jako datový bridge. Tato sekce popisuje, jak se parametrické chování realizuje v interakci Vrstvy 1, Vrstvy 3 a View.
+Analýza (FP2) definovala požadavek na dynamickou, nedestruktivní reprezentaci stěn a otvorů — model řízený parametry, ne statická polygonová síť. Návrhové rozhodnutí (kapitola 3.2) zvolilo Geometry Nodes jako výpočetní backend a pojmenované atributy jako datový bridge. Tato sekce popisuje, jak se parametrické chování realizuje v interakci Vrstvy 1, Vrstvy 3 a View.
 
 ## Parametry stěny a update mechanismus *(must-have)*
 
 Každá stěna ve Vrstvě 1 nese atributy `thickness`, `height` a `material_id`. Změna kteréhokoli parametru přes UI panel nebo 3D manipulátor (FP6) spustí přesně definovaný update cyklus:
 
-1. Validace nové hodnoty vůči povoleným rozsahům (viz datový model, kapitola 3.2)
+1. Validace nové hodnoty vůči povoleným rozsahům (viz datový model, kapitola 3.3)
 2. Zápis aktualizované hodnoty do Vrstvy 1
 3. Pokud změna ovlivňuje metriku místnosti (`height` → maximální výška) → Vrstva 2 přepočítá dotčené místnosti
 4. Vrstva 3 fáze 2: serializace pouze změněného atributu na příslušnou doménu mesh elementu
@@ -37,9 +37,9 @@ Po potvrzení se pravoúhlá místnost vloží se středem v poloze 3D kurzoru B
 
 **MVP — vložení vždy jako samostatná izolovaná místnost.** Addon zavolá sekvenci `L1.add_junction()` a `L1.add_wall()` pro čtyři stěny; vzniklé junctions nikdy nesdílejí vrcholy s existující sítí, takže ve Vrstvě 2 nevznikají žádné nové sousednosti. Detekce cyklů spustí Vrstvu 2 a synchronizační cyklus Vrstvu 3. Výsledná místnost je datově nerozeznatelná od místnosti nakreslené tužkou a všechny navazující operace (FP5 kontextová nabídka, FP6 gizmos, FP7 kóty) na ni fungují identicky.
 
-**Rozšíření (mimo MVP):** výběr existující místnosti, světové strany napojení (sever / jih / východ / západ) a způsobu sdílení stěny; systém by pak sloučil příslušné junctions a společná hrana by se stala sdílenou hranou dvou cyklů ve Vrstvě 2 — viz [5 Rozšiřitelnost](./05_extensibility.md).
+**Rozšíření (mimo MVP):** výběr existující místnosti, světové strany napojení (sever / jih / východ / západ) a způsobu sdílení stěny; systém by pak sloučil příslušné junctions a společná hrana by se stala sdílenou hranou dvou cyklů ve Vrstvě 2 — viz [3.1 Rozšiřitelnost](./01_mvp_scope.md).
 
-Poznámka: pro MVP jsou podporovány pouze pravoúhlé místnosti. Jiné tvary (L, T, polygonální) jsou záměrně vyloučeny — viz [5 Rozšiřitelnost](./05_extensibility.md).
+Poznámka: pro MVP jsou podporovány pouze pravoúhlé místnosti. Jiné tvary (L, T, polygonální) jsou záměrně vyloučeny — viz [3.1 Rozšiřitelnost](./01_mvp_scope.md).
 
 ## Vazba otvorů na stěnu *(must-have)*
 
