@@ -20,7 +20,7 @@ Reprezentuje vrchol v grafu místností — jeden uzavřený prostor odvozený z
 - `id` je perzistentní — i když uživatel změní tvar místnosti k nepoznání, ID a sémantická metadata (název, materiály) přetrvávají, dokud nedojde k úplnému rozpojení cyklu
 - `cycle_id` musí odkazovat na platný cyklus ve Vrstvě 1
 - minimálně 3 hraniční vrcholy
-- plocha a obvod musí splňovat validační pravidla (viz [rodičovský soubor](./02_data_model.md))
+- plocha a obvod musí splňovat validační pravidla (viz [rodičovský soubor](./03_data_model.md))
 
 ## Model sousedství (Adjacency)
 Reprezentuje hranu v grafu místností — logické propojení dvou prostor. Definuje propustnost půdorysu a určuje nejen to, zda dvě místnosti sdílejí stěnu, ale jakého typu je jejich propojení.

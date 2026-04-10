@@ -28,7 +28,7 @@ Reprezentuje hranu propojující právě dva existující propojovací body. Zap
 **Omezení**:
 - počáteční a koncový bod musí být různé (`junction_start` ≠ `junction_end`)
 - mezi dvěma konkrétními body může vést maximálně jedna stěna (prostý graf)
-- tloušťka a výška musí splňovat validační pravidla (viz [rodičovský soubor](./02_data_model.md))
+- tloušťka a výška musí splňovat validační pravidla (viz [rodičovský soubor](./03_data_model.md))
 
 ## Operace strukturálního grafu
 Graf zapouzdřuje veškerou manipulaci s topologií podlaží. Po každé změně garantuje, že graf zůstane validní. CRUD = create, read, update, delete
