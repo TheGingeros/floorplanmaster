@@ -7,3 +7,4 @@
 ## [3.4 Návrh funkcí](./sections/03_Design/04_features.md)
 ## [3.5 Návrh uživatelského rozhraní](./sections/03_Design/05_ui_ux.md)
 ## [3.6 Testování a validace návrhu](./sections/03_Design/06_testing_validation.md)
+## [3.7 Hodnocení návrhu uživatelského rozhraní](./sections/03_Design/07_ui_validation.md)
