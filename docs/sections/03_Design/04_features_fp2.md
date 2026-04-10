@@ -13,7 +13,7 @@ Každá stěna ve Vrstvě 1 nese atributy `thickness`, `height` a `material_id`.
 
 Tento update je levnější než přidání/odebrání stěny — neprovádí se detekce cyklů ani fáze 1 sync (topologie mesh se nemění).
 
-## Otvory — GN Mesh Boolean *(should-have)*
+## Otvory — GN Mesh Boolean *(must-have)*
 
 Otvory (dveře, okna) jsou definovány jako závislé objekty vázané na konkrétní stěnu ve Vrstvě 1. Každý otvor nese pozici na stěně (relativní parametr $t \in [0, 1]$), šířku a výšku. Tvorba otvorů probíhá výhradně ve View vrstvě — Python předá poziční data jako pojmenované atributy a Geometry Nodes uzly díru dynamicky vyříznou.
 
