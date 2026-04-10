@@ -5,15 +5,15 @@
 ## Tabulka požadavků a scénářů použití
 úvod here
 
-| Požadavek | UC 1.1 | UC 1.2 | UC 2.1 | UC 2.2 | UC 3.1 | UC 3.2 |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **FP1 - Interaktivní tvorba místností a kreslení** |  |  | Ano | | Ano | |
-| **FP2 - Generování a úprava parametrických objektů** | Ano |  |  |Ano | | Ano|
-| **FP3 - Správa prostoru a metadat** | Ano | Ano |  | | | |
-| **FP4 - Finalizační nástroj** |  |  |  | | |Ano |
-| **FP5 - Kontextová nabídka** |  | Ano |  | Ano| | |
-| **FP6 - Interaktivní 3D manipulátory** |  | Ano |  | | | |
-| **FP7 - Automatické kótování** | Ano | Ano |  | | | |
+| Požadavek | UC 1.1 | UC 1.2 | UC 2.1 | UC 2.2 | UC 3.1 | UC 3.2 | UC 1.3 | UC 2.3 | UC 3.3 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **FP1 - Interaktivní tvorba místností a kreslení** |  | Ano | Ano | | Ano | | | | |
+| **FP2 - Generování a úprava parametrických objektů** | Ano | Ano | Ano | Ano | Ano | Ano | | | |
+| **FP3 - Správa prostoru a metadat** | Ano | Ano | Ano | | Ano | Ano | | | |
+| **FP4 - Finalizační nástroj** |  |  |  | Ano | | Ano | | | |
+| **FP5 - Kontextová nabídka** |  |  |  |  | | | | Ano | |
+| **FP6 - Interaktivní 3D manipulátory** |  |  |  |  | | | | | Ano |
+| **FP7 - Automatické kótování** |  |  |  |  | | | Ano | | |
 ## Tabulka požadavků a jejich priorit
 úvod here
 
@@ -31,8 +31,8 @@
 | **NP3 - Použitelnost a UX** | Vysoká | Vysoká | Vysoká | **3,00** | **Vysoká** |
 
 
-- Vážený průměr = (Priorita architeků * 3 + Priorita 3D Umělců * 2 + Priorita Game designerů * 1) / 6
-- Vysoká - Must Have - váha 3
-- Střední - Should have - váha 2
-- Nízká - Nice to have - váha 1
+- Vážený průměr = (Priorita architektů × 3 + Priorita 3D umělců × 2 + Priorita game designerů × 1) / 6
+- Vysoká - Must Have - váha 3 — výsledný průměr ≥ 2,50
+- Střední - Should have - váha 2 — výsledný průměr 1,00–2,49
+- Nízká - Nice to have - váha 1 — výsledný průměr < 1,00
 - Irelevantní - out of scope - váha 0
