@@ -1,5 +1,5 @@
 # FP1 - Interaktivní tvorba místností a kreslení - Pencil Tool
-úvod todo
+Pencil Tool je primárním vstupním nástrojem addonu, který umožňuje uživateli definovat půdorys klikáním bodů přímo ve 3D viewportu. Základem je modální operátor, jenž přebírá veškerou interakci s myší a klávesnicí po dobu kreslení a průběžně generuje stěny. Rozšiřující požadavky zahrnují automatický snapping k osám a průběžný vizuální náhled kreslené stěny před jejím potvrzením.
 ## Základ požadavku - must have:
 - **Kreslení půdorysu v top view** - doplněk umožní uživateli definovat půdorys klikáním bodů ve 3D prostoru v pohledu shora
 - **Nástroj jako modální operátor** - stav, kdy addon přebírá všechny vstupy z myši a klávesnice

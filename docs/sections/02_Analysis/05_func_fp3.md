@@ -1,5 +1,5 @@
 # FP3 - Správa prostoru a metadat - UC 1.1, UC 1.2
-úvod todo
+Správce prostoru zajišťuje sémantickou vrstvu nad hrubou geometrií. Addon automaticky detekuje uzavřené cykly stěn jako místnosti a zobrazuje jejich vypočítanou plochu. Nepovinné rozšíření umožňuje organizovat místnosti a podlaží do kolekcí a hromadně přepínat jejich viditelnost.
 ## Základ požadavku - must have:
 - **Detekce místností** - systém automaticky detekje uzavřené prostory stěn jako místnosti, umožní s nimi pracovat a evidovat jejich data
 - **Zobrazení objemu místností** - pro detekované místnosti systém zobrazí data o dané hmotě, například její obsah

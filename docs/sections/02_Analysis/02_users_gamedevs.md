@@ -1,5 +1,5 @@
 # Game Designeři / Level Designeři
-úvod todo
+Game a level designéři využívají addon k rychlé tvorbě a iteraci herních blokouttů. Základní scénář spočívá v opakované úpravě rozměrů místností a pozic otvorů na základě zpětné vazby z playtestingu; finálním krokem je export čisté geometrie do herního enginu jako kolizní nebo vizuální mesh.
 ## Definice
 - vývojáři her, kteří navrhují herní prostředí s důrazem na hratelnost a průchodnost
 - vytvářejí tzv. blockouty (hrubé modely úrovní), na kterých testují, jak se v prostoru pohybuje hráč nebo kamera

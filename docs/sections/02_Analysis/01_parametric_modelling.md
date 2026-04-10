@@ -1,5 +1,5 @@
 # Parametrické modelování a prostorová dispozice
-úvod here
+Tato sekce vymezuje pojmy a koncepty, na nichž addon stojí. Parametrické modelování je přístup, kde tvar objektu definují číselné parametry a geometrické vztahy místo přímé manipulace s vrcholy. Sekce vysvvětluje základní principy, rozlišuje dvě hlavní paradigmata (historické CAD/BIM a algoritmické vizuální skriptování) a uvádí pojem prostorová dispozice jako specifický předmět návrhu, se kterým addon pracuje.
 
 ## Parametrické modelování
 - způsob vytváření 3D modelů

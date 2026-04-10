@@ -1,5 +1,5 @@
 # 2.4 Scénáře použití
-úvod todo
+Scénáře použití dokumentují konkrétní pracovní postupy všech tří cílových skupin. Šest scénářů musí-mít (UC 1.1–UC 3.2) pokrývá klíčové flows od hmotové studie přes kreslení půdorysu, obkreslení 2D podkladu až po finalizaci a export. Tři scénáře by-mělo-mít (UC 1.3, UC 2.3, UC 3.3) popisují rozšiřující funkce kótování, kontextové nabídky a interaktivních gizmos.
 ## UC 1.1 Scénář 1.1: Hmotová studie na základě stavebního programu
 - architekt zadá do panelu addonu požadovanou plochu a poměr stran pro každou místnost (např. 30 m², poměr 1:1,5)
 - addon automaticky dopočítá rozměry a vloží pravoúhlou místnost do scény

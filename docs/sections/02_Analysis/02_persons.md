@@ -1,5 +1,5 @@
 # Persony
-úvod todo
+Každá z identifikovaných uživatelských skupin je blíže popsána prostřednictvím konkrétní persony, která shrnuje typický profil, technické zázemí, pracovní cíle a klíčové frustrace. Persony slouží jako referenční bod pro hodnocení návrhářských rozhodnutí: Adam zachycuje potřeby architekta, Věra potřeby vizualizátorky a Denis potřeby level designéra.
 ## Architekt Adam - zaměřeno na studii a rychlý koncept
 ### Profil
 - 32 let

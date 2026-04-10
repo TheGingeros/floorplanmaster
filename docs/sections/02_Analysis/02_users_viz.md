@@ -1,5 +1,5 @@
 # 3D Umělci a Vizualizátoři
-úvod todo
+3D umělci a vizualizátoři potřebují co nejrychleji získat hotovou základní geometrii místností, aby se mohli plně věnovat kreátivní fázi — materiálům, nasvícení a renderingu. Klíčovým požadavkem je čistá topologie výstupní geometrie, na které bez problémů fungují textury a renderovací modifikátory.
 ## Definice
 - tvůrci zaměření primárně na estetiku a tvorbu realistických renderů 
 - hrubá stavba (stěny, podlaha, strop) je pro ně pouze „plátnem“, do kterého vkládají detailní modely, nastavují materiály a světlo

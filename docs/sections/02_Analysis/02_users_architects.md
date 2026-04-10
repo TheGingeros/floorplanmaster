@@ -1,5 +1,5 @@
 # Architekti (ve fázi konceptuálního navrhování)
-úvod todo
+Architekti ve fázi konceptuálního navrhování jsou primární cílovou skupinou addonu. Potřebují nástroj, který udrží krok s rychlým tokem myšlení při skicování dispozic — umožní přesné zadávání číselných hodnot, snadné měnění parametrů místností a nedestruktivní posuv prvků bez nutnosti ručně opravovat okolní geometrii.
 ## Definice
 - profesionálové nebo studenti architektury, kteří vytvářejí prvotní hmotové a prostorové studie - koncepty
 - v této fázi neřeší mikrodetaily (např. typ kování u dveří), ale zaměřují se na celkové proporce, návaznost místností a uspořádání půdorysu na pozemku

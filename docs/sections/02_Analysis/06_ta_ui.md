@@ -1,5 +1,5 @@
 # Uživatelského rozhraní
-úvod todo
+UI systém Blenderu je postaven na principu Immediate Mode rendering — rozhraní se kompletně překresluje při každém snímku. Tato sekce popisuje, jak v tomto frameworku stavit UI addonu: hierarchii obrazovky (Screen → Area → Region), datový most RNA pro propojení UI s daty scény, systém Gizmos pro přímou manipulaci v prostoru a kontextově senzitivní overlayes jako Pie Menus a Pop-overy.
 ## Princip vykreslování
 - blender funguje na principu Immediate Mode - rozhraní se zahazuje a znovu se staví při každém překreslení obrazovky nebo při nějaké změně
 - důsledkem pro výkon je, že logika, která určuje co se má zobrazit musí být extrémně rychlá

@@ -1,5 +1,5 @@
 # 2.1 Domain Analysis
-úvod todo
+Doménová analýza vymezuje problémový kontext: Blender je výkonný obecný nástroj, ale jeho nativní workflow pro tvorbu architektonických dispozic je pomalé a destruktivní. Cílem projektu je rozšiřovací modul, který do Blenderu přináší parametrické, nedestruktivní modelování prostorových dispozic, primárně zaměřené na ranou fázi architektonického návrhu. Tato sekce shrnuje definici problému, cíl projektu a podkladovou informační analýzu.
 ## Definice Problému
 - Blender je primárně obecný 3D polygonální modelovací nástroj, nikoliv specializovaný CAD/BIM software
 - nabízí obrovskou flexibilitu, pro specifické potřeby architektonického navrhování avšak postrádá nativní nástroje, což vede k neefektivně a zdlouhavosti pracovních postupů

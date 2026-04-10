@@ -1,9 +1,9 @@
 # 2.5 Analýza požadavků
-úvod todo
+Analýza požadavků převádí identifikované potřeby uživatelů a scénáře použití do strukturovaných funkčních a nefunkčních požadavků. Funkční požadavky jsou organizovány do sedmi balíčků (FP1–FP7), nefunkční do tří oblastí (NP1–NP3). Kapitolu uzavírají dvě prioritizační tabulky: mapování požadavků na scénáře použití a vážená prioritizace podle cílových skupin.
 ## [Funkční požadavky](./05_func_requirements.md)
 ## [Nefunkční požadavky](./05_nonfunc_requirements.md)
 ## Tabulka požadavků a scénářů použití
-úvod here
+Následující tabulka mapuje každý funkční balíček na scénáře použití, které ho motivují. Prázdná buňka znamená, že daná funkce není pro tento scénář vyžadována.
 
 | Požadavek | UC 1.1 | UC 1.2 | UC 2.1 | UC 2.2 | UC 3.1 | UC 3.2 | UC 1.3 | UC 2.3 | UC 3.3 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -15,7 +15,7 @@
 | **FP6 - Interaktivní 3D manipulátory** |  |  |  |  | | | | | Ano |
 | **FP7 - Automatické kótování** |  |  |  |  | | | Ano | | |
 ## Tabulka požadavků a jejich priorit
-úvod here
+Každý požadavek je hodnocen zvlášť každou cílovou skupinou (Vysoká / Střední / Nízká / Irelevantní) a výsledná priorita se stanovuje jako vážený průměr s koeficienty odpovídajícími důležitosti skupiny (architekti ×3, vizualizátoři ×2, game designéři ×1).
 
 | Požadavek | Architekti | 3D Vizualizátoři | Game Designeři | Vážený průměr | Výsledná priorita |
 | :--- | :--- | :--- | :--- | :--- | :--- |
