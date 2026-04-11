@@ -143,51 +143,51 @@ Přehled existujících řešení odhaluje opakující se nedostatky, které př
 
 == Cílové skupiny
 
-Parametrické modelování půdorysů v Blenderu může urychlit práci architekta skicujícího varianty pro klienta, vizualizátorky přepisující PDF výkres do 3D i game designéra ladícího šíři chodby po desátém playtestingu --- ale každý z nich potřebuje od addonu něco jiného. Cílem této sekce je tyto skupiny přesně vymezit, pojmenovat jejich konkrétní frustrace s nativním Blenderem a ztělesnit je v personách, které slouží jako referenční bod pro hodnocení každého návrhového rozhodnutí.
+Parametrické modelování půdorysů v Blenderu může urychlit práci architektovi skicujícímu varianty pro klienta, vizualizátorce převádějící 2D výkresy z PDF do 3D prostoru, i game designérovi, který po sérii testování potřebuje narychlo rozšířit herní chodbu. Každý z nich však od addonu očekává něco trochu jiného. Cílem této sekce je tyto skupiny přesně vymezit, pojmenovat jejich konkrétní frustrace s nativním Blenderem a ztělesnit je v uživatelských personách. Ty pak poslouží jako měřítko pro hodnocení každého budoucího návrhového rozhodnutí.
 
 === Uživatelské skupiny
 
-Společným jmenovatelem všech tří skupin je frustrace z toho, že Blender nedokáže udržet krok s rychlostí jejich myšlení: změna dispozice přichází příliš pozdě, kdy je geometrie již svázaná do jednoho celku. Každá skupina však naráží na jiný konkrétní problém a prioritizuje jiné vlastnosti addonu, proto je nutné je popsat zvlášť.
+Společným problémem všech tří skupin je frustrace z toho, že Blender nedokáže udržet krok s rychlostí jejich myšlení: potřeba změnit dispozici často přichází ve chvíli, kdy je geometrie již pevně spojená v jeden celek a její úprava je zdlouhavá. Každá skupina však naráží na specifické problémy a upřednostňuje jiné vlastnosti addonu, proto je nutné popsat je zvlášť.
 
 ==== Architekti ve fázi konceptuálního navrhování
 
-Architekti ve fázi konceptuálního navrhování jsou primární cílovou skupinou addonu. Jde o profesionály nebo studenty architektury, kteří vytvářejí prvotní hmotové a prostorové studie. V této fázi neřeší mikrodetaily (typ kování u dveří), ale zaměřují se na celkové proporce, návaznost místností a uspořádání půdorysu.
+Architekti pracující na konceptuálním návrhu tvoří primární cílovou skupinu addonu. Jedná se o profesionály nebo studenty tvořící úvodní hmotové a prostorové studie. V této fázi se nezdržují mikrodetaily (jako je typ kování u dveří), ale zaměřují se na celkové proporce, návaznosti místností a celkové uspořádání půdorysu.
 
-Jejich klíčovými potřebami jsou rychlá iterace návrhu, přesné zadávání číselných hodnot (délka, šířka, výška v metrech či centimetrech) a nedestruktivní úpravy --- tedy možnost kdykoliv změnit parametry místnosti nebo plynule posouvat okna a dveře po stěně. Modelování architektonických prvků pomocí standardních nástrojů Blenderu je pro ně destruktivní: každá změna znamená zdlouhavou manuální opravu okolní geometrie, posouvání vrcholů a přepočítávání otvorů, což výrazně brzdí kreativní proces.
+Vyžadují rychlou iteraci návrhu, přesné zadávání číselných hodnot (délky, šířky, výšky) a nedestruktivní úpravy — tedy možnost kdykoliv změnit parametry místnosti nebo plynule posouvat okna a dveře podél stěn. Modelování těchto prvků pomocí standardních nástrojů Blenderu pro ně představuje destruktivní proces: každá změna vyžaduje manuální opravu okolní geometrie, posouvání vrcholů a složité přepočítávání otvorů. To odvádí jejich pozornost od samotného navrhování a narušuje plynulost tvůrčí práce.
 
 ==== 3D umělci a vizualizátoři
 
-3D umělci a vizualizátoři potřebují co nejrychleji získat hotovou základní geometrii místností, aby se mohli plně věnovat kreativní fázi --- materiálům, nasvícení a renderingu. Je to skupina tvůrců zaměřených primárně na estetiku a tvorbu realistických renderů, pro které je hrubá stavba pouze „plátnem", do kterého vkládají detailní modely.
+Vizualizátoři potřebují co nejrychleji postavit základní geometrii místností, aby se mohli naplno věnovat tomu hlavnímu — materiálům, nasvícení a samotnému renderingu. Jde o tvůrce zaměřené primárně na estetiku. Hrubá stavba pro ně představuje pouhé „plátno“, do kterého následně vkládají detailní modely nábytku a vybavení.
 
-Klíčovým požadavkem je kromě rychlosti také čistá topologie výstupní geometrie, na níž bez problémů fungují textury a renderovací modifikátory. Ruční modelování stěn a vyřezávání oken pomocí Boolean modifikátorů totiž often vytváří nevzhlednou topologii a ruční čistění těchto chyb je pro umělce nezáživná, neefektivní rutina.
+Kromě rychlosti je pro ně klíčová také čistá topologie výsledné geometrie, na které budou bezchybně fungovat textury a další renderovací modifikátory. Ruční modelování stěn a vyřezávání oken pomocí nativních Boolean modifikátorů totiž často vytváří nevzhlednou topologii a její ruční čištění je pro tyto umělce nepříjemnou a vysoce neefektivní rutinou.
 
-==== Game designéři a level designéři
+==== Game a level designéři
 
-Game a level designéři využívají addon k rychlé tvorbě a iteraci herních blokouttů. Jsou to vývojáři her navrhující herní prostředí s důrazem na hratelnost a průchodnost, vytvářející takzvaný blockout --- hrubý model úrovně pro testování pohybu hráče nebo kamery.
+Game a level designéři využívají addon k rychlé tvorbě a iteraci herních blockoutů — hrubých modelů úrovní sloužících k testování hratelnosti, průchodnosti a pohybu hráče či kamery.
 
-Jejich potřebami jsou modulární přístup ke stavbě prostoru, schopnost okamžitě měnit proporce na základě zpětné vazby z herního testování a snadný export hrubých tvarů do enginů jako Unreal Engine nebo Unity. Modelovací nástroje Blenderu nejsou optimalizovány pro rychlý level design, takže ruční přestavování rozměrů místností nebo přesouvání otvorů při prototypování je příliš pomalé.
+Požadují především modulární přístup k tvorbě prostoru, schopnost okamžitě měnit proporce na základě zpětné vazby z herního testování a bezproblémový export hotových tvarů do enginů jako Unreal Engine nebo Unity. Nativní modelovací nástroje Blenderu nejsou pro rychlý level design optimalizovány, a tak je ruční upravování rozměrů místností nebo přesouvání otvorů během prototypování příliš těžkopádné.
 
 === Persony
 
-Abstraktní popis skupiny neodhalí, jak se frustrace projeví v konkrétní situaci --- zda architekta brzdí přepočet sousedních stěn nebo chybějící přehled o metrech čtverečních, zda vizualizátorku zdržuje modelování zdí nebo čistění topologie po Booleanu. Pro každou skupinu proto uvádíme jednu konkrétní personu, jejíž profil, cíle a frustrace jsou použity jako zkušební kámen pro každé návrhové rozhodnutí.
+Abstraktní popis cílových skupin neukáže, jak přesně se zmíněné frustrace projevují v praxi — zda architekta brzdí přepočítávání návazných stěn, nebo spíše chybějící přehled o podlahové ploše; zda vizualizátorku zdržuje samotné modelování, nebo až následné čištění topologie po ořezu. Pro každou skupinu je proto definována jedna konkrétní persona. Její profil, cíle a frustrace slouží jako referenční bod při rozhodování o podobě a funkčnosti addonu.
 
 ==== Architekt Adam
 
-Adam je 32letý architekt pracující v menším architektonickém ateliéru, zodpovědný za úvodní studie a komunikaci s klienty ve fázi hledání tvaru a dispozice budovy. Pracuje v CAD a BIM softwaru (AutoCAD, Revit) a pro rychlé 3D koncepty a objemové studie začal používat Blender pro jeho svižnost a real-time zobrazení. Neumí programovat a Geometry Nodes jsou pro něj příliš složité.
+Adam (32 let) pracuje v menším architektonickém ateliéru a má na starosti úvodní studie a komunikaci s klienty při hledání tvaru a dispozice budovy. Běžně pracuje v profesionálních CAD a BIM programech (AutoCAD, Revit), ale pro rychlé 3D koncepty a objemové studie si oblíbil Blender díky jeho svižnosti a real-time zobrazení. Neumí však programovat a práce s Geometry Nodes je pro něj příliš složitá.
 
-Adamovým typickým cílem je během několika hodin vytvořit tři různé varianty prostorového uspořádání domu pro prezentaci klientovi, přičemž ho primárně zajímá hmota, návaznost místností a základní rozměry. Frustruje ho, že v čistém Blenderu zdržuje extrudování polygonů: když klient řekne, že chce obývák o metr širší, musí ručně posouvat vertexy a přepočítávat návaznosti, přičemž mu navíc chybí rychlý přehled o metrech čtverečních. Očekává jednoduché UI, kde zadá rozměry místnosti nebo je naskicuje, a aby při změně parametru addon automaticky zachoval tloušťku zdiva a nerozbil návaznost na další místnosti.
+Jeho typickým cílem je během pár hodin vytvořit pro klienta tři různé varianty prostorového uspořádání domu. Primárně ho zajímá hmota, návaznosti místností a základní rozměry. Frustruje ho zdlouhavé extrudování polygonů v nativním Blenderu: když klient požádá o rozšíření obývacího pokoje o metr, Adam musí ručně posouvat vertexy a složitě přepočítávat navazující stěny, přičemž mu navíc chybí okamžitý přehled o rozměrech místností. Od addonu očekává jednoduché rozhraní, ve kterém zadá rozměry místnosti nebo je naskicuje, a systém při jakékoliv změně automaticky zachová tloušťku zdiva a nerozbije návaznost na další prostory.
 
 ==== Vizualizátorka Věra
 
-Věra je 28letá vizualizátorka na volné noze, specializující se na fotorealistické interiéry pro developery a realitní kanceláře. Blender ovládá na velmi vysoké úrovni --- dokonale zná materiály, nasvícení a rendering --- a je spíše umělecky než technicky zaměřená.
+Věra (28 let) je vizualizátorka na volné noze, která se specializuje na tvorbu fotorealistických interiérů pro developery a realitní kanceláře. Blender ovládá na špičkové úrovni — má hluboké znalosti materiálů, nasvícení i renderingu — a profiluje se spíše umělecky než technicky.
 
-Od klienta dostane 2D půdorys v PDF a potřebuje co nejrychleji vytvořit 3D shell bytu, aby se mohla věnovat tomu hlavnímu --- nasvícení, materiálům a vybavení nábytkem. Frustruje ji, že modelování holých zdí ji zdržuje a nebaví, a že nativní Boolean operace na otvory vytváří ošklivou topologii, kterou musí čistit kvůli renderingu. Očekává nástroj podobný tužce, s nímž obkreslí podložený půdorys, a možnost jedním kliknutím vkládat otvory, přičemž addon se postará o čistou topologii.
+Běžně dostává od klienta 2D půdorys v PDF a potřebuje z něj co nejrychleji vytvořit hrubý 3D obraz bytu, aby se mohla věnovat tomu hlavnímu: světlu, texturám a vybavení. Zdlouhavé modelování holých stěn ji zdržuje a odvádí od kreativní práce. Navíc nativní vyřezávání otvorů přes Boolean jí často zaneřádí síť ošklivou topologií, kterou pak musí před renderingem složitě čistit. Očekává proto nástroj podobný tužce, kterým podložený půdorys jednoduše obkreslí, a možnost vkládat otvory na jedno kliknutí s jistotou, že addon udrží topologii čistou.
 
 ==== Level designer Denis
 
-Denis je 25letý vývojář v nezávislém herním studiu, který vytváří herní úrovně a testuje pohyb hráče v prostoru. Primárně pracuje v herních enginech (Unreal Engine, Unity) a Blender používá k tvorbě blockoutu --- rychlé hrubé geometrie pro testování hratelnosti.
+Denis (25 let) je vývojář v nezávislém herním studiu. Navrhuje herní úrovně a testuje pohyb hráče v prostoru. Primárně pracuje v herních enginech (Unreal Engine, Unity), přičemž Blender využívá k rychlé tvorbě takzvaných blockoutů — hrubé geometrie určené pro okamžité testování hratelnosti.
 
-Cílem je rychle vybudovat komplexní herní mapu (například spleť chodeb a místností), vyexportovat ji do enginu a projít si ji s herní postavou. Po testování Denis zjistí, že chodba je příliš úzká nebo strop moc nízký, ale pokud má úroveň vymodelovanou z jednoho kusu geometrie v čistém Blenderu, je její úprava destruktivní a zdlouhavá. Hledá proto robustnost a rychlost iterace: parametrické místnosti mu mají umožnit kliknutím na chodbu změnit v panelu šířku ze 2 metrů na 3 metry a addon se postará o zbytek. Požadavkem je i bezproblémový export, který nerozbije kolize pro herní engine.
+Jeho úkolem je v krátkém čase vybudovat rozsáhlou herní mapu (například spleť chodeb a místností), vyexportovat ji do enginu a projít si ji s herní postavou. Když při testování zjistí, že je chodba příliš úzká nebo strop příliš nízký, je úprava takové úrovně v čistém Blenderu (pokud je spojená do jednoho souvislého kusu geometrie) neefektivní a zdlouhavá. Od addonu proto vyžaduje robustnost a rychlost iterace: parametrický přístup by mu měl umožnit kliknout na chodbu, v panelu přepsat její šířku ze dvou metrů na tři, a nechat systém automaticky vyřešit zbytek. Nezbytností je pro něj také export, který po přesunu do enginu nerozbije fyzikální kolize.
 
 == Vstupy a výstupy
 
