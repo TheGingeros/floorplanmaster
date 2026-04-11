@@ -211,43 +211,43 @@ Třetí a poslední kategorií jsou *prostorová a analytická data* — rychlá
 
 == Scénáře použití
 
-Abstraktní požadavky na "parametrické úpravy" nebo "nedestruktivní workflow" nic neříkají o tom, jak rychle se musí stěna přepočítat po kliknutí nebo co se stane, když uživatel podložímateriálem PDF výkres a začne obkreslovat. Scénáře použití tyto situace konkretizují: každý z nich sleduje jednu personu od prvního kliknutí až po výsledek a odkrývá, které funkce addonu jsou pro daný úkol klíčové.
+Abstraktní požadavky typu „parametrické úpravy“ či „nedestruktivní workflow“ samy o sobě nedefinují, s jakou odezvou se musí stěna přepočítat po kliknutí myší, ani jak se systém zachová, když uživatel do scény přiloží PDF výkres a začne jej obkreslovat. Tyto situace konkretizují až scénáře použití (Use Cases). Každý scénář sleduje konkrétní personu od jejího prvního kliknutí až po požadovaný výsledek a jasně odkrývá, které funkce modulu jsou pro daný úkol klíčové.
 
 === UC 1.1: Hmotová studie na základě stavebního programu
 
-Architekt zadá do panelu addonu požadovanou plochu a poměr stran pro každou místnost (například 30~$m^2$, poměr 1:1,5). Addon automaticky dopočítá rozměry a vloží pravoúhlou místnost do scény. Uživatel opakuje vložení pro všechny místnosti ze stavebního programu a výsledkem je schematická dispozice, u níž lze v panelu ověřit plochu každé místnosti.
+Architekt zadá do panelu nástroje požadovanou podlahovou plochu a poměr stran pro každou místnost (například 30 m², poměr 1:1,5). Addon automaticky vypočítá potřebné rozměry a vloží pravoúhlou místnost přímo do scény. Uživatel tento postup zopakuje pro všechny místnosti ze stavebního programu. Výsledkem je schematická dispozice, u níž lze v panelu okamžitě ověřit plochu každého prostoru.
 
 === UC 1.2: Kreslení dispozice tužkou
 
-Architekt aktivuje kreslící nástroj a klikáním bodů přímo ve 3D viewportu načrtne dispozici. Addon průběžně generuje stěny a při uzavření cyklu automaticky detekuje místnosti. Uživatel doladí tloušťku a výšku stěn zadáním hodnot v N-panelu.
+Architekt aktivuje kreslicí nástroj a pouhým klikáním bodů přímo ve 3D viewportu načrtne hrubou dispozici. Addon průběžně generuje stěny a při uzavření polygonu automaticky detekuje vzniklé místnosti. Uživatel následně doladí tloušťku a výšku stěn zadáním přesných hodnot v N-panelu.
 
 === UC 1.3: Kontrola rozměrů vůči normovým minimům
 
-Architekt má hotovou dispozici a potřebuje ověřit, zda šíře chodeb a místností splňují normová minima. Zapne kótovací overlay v N-panelu, addon zobrazí délky všech stěn a plochy místností přímo ve viewportu prostřednictvím BLF draw handleru. Vizuálně zkontroluje kritická místa a případně upraví parametry stěn v N-panelu.
+Architekt má navrženou dispozici a potřebuje ověřit, zda šířky chodeb a rozměry místností splňují minimální normové požadavky. V N-panelu zapne kótovací vrstvu (overlay). Addon prostřednictvím překreslovacího modulu (BLF draw handler) okamžitě zobrazí délky všech stěn a plochy místností přímo ve viewportu. Uživatel tak může vizuálně zkontrolovat kritická místa a případně upravit parametry stěn v panelu.
 
 === UC 2.1: Obkreslení dodaného 2D půdorysu
 
-Vizualizátor si na pozadí Blenderu vloží obrázek s půdorysem, aktivuje kreslící nástroj a se zapnutým přichytáváním na existující junctions odklikává rohy místností přesně podle obrázku. Addon průběžně generuje stěny a automaticky detekuje místnosti při uzavření cyklů. Uživatel nastaví výšku a tloušťku stěn v N-panelu.
+Vizualizátorka si na pozadí scény vloží referenční obrázek s půdorysem. Aktivuje kreslicí nástroj a se zapnutým přichytáváním (snapping) na existující uzly odklikává rohy místností přesně podle podkladu. Addon během kreslení průběžně generuje stěny a při uzavření cyklů automaticky detekuje jednotlivé místnosti. Výšku a tloušťku stěn následně hromadně nebo individuálně nastaví v N-panelu.
 
 === UC 2.2: Příprava modelu pro renderovací pipeline
 
-Vizualizátor na existujícím půdorysu vybere stěnu a v N-panelu přidá otvor zadáním přesných rozměrů (například 1500~×~1250~mm) a výšky parapetu. Addon dynamicky vyřízne otvor pomocí GN Mesh Boolean; při změně rozměrů v panelu se otvor okamžitě aktualizuje. Po dokončení dispozice uživatel spustí finalizační nástroj, který aplikuje modifikátory, zpracuje UV mapy a připraví statickou mesh pro renderovací pipeline.
+Vizualizátorka vybere na existujícím půdorysu konkrétní stěnu a v N-panelu k ní přidá otvor zadáním přesných rozměrů (například 1500 × 1250 mm). Addon otvor dynamicky vyřízne pomocí logiky Geometry Nodes (Mesh Boolean). Při jakékoliv změně rozměrů v panelu se otvor okamžitě zaktualizuje. Po dokončení celé dispozice uživatelka spustí finalizační nástroj, který aplikuje všechny modifikátory, zpracuje UV mapy a připraví čistou statickou síť (mesh) pro renderovací pipeline.
 
 === UC 2.3: Rychlá editace vlastností prvků přes kontextovou nabídku
 
-Vizualizátor chce přiřadit různé materiály podlahy jednotlivým místnostem bez přepínání do separátního panelu. Klikne pravým tlačítkem na plochu místnosti ve viewportu, kontextová nabídka zobrazí akce pro danou místnost, uživatel vybere „Změnit materiál podlahy" a přiřadí odpovídající materiál; stejným způsobem místnost přejmenuje.
+Vizualizátorka potřebuje přiřadit různé materiály podlah jednotlivým místnostem, ideálně bez neustálého přepínání do postranních panelů. Klikne proto pravým tlačítkem myši na plochu místnosti ve viewportu. Vyvolaná kontextová nabídka zobrazí dostupné akce pro daný prvek. Uživatelka zvolí možnost „Změnit materiál podlahy“ a vybere odpovídající texturu. Stejným způsobem může místnost rovnou přejmenovat.
 
 === UC 3.1: Rychlý level blockout
 
-Game designer aktivuje kreslící nástroj a hrubě načrtne sérii navazujících místností. Soustředí se na proporce a měřítko vůči hráčské postavě, přičemž addon průběžně generuje stěny a detekuje místnosti. Výšku stěn nastaví uniformně v N-panelu pro celý půdorys.
+Game designér aktivuje kreslicí nástroj a hrubě načrtne sérii navazujících místností. Soustředí se především na proporce a měřítko prostoru vůči hráčské postavě. Addon mezitím průběžně generuje stěny a detekuje vznikající místnosti. Uniformní výšku stěn pro celý půdorys designér následně nastaví v N-panelu.
 
 === UC 3.2: Finalizace a export herní úrovně
 
-Game designer na hotovém blokoute přidá dveřní otvory zadáním parametrů v N-panelu na vybraných stěnách, ověří plochy místností viditelné v N-panelu a spustí finalizační nástroj. Ten aplikuje GN modifikátory, konvertuje UV atributy a připraví statickou mesh na export ve formátu FBX nebo GLTF.
+Na hotovém blockoutu přidá game designér dveřní otvory zadáním požadovaných parametrů v N-panelu u vybraných stěn. Zkontroluje podlahové plochy místností zobrazené v panelu a spustí finalizační nástroj. Ten aplikuje modifikátory Geometry Nodes, zkonvertuje atributy UV map a připraví statickou geometrii pro bezproblémový export do herního enginu ve formátu FBX nebo glTF.
 
-=== UC 3.3: Interaktivní adjustace rozložení místností
+=== UC 3.3: Interaktivní úprava rozložení místností
 
-Game designer zjistí po playtestingu, že chodba mezi dvěma arénami je příliš úzká pro pohyb hráče. Vybere junction na kraji chodby a pomocí gizma pohybu táhne bod v rovině XY; addon zachovává planaritu a průběžně přepočítává sousední místnosti. Výsledná šíře chodby je ověřena vizuálně ve viewportu bez nutnosti zadávat číselné hodnoty.
+Game designér po herním testování (playtestingu) zjistí, že chodba mezi dvěma arénami je pro pohyb hráče příliš úzká. Vybere proto uzel na okraji chodby a pomocí 3D manipulátoru (gizmo) bod plynule posune v rovině XY. Addon automaticky udržuje planaritu a v reálném čase přepočítává sousední místnosti. Výslednou šířku chodby designér ověří čistě vizuálně ve viewportu, aniž by musel zadávat přesné číselné hodnoty.
 
 == Analýza požadavků
 
