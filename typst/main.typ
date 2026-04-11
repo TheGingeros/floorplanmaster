@@ -149,19 +149,19 @@ Parametrické modelování půdorysů v Blenderu může urychlit práci architek
 
 Společným problémem všech tří skupin je frustrace z toho, že Blender nedokáže udržet krok s rychlostí jejich myšlení: potřeba změnit dispozici často přichází ve chvíli, kdy je geometrie již pevně spojená v jeden celek a její úprava je zdlouhavá. Každá skupina však naráží na specifické problémy a upřednostňuje jiné vlastnosti addonu, proto je nutné popsat je zvlášť.
 
-==== Architekti ve fázi konceptuálního navrhování
+==== 1. Architekti ve fázi konceptuálního navrhování
 
 Architekti pracující na konceptuálním návrhu tvoří primární cílovou skupinu addonu. Jedná se o profesionály nebo studenty tvořící úvodní hmotové a prostorové studie. V této fázi se nezdržují mikrodetaily (jako je typ kování u dveří), ale zaměřují se na celkové proporce, návaznosti místností a celkové uspořádání půdorysu.
 
 Vyžadují rychlou iteraci návrhu, přesné zadávání číselných hodnot (délky, šířky, výšky) a nedestruktivní úpravy — tedy možnost kdykoliv změnit parametry místnosti nebo plynule posouvat okna a dveře podél stěn. Modelování těchto prvků pomocí standardních nástrojů Blenderu pro ně představuje destruktivní proces: každá změna vyžaduje manuální opravu okolní geometrie, posouvání vrcholů a složité přepočítávání otvorů. To odvádí jejich pozornost od samotného navrhování a narušuje plynulost tvůrčí práce.
 
-==== 3D umělci a vizualizátoři
+==== 2. 3D umělci a vizualizátoři
 
 Vizualizátoři potřebují co nejrychleji postavit základní geometrii místností, aby se mohli naplno věnovat tomu hlavnímu — materiálům, nasvícení a samotnému renderingu. Jde o tvůrce zaměřené primárně na estetiku. Hrubá stavba pro ně představuje pouhé „plátno“, do kterého následně vkládají detailní modely nábytku a vybavení.
 
 Kromě rychlosti je pro ně klíčová také čistá topologie výsledné geometrie, na které budou bezchybně fungovat textury a další renderovací modifikátory. Ruční modelování stěn a vyřezávání oken pomocí nativních Boolean modifikátorů totiž často vytváří nevzhlednou topologii a její ruční čištění je pro tyto umělce nepříjemnou a vysoce neefektivní rutinou.
 
-==== Game a level designéři
+==== 3. Game a level designéři
 
 Game a level designéři využívají addon k rychlé tvorbě a iteraci herních blockoutů — hrubých modelů úrovní sloužících k testování hratelnosti, průchodnosti a pohybu hráče či kamery.
 
@@ -221,6 +221,10 @@ Architekt zadá do panelu addonu požadovanou plochu a poměr stran pro každou 
 
 Architekt aktivuje kreslící nástroj a klikáním bodů přímo ve 3D viewportu načrtne dispozici. Addon průběžně generuje stěny a při uzavření cyklu automaticky detekuje místnosti. Uživatel doladí tloušťku a výšku stěn zadáním hodnot v N-panelu.
 
+=== UC 1.3: Kontrola rozměrů vůči normovým minimům
+
+Architekt má hotovou dispozici a potřebuje ověřit, zda šíře chodeb a místností splňují normová minima. Zapne kótovací overlay v N-panelu, addon zobrazí délky všech stěn a plochy místností přímo ve viewportu prostřednictvím BLF draw handleru. Vizuálně zkontroluje kritická místa a případně upraví parametry stěn v N-panelu.
+
 === UC 2.1: Obkreslení dodaného 2D půdorysu
 
 Vizualizátor si na pozadí Blenderu vloží obrázek s půdorysem, aktivuje kreslící nástroj a se zapnutým přichytáváním na existující junctions odklikává rohy místností přesně podle obrázku. Addon průběžně generuje stěny a automaticky detekuje místnosti při uzavření cyklů. Uživatel nastaví výšku a tloušťku stěn v N-panelu.
@@ -228,6 +232,10 @@ Vizualizátor si na pozadí Blenderu vloží obrázek s půdorysem, aktivuje kre
 === UC 2.2: Příprava modelu pro renderovací pipeline
 
 Vizualizátor na existujícím půdorysu vybere stěnu a v N-panelu přidá otvor zadáním přesných rozměrů (například 1500~×~1250~mm) a výšky parapetu. Addon dynamicky vyřízne otvor pomocí GN Mesh Boolean; při změně rozměrů v panelu se otvor okamžitě aktualizuje. Po dokončení dispozice uživatel spustí finalizační nástroj, který aplikuje modifikátory, zpracuje UV mapy a připraví statickou mesh pro renderovací pipeline.
+
+=== UC 2.3: Rychlá editace vlastností prvků přes kontextovou nabídku
+
+Vizualizátor chce přiřadit různé materiály podlahy jednotlivým místnostem bez přepínání do separátního panelu. Klikne pravým tlačítkem na plochu místnosti ve viewportu, kontextová nabídka zobrazí akce pro danou místnost, uživatel vybere „Změnit materiál podlahy" a přiřadí odpovídající materiál; stejným způsobem místnost přejmenuje.
 
 === UC 3.1: Rychlý level blockout
 
@@ -237,15 +245,7 @@ Game designer aktivuje kreslící nástroj a hrubě načrtne sérii navazující
 
 Game designer na hotovém blokoute přidá dveřní otvory zadáním parametrů v N-panelu na vybraných stěnách, ověří plochy místností viditelné v N-panelu a spustí finalizační nástroj. Ten aplikuje GN modifikátory, konvertuje UV atributy a připraví statickou mesh na export ve formátu FBX nebo GLTF.
 
-=== UC 1.3: Kontrola rozměrů vůči normovým minimům _(should-have)_
-
-Architekt má hotovou dispozici a potřebuje ověřit, zda šíře chodeb a místností splňují normová minima. Zapne kótovací overlay v N-panelu, addon zobrazí délky všech stěn a plochy místností přímo ve viewportu prostřednictvím BLF draw handleru. Vizuálně zkontroluje kritická místa a případně upraví parametry stěn v N-panelu.
-
-=== UC 2.3: Rychlá editace vlastností prvků přes kontextovou nabídku _(should-have)_
-
-Vizualizátor chce přiřadit různé materiály podlahy jednotlivým místnostem bez přepínání do separátního panelu. Klikne pravým tlačítkem na plochu místnosti ve viewportu, kontextová nabídka zobrazí akce pro danou místnost, uživatel vybere „Změnit materiál podlahy" a přiřadí odpovídající materiál; stejným způsobem místnost přejmenuje.
-
-=== UC 3.3: Interaktivní adjustace rozložení místností _(should-have)_
+=== UC 3.3: Interaktivní adjustace rozložení místností
 
 Game designer zjistí po playtestingu, že chodba mezi dvěma arénami je příliš úzká pro pohyb hráče. Vybere junction na kraji chodby a pomocí gizma pohybu táhne bod v rovině XY; addon zachovává planaritu a průběžně přepočítává sousední místnosti. Výsledná šíře chodby je ověřena vizuálně ve viewportu bez nutnosti zadávat číselné hodnoty.
 
