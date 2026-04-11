@@ -191,19 +191,23 @@ Jeho úkolem je v krátkém čase vybudovat rozsáhlou herní mapu (například 
 
 == Vstupy a výstupy
 
-FlorPlanMaster musí fungovat v reálných pracovních situacích: architekt přichází s prázdnou scénou a nápadem v hlavě, vizualizátorka s PDF půdorysem od klienta, game designer s přibližnými rozměry z herního designového dokumentu. Tato sekce vymezuje, jaké formy vstupních dat addon akceptuje a jaké výstupy z nich produkuje, aby bylo od začátku jasné, kde životní cyklus modelu začíná a kde končí.
+FloorPlanMaster je navržen tak, aby dokázal reagovat na reálné pracovní situace: architekt často začíná s prázdnou scénou a úvodní myšlenkou, vizualizátorka dostane od klienta 2D půdorys ve formátu PDF a game designér vychází z přibližných rozměrů v herním design dokumentu. Tato sekce jasně vymezuje, jaké formy vstupních dat addon zpracovává a jaké výstupy následně produkuje, čímž definuje hranice životního cyklu celého modelu.
 
 === Vstupy
 
-Addon přijímá tři kategorie vstupů. První kategorií jsou *2D podklady* --- naskenované ruční skici, PDF výkresy, obrázky půdorysů nebo importované 2D CAD výkresy (DXF/DWG), které uživatel potřebuje transformovat do 3D. Podkladový obrázek se vloží na pozadí scény a slouží jako reference pro kreslení.
+Addon dokáže zpracovat tři základní kategorie vstupů. První kategorií jsou *2D podklady* — naskenované ruční skice, výkresy v PDF, obrázky půdorysů nebo importované 2D CAD výkresy (DXF/DWG), které uživatel potřebuje převést do 3D prostoru. Podkladový soubor se typicky umístí na pozadí scény a slouží jako vizuální reference pro následné obkreslování.
 
-Druhou kategorií je *kvantitativní zadání* --- seznam požadavků od klienta nebo game designéra, například „potřebujeme obývák o rozloze 30~$m^2$" nebo „šířka chodby musí být přesně 2 metry". Tyto hodnoty se zadávají přímo do panelu addonu jako číselné parametry.
+Druhou kategorií je *kvantitativní zadání* — přesný seznam požadavků od klienta nebo technické specifikace (např. „obývací pokoj musí mít minimálně 30 m²“ nebo „minimální šířka chodby jsou 2 metry“). Tyto hodnoty lze přímo zadávat do panelu nástroje jako číselné parametry.
 
-Třetí kategorií je *čistý koncept* --- uživatel nemá žádný podklad, začíná s prázdnou scénou a potřebuje nástroj, který udrží krok s jeho rychlým tokem myšlenek při volném navrhování.
+Třetí kategorií je *volný návrh* — situace, kdy uživatel nemá žádné přesné podklady, začíná s prázdnou scénou a potřebuje nástroj, který ho nebude omezovat v rychlém a intuitivním skicování úvodních konceptů.
 
 === Výstupy
 
-Addon produkuje tři kategorie výstupů. *3D hmotový model* je čistá prostorová 3D reprezentace stěn, místností a otvorů, sloužící k vizuální kontrole proporcí, tvorbě úvodních renderů, světelných studií nebo k prezentaci klientovi. *Optimalizovaná geometrie pro export* je vyčištěný 3D model bez topologických chyb, který si level designer může okamžitě vyexportovat (například přes FBX nebo OBJ) do herního enginu. *Přehledná prostorová data* slouží jako rychlá zpětná vazba --- zobrazení vypočítaných metrů čtverečních jednotlivých místností a kontrola tloušťky nosných stěn.
+Výstupy z addonu se dělí do tří kategorií. Tou první je *3D hmotový model* — prostorová 3D reprezentace stěn, místností a otvorů, která slouží primárně k vizuální kontrole proporcí, tvorbě hmotových renderů, analýze osvětlení nebo k základní prezentaci klientovi. 
+
+Druhou kategorií je *optimalizovaná geometrie pro export*. Jedná se o čistou topologickou síť (mesh) bez chyb nebo překrývajících se stěn, kterou může level designér okamžitě a bez dalších úprav vyexportovat (například do formátu FBX nebo OBJ) pro použití v herním enginu. 
+
+Třetí a poslední kategorií jsou *prostorová a analytická data* — rychlá vizuální zpětná vazba pro uživatele. Zahrnuje automatické výpočty podlahové plochy jednotlivých místností a jasnou indikaci tloušťky stěn přímo v uživatelském rozhraní.
 
 == Scénáře použití
 
