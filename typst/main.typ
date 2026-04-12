@@ -350,7 +350,7 @@ Každý požadavek je hodnocen zvlášť každou cílovou skupinou (Vysoká / St
 
 == Technická analýza
 
-Funkční požadavky říkají _co_ má addon umět; technická analýza odpovídá na otázku _jak_ --- které části Blender API to umožňují, jaké jsou jejich limity a kde hrozí designová pasti, která by ovlivnila celou architekturu. Klíčové otázky jsou, jak zachytit kreslení půdorysu v reálném čase bez degradace výkonu, jak reprezentovat půdorys jako živý datový model schopný detekovat místnosti a reagovat na každou změnu stěny, a jak parametrické objekty převést do statické geometrie připravené pro export.
+Funkční požadavky říkají _co_ má addon umět; technická analýza odpovídá na otázku _jak_ --- které části Blender API to umožňují, jaké jsou jejich limity a kde hrozí designová nedostatky, které by ovlivnily celou architekturu. Klíčové otázky jsou, jak zachytit kreslení půdorysu v reálném čase bez ztráty výkonu, jak reprezentovat půdorys jako responsivní datový model schopný detekovat místnosti a reagovat na každou změnu stěny, a jak parametrické objekty převést do statické geometrie připravené pro export.
 
 === Architektura Blenderu
 
@@ -360,7 +360,7 @@ Blender využívá kombinaci vzoru MVC (Model-View-Controller), která umožňuj
 
 === Interaktivní kreslení a interakce ve viewportu
 
-Kreslení stěny musí být plynulé: kurzor se pohybuje, náhledová linka sleduje jeho polohu, stěna se potvrdí kliknutím --- ale každý z těchto kroků musí být zpracován v rámci jednoho snímku, jinak přijde pocit lag. Tato sekce vysvětluje, jak Blender takovou interakci umožňuje přes modální operátory a stavový automat, a kde leží výkonnostní strop Pythonu, který je nutné obejít delegováním práce na C++ jádro.
+Kreslení stěny musí být plynulé: kurzor se pohybuje, náhledová linka sleduje jeho polohu, stěna se potvrdí kliknutím --- ale každý z těchto kroků musí být zpracován v rámci jednoho snímku. Tato sekce vysvětluje, jak Blender takovou interakci umožňuje přes modální operátory a stavový automat, a kde leží výkonnostní limit Pythonu, který je nutné obejít delegováním práce na C++ jádro.
 
 ==== Modální operátory
 
@@ -383,7 +383,7 @@ Inicializace operátoru začíná metodou `invoke()`, která připraví počáte
 
 Metoda `modal()` funguje na principu stavového automatu, který umožňuje operátoru měnit chování v závislosti na fázi interakce. Pro kreslení půdorysu jsou typické stavy: `START` (čekání na první kliknutí), `DRAWING` (průběžné přepočítávání délky a úhlu stěny a vykreslování náhledové linky přes GPU modul), `EXTRUDING` (definování tloušťky nebo výšky) a `FINISHING` (zápis geometrie do scény a čištění draw handlerů).
 
-Stavový automat přináší tři klíčové výhody: řízení složitosti při implementaci vícekrokových nástrojů, možnost kontextového snappingu (v různých stavech jsou aktivní různé typy přichytávání) a optimalizaci výkonu --- složité operace se spouštějí pouze při přechodu mezi stavy, zatímco při pohybu myši se aktualizuje pouze lehká vizualizace.
+Stavový automat přináší tři klíčové výhody: řízení složitosti při implementaci vícekrokových nástrojů, možnost kontextového snappingu (v různých stavech jsou aktivní různé typy přichytávání) a optimalizaci výkonu --- složité operace se spouštějí pouze při přechodu mezi stavy, zatímco při pohybu myši se aktualizuje pouze drobná vizualizace.
 
 ==== Limity výkonu Pythonu v Blenderu
 
