@@ -449,7 +449,7 @@ Hlavním architektonickým rozhodnutím při použití grafové reprezentace je 
 
 S grafovou reprezentací úzce souvisí i strategie automatické detekce místností při uzavírání stěnových cyklů, jíž se detailně věnuje následující podkapitola.
 
-==== Detekce místností: lazy přístup
+==== Způsoby detekce místností
 
 Pro detekci místností existují dva přístupy. _Eager_ přístup ihned při vzniku stěny vytváří dočasný objekt místnosti, který je při uzavření cyklu validován. Toto vede k řadě problémů: nedefinovanému stavu dočasného objektu, konfliktu při slučování po uzavření cyklu (systém musí vybrat, který dočasný objekt zachovat), problémům se simultánním uzavřením více cyklů a složité vlastní správou Undo historie.
 
@@ -457,18 +457,15 @@ _Lazy_ přístup naproti tomu vytváří místnost výhradně tehdy, kdy je dete
 
 === Tvorba otvorů pro okna a dveře
 
-Okno osazené ve stěně se musí pohybovat spolu s ní, přizpůsobit při změně její tloušťky a okamžitě regenerovat otvor bez jakéhokoli ručního zásahu --- to je základní podmínka nedestruktivního workflow. Splnit ji lze více způsoby, přičemž každý nabízí jiný kompromis mezi výkonem, numerickou stabilitou a topologickou čistotou výsledné geometrie. Tato sekce porovnává tři přístupy a zdůvodňuje, proč byl pro FloorPlanMaster vybrán právě GN Mesh Boolean.
+Okno osazené ve stěně se musí pohybovat spolu s ní, přizpůsobit při změně její tloušťky a okamžitě regenerovat otvor bez jakéhokoli ručního zásahu --- to je základní podmínka nedestruktivního workflow. Splnit ji lze více způsoby, přičemž každý nabízí jiný kompromis mezi výkonem, numerickou stabilitou a topologickou čistotou výsledné geometrie. Tato sekce porovnává následující tři hlavní přístupy jak zmíněnou podmínku splnit:
 
-V parametrickém modelování je kritické, aby otvory pro okna a dveře byly plně dynamické: při posunu stěny se otvor musí posunout s ní a automaticky regenerovat bez manuálního zásahu. Lze to řešit třemi způsoby.
+_Boolean operace spravované přes Python API_ využívají standardní modifikátorový stack, kde Python dynamicky vytváří cutter objekty a přiřazuje je ke stěně. Hlavní nevýhodou je vysoká režie při správě stacku s desítkami modifikátorů a numerická nestabilita --- pokud souřadnice po transformaci nejsou binárně identické (kvůli zaokrouhlení floatů), `Exact` solver může selhat při detekci společných ploch.
 
-_Boolean operace spravované přes Python API_ využívají standardní modifikátorový stack, kde Python dynamicky vytváří cutter objekty a přiřazuje je ke stěně. Hlavní nevýhodou je extrémní režie při správě stacku s desítkami modifikátorů a numerická nestabilita --- pokud souřadnice po transformaci nejsou binárně identické (kvůli zaokrouhlení floatů), `Exact` solver může selhat při detekci společných ploch.
+_Mesh Boolean v Geometry Nodes_ nahrazuje objektový stack jedním uzlovým stromem, kde operace probíhají nad toky geometrických dat. Na rozdíl od modifikátorů, které pracují v párech, uzel Mesh Boolean v GN dokáže zpracovat celé kolekce instancí oken jako jeden sloučený vstup --- to dramaticky snižuje počet reevaluací. Problémem je, že solver považuje vše zapojené do vstupu za jediné těleso; pokud se dvě stěny překrývají, může dojít ke vzniku dutých výsledků.
 
-_Mesh Boolean v Geometry Nodes_ nahrazuje objektový stack jedním uzlovým stromem, kde operace probíhají nad proudy geometrických dat. Na rozdíl od modifikátorů, které pracují v párech, uzel Mesh Boolean v GN dokáže zpracovat celé kolekce instancí oken jako jeden sloučený vstup --- to dramaticky snižuje počet reevaluací. Problémem je, že solver považuje vše zapojené do vstupu za jediné těleso; pokud se dvě stěny překrývají, může dojít ke vzniku dutých výsledků.
+_Metody bez Boolean operací_ se vyhýbají výpočtům průsečíků a otvory vkládají přímo do procesu generování topologie. Curve Trimming ořízne vodicí křivku před vytažením do 3D, čímž vzniknou fyzické mezery s čistou topologií --- tato metoda však vyžaduje reprezentaci stěn jako Blender Curve objektů a není kompatibilní s architekturou pracující s base meshem a Named Attributes. Modulární instancování chápe stěnu jako pole buněk s plnými nebo prázdnými moduly. Vertex Group Topology označí specifické vrcholy atributem `is_window` a GN je posunou aby vytvořily pravoúhlý otvor.
 
-_Metody bez Boolean operací_ se vyhýbají drahým výpočtům průsečíků a otvory vkládají přímo do procesu generování topologie. Curve Trimming ořízne vodicí křivku před vytažením do 3D, čímž vzniknou fyzické mezery s čistou topologií --- tato metoda však vyžaduje reprezentaci stěn jako Blender Curve objektů a není kompatibilní s architekturou pracující s base meshem a Named Attributes. Modulární instancování chápe stěnu jako pole buněk s plnými nebo prázdnými moduly. Vertex Group Topology označí specifické vrcholy atributem `is_window` a GN je posunou aby vytvořily pravoúhlý otvor.
-
-Zvolená metoda pro tento addon je výhradně *GN Mesh Boolean*, která pracuje přímo nad mesh doménami a je kompatibilní s hybridní architekturou.
-
+Následující tabulka zobrazuje hlavní rozdíly mezi zmíněnými přístupy:
 #figure(
   table(
     columns: (1fr, 1fr, 1fr, 1fr),
