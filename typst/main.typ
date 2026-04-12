@@ -483,9 +483,7 @@ Následující tabulka zobrazuje hlavní rozdíly mezi zmíněnými přístupy:
 
 === Ukládání dat a správa metadat
 
-Parametrický addon pracuje s daty na dvou odlišných rovinách: s geometrií stěn, která musí přežít každý Undo krok, i s metadaty místností --- jejich názvem, typem a plochou --- která musí zůstat konzistentní při sdílení souborů nebo instancování objektů. Tato sekce analyzuje, které mechanismy Blender API pro tato data nabízí, na které úrovni hierarchie scény je přirozeně ukládat a jak zajistit, aby grafové struktury v paměti přežily uložení a opětovné otevření `.blend` souboru.
-
-Architektonický addon vyžaduje integraci sémantických informací, které definují prvky jako stěna, okno nebo místnost v kontextu jejich fyzikálních a funkčních vlastností.
+Parametrický addon pracuje s daty na dvou odlišných úrovní: s geometrií stěn, která musí přežít každý zpětný (Undo) krok, i s metadaty místností --- jejich názvem, typem a plochou --- která musí zůstat konzistentní při sdílení souborů nebo instancování objektů. Tato sekce analyzuje, které mechanismy Blender API pro tato data nabízí, na které úrovni hierarchie BLenderu je přirozeně ukládat a jak zajistit, aby grafové struktury v paměti přežily uložení a opětovné otevření `.blend` souboru.
 
 ==== Systémy pro správu uživatelských parametrů
 
@@ -499,15 +497,9 @@ Rozhodnutí, na jakou úroveň hierarchie Blenderu budou metadata uložena, má 
 
 Úroveň *Scéna* (`bpy.types.Scene`) je vhodná pro globální parametry projektu. Data specifická pro jednotlivé místnosti jsou na této úrovni nevhodná: smazání objektu ve viewportu nezpůsobí automatické smazání metadat v kolekci, což vede k hromadění dat. Úroveň *Objekt* (`bpy.types.Object`) nese informace o transformaci a viditelnosti. Komplikace nastávají při instancování: vytvoření instance přes Alt+D vytvoří dva objekty sdílející stejná geometrická data, ale s unikátními daty na úrovni Object --- změna rozměru jednoho okna by se neprojevila u ostatních instancí. Úroveň *Geometrie* (`bpy.types.Mesh`) je nejvhodnějším přístupem pro architektonické prvky: mesh reprezentuje „definici typu" prvku a všechny sdílené instance mají identické parametry, v souladu s principy BIM.
 
-Z tohoto vyplývá hybridní model: parametry definující tvar a funkci (rozměry, materiály, typ místnosti) se ukládají na úroveň Mesh; identifikační data a specifické stavy (GUID prvku, stav revize) na úroveň Object; projektová data (název akce, stupeň dokumentace) na úroveň Scene.
-
-==== Systém prostorových závislostí
-
-Typickým požadavkem je, aby se okno automaticky posunulo při změně délky stěny. Standardní parent-child relace přenáší transformaci celého objektu, ale nereaguje na změny vnitřní geometrie --- pro architektonické prvky je tedy nedostatečná. Pro komplexnější závislosti, jako je propojení pozice okna s parametry stěny uloženými v PropertyGroup, jsou vhodné *Drivers* --- systém ovladačů, kde x-ová souřadnice okna může být definována výrazem $"pos"_x = "wall.length" times "window.relative_position"$. Drivers se vyhodnocují v rámci DepsGraphu Blenderu, což zajišťuje vysoký výkon. Pro případy, které nelze vyřešit modifikátory nebo Drivers (komplexní topologické změny), slouží aplikační handler `bpy.app.handlers.depsgraph_update_post`.
-
 ==== Perzistence grafových dat
 
-Blender při uložení `.blend` souboru automaticky ukládá mesh geometrii a Custom Properties objektů --- Python objekty v paměti (NetworkX grafy) nikoli. Po zavření a opětovném otevření souboru jsou grafy ztraceny, pokud nejsou zachovány.
+Blender při uložení `.blend` souboru automaticky ukládá mesh geometrii a Custom Properties objektů --- Python objekty v paměti (např. NetworkX grafy) nikoli. Po zavření a opětovném otevření souboru jsou grafy ztraceny, pokud nejsou zachovány.
 
 #figure(
   table(
@@ -520,8 +512,6 @@ Blender při uložení `.blend` souboru automaticky ukládá mesh geometrii a Cu
   ),
   caption: [Přístupy k perzistenci grafových dat v Blenderu],
 ) <tab-persistence>
-
-Pro addon využívající named attributes na base meshi je výhodná *rekonstrukce z meshe* --- mesh přirozeně obsahuje veškerou topologickou informaci, takže samostatná serializace grafů je nadbytečná. Jedinou podmínkou je, aby mesh byl udržován jako jediný zdroj pravdivých dat.
 
 ==== Perzistence globálních nastavení addonu
 
