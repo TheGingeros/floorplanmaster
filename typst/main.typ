@@ -251,57 +251,57 @@ Game designér po herním testování (playtestingu) zjistí, že chodba mezi dv
 
 == Analýza požadavků
 
-Z person a scénářů použití vyplývá, že addon musí zvládat kreslit půdorys tužkou, parametricky upravovat stěny a otvory, detekovat místnosti a jejich plochy i připravit výsledek pro renderovací nebo herní pipeline --- ale ne všechny tyto schopnosti jsou stejně důležité pro stejné lidi. Tato sekce proto potřeby strukturuje do sedmi funkčních a tří nefunkčních balíčků a uzavírá je prioritizační analýzou, která váží každý požadavek napříč cílovými skupinami.
+Z definovaných person a scénářů použití vyplývá, že modul musí umožňovat interaktivní kreslení půdorysu, parametrickou úpravu stěn a otvorů, automatickou detekci místností i přípravu modelu pro další zpracování (rendering či nasazení v herním enginu). Ne všechny tyto funkce jsou však pro jednotlivé cílové skupiny stejně důležité. Tato sekce proto strukturovaně rozděluje zjištěné potřeby do sedmi funkčních a tří nefunkčních požadavků a ústí v prioritizační analýzu, která hodnotí váhu každého požadavku napříč cílovými skupinami.
 
 === Funkční požadavky
 
-Sedm funkčních balíčků pokrývá celý funkční rozsah addonu --- od interaktivního kreslení přes parametrickou správu prvků až po finalizaci a pomocné overlaye.
+Následujících sedm funkčních požadavků pokrývá celý zamýšlený rozsah modulu – od interaktivního kreslení přes parametrickou správu prvků až po finalizaci modelu a integraci pomocných grafických vrstev.
 
-==== FP1 --- Interaktivní tvorba místností a kreslení (Pencil Tool)
+==== FP1 — Interaktivní tvorba místností a kreslení (Pencil Tool)
 
-Pencil Tool je primárním vstupním nástrojem addonu, který umožňuje uživateli definovat půdorys klikáním bodů přímo ve 3D viewportu. Základem je modální operátor, jenž přebírá veškerou interakci s myší a klávesnicí po dobu kreslení a průběžně generuje stěny.
+Nástroj pro kreslení („tužka“) představuje primární vstupní metodu addonu. Umožňuje uživateli definovat půdorys klikáním bodů přímo ve 3D scéně. Jádrem je modální operátor, který po dobu kreslení přebírá veškerou interakci s myší a klávesnicí a průběžně generuje stěny.
 
-Jako nezbytnou (must-have) část zahrnuje tento balíček kreslení půdorysu v pohledu shora a stav, kdy addon přebírá všechny vstupy jako modální operátor. Jako rozšíření (should-have) je definován automatický snapping k osám XYZ na základě vzdálenosti kurzoru od existujících bodů nebo os. Jako pěkné doplnění (nice-to-have) je označeno průběžné vykreslování náhledu nové stěny před potvrzením --- systém by neustále zachytával pozici kurzoru, vykresloval náhledovou linku a čekal na kliknutí nebo stisk klávesy Enter.
+Nezbytným minimem pro realizaci (must-have) je kreslení půdorysu v pohledu shora a spolehlivá správa uživatelských vstupů modálním operátorem. Důležitým rozšířením (should-have) je automatické přichytávání (snapping) k osám XYZ odvozené od vzdálenosti kurzoru k existujícím bodům či osám. Jako volitelné vylepšení (nice-to-have) se nabízí průběžné vykreslování náhledu budoucí stěny před jejím potvrzením – systém by neustále sledoval pozici kurzoru, kreslil vodicí linku a čekal na kliknutí nebo stisk klávesy Enter.
 
-==== FP2 --- Generování a úprava parametrických objektů
+==== FP2 — Generování a úprava parametrických objektů
 
-Tento balíček definuje parametrické chování všech prvků půdorysu --- stěn i otvorů. Každý prvek si pamatuje své parametry (délka, výška, tloušťka, pozice) a při jejich změně přepočítá svou geometrii, zachová relativní polohu navázaných otvorů a dynamicky je aktualizuje.
+Tento požadavek definuje parametrické chování všech prvků půdorysu, tedy stěn i otvorů. Každý objekt si uchovává své parametry (délku, výšku, tloušťku, pozici v prostoru). Při jejich změně se automaticky přepočítá geometrie prvku a dynamicky se zaktualizuje poloha případných navázaných otvorů.
 
-Jako must-have jsou vyžadována: dynamická reprezentace stěn jako systém řízený vstupními parametry (nikoliv statická mesh), dynamický update geometrie při změně parametrů prostřednictvím update callbacku, dynamický posun otvorů při posunu stěn prostřednictvím datové vazby otvor--stěna a chytrá správa vytváření otvorů pomocí Boolean operací v Geometry Nodes.
+Základní implementace (must-have) vyžaduje dynamickou reprezentaci stěn formou parametrického systému (nikoliv jako statickou síť), okamžitou aktualizaci geometrie při úpravě hodnot, zachování relativní pozice otvorů vůči stěně pomocí pevných datových vazeb a inteligentní generování ořezů (Boolean operací) přímo prostřednictvím Geometry Nodes.
 
-==== FP3 --- Správa prostoru a metadat
+==== FP3 — Správa prostoru a metadat
 
-Správce prostoru zajišťuje sémantickou vrstvu nad hrubou geometrií. Addon automaticky detekuje uzavřené cykly stěn jako místnosti a zobrazuje jejich vypočítanou plochu. Toto je celé klasifikováno jako must-have. Jako nice-to-have je označena hierarchizace místností a správa jejich viditelnosti --- organizace místností a podlaží do kolekcí s rozhraním pro hromadné přepínání viditelnosti.
+Správce prostoru tvoří sémantickou vrstvu nad obyčejnou 3D geometrií. Modul musí umět automaticky detekovat uzavřené cykly stěn, rozpoznat je jako samostatné místnosti a vypočítat jejich plochu (celý tento blok je klasifikován jako must-have). Jako volitelné rozšíření (nice-to-have) je koncipována hierarchizace prostorů – organizace místností a celých podlaží do přehledných kolekcí, které umožní například hromadné přepínání viditelnosti v projektu.
 
-==== FP4 --- Finalizační nástroj
+==== FP4 — Finalizační nástroj
 
-Finalizační nástroj uzavírá nedestruktivní životní cyklus modelu. Po dokončení návrhu převede parametrický systém do statické mesh geometrie připravené pro UV mapování, export do herního enginu nebo zařazení do renderovací pipeline. Jako must-have je vyžadována aplikace použitých modifikátorů a finalizace: systém projde vybrané objekty a trvale aplikuje všechny generátory.
+Finalizační nástroj uzavírá nedestruktivní fázi návrhu. Po dokončení úprav převede parametrický systém na čistou, statickou 3D geometrii, která je připravená pro UV mapování, export do herního enginu nebo nasazení v renderovací pipeline. Hlavním požadavkem (must-have) je trvalá aplikace všech procedurálních generátorů a modifikátorů u vybraných objektů scény.
 
-==== FP5 --- Kontextová nabídka
+==== FP5 — Kontextová nabídka
 
-Kontextová nabídka zpřístupňuje akce specifické pro kliknutý prvek prostřednictvím plovoucí overlay vrstvy zobrazující se přímo u kurzoru. Addon využívá raycast k identifikaci cílového prvku a pomocí GPU nebo BLF modulů vykresluje vlastní UI vrstvu překrývající 3D viewport. Celý balíček je klasifikován jako should-have.
+Kontextová nabídka zpřístupňuje akce vázané na konkrétní prvek pomocí plovoucí uživatelské nabídky zobrazené přímo u kurzoru. Addon by měl využívat metodu vržení paprsku (raycast) k identifikaci cílového objektu a přes moduly GPU nebo BLF vykreslovat vlastní rozhraní překrývající 3D viewport. Tato interakční zkratka je hodnocena jako důležité rozšíření (should-have).
 
-==== FP6 --- Interaktivní 3D manipulátory
+==== FP6 — Interaktivní 3D manipulátory
 
-Interaktivní 3D manipulátory nahrazují ruční zadávání hodnot přímou geometrickou manipulací v prostoru: uživatel chytí barevné táhlo přímo u prvku a tažením myši mění jeho rozměry nebo výšku. Implementace využívá rozhraní `bpy.types.Gizmo` a `GizmoGroup`. Balíček je klasifikován jako should-have.
+Interaktivní 3D manipulátory (gizma) nabízejí alternativu k ručnímu vypisování parametrů. Umožňují geometrickou manipulaci přímo v prostoru: uživatel uchopí barevné grafické táhlo u daného prvku a tažením myši plynule mění jeho rozměry nebo výšku. Implementace by měla využít nativní rozhraní `bpy.types.Gizmo` a `GizmoGroup`. Funkcionalita je zařazena jako should-have.
 
-==== FP7 --- Automatické kótování
+==== FP7 — Automatické kótování
 
-Kótovací overlay průběžně zobrazuje délky stěn a plochy místností jako dynamický text přímo ve viewportu bez nutnosti přepínat do jiného nástroje. Texty jsou generovány modulem BLF přes draw handler a aktualizují se v reálném čase při každé změně půdorysu. Balíček je klasifikován jako should-have.
+Kótovací vrstva průběžně zobrazuje délky stěn a plochy místností jako dynamický text přímo ve viewportu, takže uživatel nemusí zjišťovat rozměry v postranních panelech. Texty generované modulem BLF přes překreslovací smyčku (draw handler) se musejí aktualizovat v reálném čase při každé změně dispozice. Požadavek je klasifikován jako should-have.
 
 === Nefunkční požadavky
 
-==== NP1 --- Architektura a technologie
+==== NP1 — Architektura a technologie
 
-Geometry Nodes tvoří výpočetní jádro addonu: logika tvarování geometrie je realizována pomocí GN stromů, zatímco Python slouží jako manažer, který tyto stromy připojuje a mění jejich vstupy. Toto oddělení vizuální logiky a aplikační logiky je klíčovým architektonickým principem. Addon nesmí vyžadovat ruční doinstalaci externích knihoven --- cílová platforma Blender 4.2+ umožňuje deklarovat závislosti v souboru `blender_manifest.toml` jako wheel soubory přibalené do extension balíčku, které Blender při aktivaci automaticky nainstaluje. Pro grafové operace (detekce cyklů, planární embedding) je použita knihovna NetworkX deklarovaná jako wheel závislost.
+Výpočetní jádro modulu je postaveno na Geometry Nodes: logika generování a tvarování geometrie probíhá uvnitř uzlových stromů, zatímco Python plní roli správce, který tyto stromy propojuje a dynamicky upravuje jejich vstupy. Toto striktní oddělení vizuální a aplikační logiky je klíčovým architektonickým principem. Z hlediska distribuce nesmí modul vyžadovat ruční doinstalaci externích knihoven. Cílová platforma (Blender 4.2+) umožňuje definovat závislosti přímo v konfiguračním souboru `blender_manifest.toml`. Externí knihovny, jako například NetworkX využívaná pro grafové výpočty (detekce cyklů, planární embedding), tak budou zabaleny jako standardní Wheel soubory (`.whl`) a nainstalují se automaticky při aktivaci addonu.
 
-==== NP2 --- Výkon a nedestruktivnost
+==== NP2 — Výkon a nedestruktivní přístup
 
-Systém musí reagovat plynule: uživatel nesmí ztratit možnost úpravy ani při komplexních změnách a generování geometrie. Klíčovými aspekty jsou minimalizace výpočetní náročnosti při operacích, optimalizace při přepočtu parametrů a respektování DepsGraphu --- systému závislostí v Blenderu --- aby nedocházelo ke zbytečným cyklickým přepočtům celé scény.
+Systém musí reagovat naprosto plynule: uživatel si musí zachovat možnost interaktivní úpravy i při komplexnějších změnách půdorysu a souběžném překreslování geometrie. Hlavním architektonickým důrazem je zde minimalizace výpočetní náročnosti, optimalizace přepočtů parametrů a důsledné respektování grafu závislostí v Blenderu (DepsGraph), aby nedocházelo k neefektivním cyklickým přepočtům celé 3D scény.
 
-==== NP3 --- Použitelnost a UX
+==== NP3 — Použitelnost a UX (Uživatelská zkušenost)
 
-Vzhled addonu by měl působit jako nativní součást Blenderu, čehož je dosaženo striktním používáním zabudovaných UI komponent (`UILayout.row` apod.) a logickým seskupováním nástrojů do záložek s tooltipsy. Důraz je kladen na ošetření chyb a srozumitelný feedback při neplatných operacích --- například při pokusu o přidání okna do stěny, která je menší než zadaná velikost okna.
+Uživatelské rozhraní modulu musí působit jako nativní součást Blenderu. Toho bude dosaženo konzistentním využíváním zabudovaných UI komponent (např. `UILayout.row`) a logickým seskupováním nástrojů do přehledných záložek s vysvětlujícími popisky (tooltips). Důraz je kladen na ošetření chyb a srozumitelnou zpětnou vazbu při pokusu o neplatnou operaci – např. při snaze vložit velké okno do příliš krátké stěny.
 
 === Prioritizace požadavků
 
