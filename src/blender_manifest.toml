@@ -1,0 +1,25 @@
+schema_version = "1.0.0"
+
+id = "floorplanmaster"
+version = "0.1.0"
+name = "FloorPlanMaster"
+tagline = "Interactive floor plan creation with parametric walls and automatic room detection"
+maintainer = "wladaosk"
+type = "add-on"
+
+blender_version_min = "5.1.0"
+license = ["SPDX:GPL-2.0-or-later"]
+
+[build]
+paths_exclude_pattern = [
+    "__pycache__/",
+    "*.pyc",
+    "tests/",
+    "demo/",
+    "requirements-dev.txt",
+]
+
+# NetworkX wheel — installed automatically by Blender on addon activation.
+wheels = [
+    "./wheels/networkx-3.6.1-py3-none-any.whl",
+]
