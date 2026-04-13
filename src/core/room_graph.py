@@ -1,6 +1,6 @@
 import uuid
 
-from ..utils.constants import RoomType, ConnectionType, DEFAULT_WALL_COLOR
+from ..utils.constants import RoomType
 from ..utils.math_helpers import polygon_area, polygon_centroid, polygon_perimeter, aspect_ratio
 from .validators import validate_room_area, validate_aspect_ratio, validate_room_vertex_count
 from .structural_graph import StructuralGraph
@@ -17,9 +17,6 @@ class Room:
         self.perimeter = 0.0
         self.centroid = (0.0, 0.0)
         self.height = 0.0
-        self.wall_color = DEFAULT_WALL_COLOR
-        self.floor_material = 0
-        self.ceiling_material = 0
 
     def __repr__(self):
         return f"Room({self.id[:8]}, name={self.name!r}, area={self.area:.2f})"
@@ -31,8 +28,6 @@ class Adjacency:
         self.room_a = room_a_id
         self.room_b = room_b_id
         self.shared_wall = shared_wall_id
-        self.connection_type = ConnectionType.CLOSED
-        self.openings = []
 
     def __repr__(self):
         return f"Adjacency({self.room_a[:8]}↔{self.room_b[:8]})"
@@ -145,15 +140,6 @@ class RoomGraph:
         room = self._rooms.get(room_id)
         if room:
             room.room_type = room_type
-
-    def set_room_materials(self, room_id, floor_material=None, ceiling_material=None):
-        room = self._rooms.get(room_id)
-        if room is None:
-            return
-        if floor_material is not None:
-            room.floor_material = floor_material
-        if ceiling_material is not None:
-            room.ceiling_material = ceiling_material
 
     # Adjacency queries
     def get_adjacencies(self):

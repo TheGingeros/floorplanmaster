@@ -29,11 +29,6 @@ class TestJunctionCRUD:
         assert j.position == (1.0, 2.0)
         assert sg.junction_count() == 1
 
-    def test_add_junction_with_priority(self):
-        sg = StructuralGraph()
-        j = sg.add_junction((0, 0), snap_priority=5)
-        assert j.snap_priority == 5
-
     def test_duplicate_position_rejected(self):
         sg = StructuralGraph()
         sg.add_junction((1, 2))
@@ -134,10 +129,9 @@ class TestWallCRUD:
         sg = StructuralGraph()
         j1 = sg.add_junction((0, 0))
         j2 = sg.add_junction((1, 0))
-        w = sg.add_wall(j1.id, j2.id, thickness=0.3, height=4.0, is_external=True)
+        w = sg.add_wall(j1.id, j2.id, thickness=0.3, height=4.0)
         assert w.thickness == 0.3
         assert w.height == 4.0
-        assert w.is_external is True
 
     def test_self_loop_rejected(self):
         sg = StructuralGraph()
@@ -227,10 +221,9 @@ class TestWallCRUD:
         j1 = sg.add_junction((0, 0))
         j2 = sg.add_junction((1, 0))
         w = sg.add_wall(j1.id, j2.id)
-        sg.update_wall(w.id, thickness=0.5, height=5.0, material_id=3)
+        sg.update_wall(w.id, thickness=0.5, height=5.0)
         assert w.thickness == 0.5
         assert w.height == 5.0
-        assert w.material_id == 3
 
     def test_update_wall_invalid_thickness(self):
         sg = StructuralGraph()

@@ -17,10 +17,9 @@ from .validators import (
 # Junction — node in the structural graph
 # Representing position of one vertex, two verteces make up one wall
 class Junction:
-    def __init__(self, position, snap_priority=0, junction_id=None):
+    def __init__(self, position, junction_id=None):
         self.id = junction_id or str(uuid.uuid4()) # assign given ID, if None, create a new one
         self.position = tuple(position)  # (x, y)
-        self.snap_priority = snap_priority
 
     def __repr__(self):
         return f"Junction({self.id[:8]}, pos={self.position})"
@@ -34,9 +33,6 @@ class Wall:
         junction_end_id,
         thickness=DEFAULT_THICKNESS,
         height=DEFAULT_HEIGHT,
-        material_id=0,
-        is_external=False,
-        is_bearing=False,
         wall_id=None,
     ):
         self.id = wall_id or str(uuid.uuid4())
@@ -44,10 +40,6 @@ class Wall:
         self.junction_end = junction_end_id
         self.thickness = thickness
         self.height = height
-        self.material_id = material_id
-        self.openings = []
-        self.is_external = is_external
-        self.is_bearing = is_bearing
 
     def __repr__(self):
         return f"Wall({self.id[:8]}, {self.junction_start[:8]}→{self.junction_end[:8]})"
@@ -76,14 +68,14 @@ class StructuralGraph:
         return tuple(sorted((jid_a, jid_b)))
 
     # Junction CRUD
-    def add_junction(self, position, snap_priority=0, junction_id=None):
+    def add_junction(self, position, junction_id=None):
         pk = self._pos_key(position)
         if pk in self._pos_index:
             raise ValidationError(
                 E_JUNCTION_DUPLICATE,
                 f"Junction already exists at {position}",
             )
-        j = Junction(position, snap_priority, junction_id)
+        j = Junction(position, junction_id)
         self._junctions[j.id] = j
         self._graph.add_node(j.id, pos=j.position)
         self._pos_index[pk] = j.id
@@ -146,9 +138,6 @@ class StructuralGraph:
         junction_end_id,
         thickness=DEFAULT_THICKNESS,
         height=DEFAULT_HEIGHT,
-        material_id=0,
-        is_external=False,
-        is_bearing=False,
         wall_id=None,
     ):
         if junction_start_id == junction_end_id:
@@ -167,8 +156,6 @@ class StructuralGraph:
         w = Wall(
             junction_start_id, junction_end_id,
             thickness=thickness, height=height,
-            material_id=material_id,
-            is_external=is_external, is_bearing=is_bearing,
             wall_id=wall_id,
         )
         self._walls[w.id] = w
@@ -214,12 +201,7 @@ class StructuralGraph:
         if "height" in kwargs:
             validate_height(kwargs["height"])
             w.height = kwargs["height"]
-        if "material_id" in kwargs:
-            w.material_id = kwargs["material_id"]
-        if "is_external" in kwargs:
-            w.is_external = kwargs["is_external"]
-        if "is_bearing" in kwargs:
-            w.is_bearing = kwargs["is_bearing"]
+
 
     # Geometry queries
     def wall_length(self, wall_id):

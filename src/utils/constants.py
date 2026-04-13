@@ -17,11 +17,7 @@ MIN_ROOM_VERTICES = 3
 
 # Snapping
 SNAP_JUNCTION_TOLERANCE = 15  # pixels
-SNAP_AXIS_TOLERANCE = 10     # pixels
-
 # Default colours (RGBA, 0-1 range)
-DEFAULT_WALL_COLOR = (0.8, 0.8, 0.8, 1.0)
-
 # Enumerations
 
 class RoomType(IntEnum):
@@ -29,10 +25,3 @@ class RoomType(IntEnum):
     LIVING = 1
     TECHNICAL = 2
     COMMUNICATION = 3
-
-
-class ConnectionType(IntEnum):
-    CLOSED = 0
-    DOOR = 1
-    WINDOW = 2
-    PASSAGE = 3

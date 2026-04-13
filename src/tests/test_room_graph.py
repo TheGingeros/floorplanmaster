@@ -2,7 +2,7 @@ import pytest
 
 from src.core.structural_graph import StructuralGraph
 from src.core.room_graph import RoomGraph, Room, Adjacency
-from src.utils.constants import RoomType, ConnectionType
+from src.utils.constants import RoomType
 
 
 # Helpers
@@ -172,7 +172,6 @@ class TestAdjacency:
         _, rg, _ = make_two_rooms()
         adj = rg.get_adjacencies()[0]
         assert isinstance(adj, Adjacency)
-        assert adj.connection_type == ConnectionType.CLOSED
         assert adj.shared_wall != ""
 
     def test_are_adjacent(self):
@@ -241,13 +240,6 @@ class TestRoomMetadata:
         room = rg.get_all_rooms()[0]
         rg.set_room_type(room.id, RoomType.COMMUNICATION)
         assert room.room_type == RoomType.COMMUNICATION
-
-    def test_set_materials(self):
-        _, rg, _ = make_single_room()
-        room = rg.get_all_rooms()[0]
-        rg.set_room_materials(room.id, floor_material=5, ceiling_material=8)
-        assert room.floor_material == 5
-        assert room.ceiling_material == 8
 
     def test_default_room_type(self):
         _, rg, _ = make_single_room()
