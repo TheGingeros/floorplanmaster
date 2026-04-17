@@ -78,6 +78,7 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         bpy.ops.wm.tool_set_by_id(name="floorplan.pencil_workspace_tool")
 
         self._state = WAITING
+        self._update_status_bar(context)
         context.window_manager.modal_handler_add(self)
         context.area.tag_redraw()
         return {'RUNNING_MODAL'}
@@ -97,6 +98,7 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             if self._state == DRAWING:
                 self._state = WAITING
                 self._start_junction_id = None
+                self._update_status_bar(context)
                 return {'RUNNING_MODAL'}
             else:
                 self._finish(context)
@@ -119,6 +121,7 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             if self._state == WAITING:
                 self._place_start_junction(context)
                 self._state = DRAWING
+                self._update_status_bar(context)
                 return {'RUNNING_MODAL'}
 
             elif self._state == DRAWING:
@@ -269,6 +272,7 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         if self._draw_handler:
             bpy.types.SpaceView3D.draw_handler_remove(self._draw_handler, 'WINDOW')
             self._draw_handler = None
+        context.workspace.status_text_set(None)
         context.area.tag_redraw()
 
     # -- GPU overlay draw callback --
@@ -289,17 +293,27 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         if self._state == DRAWING and self._start_junction_id:
             self._draw_preview_line(context, region, rv3d)
 
+    def _update_status_bar(self, context):
+        # Set keyboard hints in the bottom status bar (Blender convention).
+        if self._state == WAITING:
+            context.workspace.status_text_set(
+                "LMB: Place first junction    Z: Undo    ESC: Exit tool"
+            )
+        else:
+            context.workspace.status_text_set(
+                "LMB: Place next wall    Z: Undo last wall    ESC: Cancel line"
+            )
+
     def _draw_status_text(self, context):
         font_id = 0
         blf.size(font_id, 16)
+        blf.color(font_id, 1.0, 1.0, 1.0, 0.8)
 
         if self._state == WAITING:
-            text = "FloorPlan Pencil — LMB: place start point | ESC: exit tool"
-            blf.color(font_id, 1.0, 1.0, 1.0, 0.8)
+            blf.position(font_id, 20, 40, 0)
+            blf.draw(font_id, "FloorPlan Pencil — Waiting for input")
         else:
-            # Show wall length and angle in HUD.
-            length_str = ""
-            angle_str = ""
+            # Show live wall length and angle while drawing.
             if self._start_junction_id:
                 start_j = self._sg.get_junction(self._start_junction_id)
                 if start_j:
@@ -308,14 +322,9 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
                     dy = self._cursor_world.y - start_j.position[1]
                     length = math.hypot(dx, dy)
                     angle = math.degrees(math.atan2(dy, dx))
-                    length_str = f"  Length: {length:.2f} m"
-                    angle_str = f"  Angle: {angle:.1f}°"
-
-            text = f"FloorPlan Pencil — LMB: confirm | Z: undo | ESC: cancel{length_str}{angle_str}"
-            blf.color(font_id, 0.7, 0.9, 1.0, 0.9)
-
-        blf.position(font_id, 20, 40, 0)
-        blf.draw(font_id, text)
+                    blf.color(font_id, 0.7, 0.9, 1.0, 0.9)
+                    blf.position(font_id, 20, 40, 0)
+                    blf.draw(font_id, f"FloorPlan Pencil — Length: {length:.2f} m   Angle: {angle:.1f}°")
 
     def _draw_preview_line(self, context, region, rv3d):
         start_j = self._sg.get_junction(self._start_junction_id)
