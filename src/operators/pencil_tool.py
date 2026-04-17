@@ -87,7 +87,7 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         self._height = settings.default_height
 
         # Ensure GN modifier is attached with correct dimensions.
-        ensure_gn_modifier(self._obj, self._thickness, self._height)
+        ensure_gn_modifier(self._obj)
 
         # Register GPU draw handler for visual feedback.
         self._draw_handler = bpy.types.SpaceView3D.draw_handler_add(
@@ -245,6 +245,9 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         self._rg.sync_from_structural_graph()
         sync_graph_to_mesh(self._obj, self._sg, self._rg, id_mapper=self._id_mapper)
         sync_room_name_props(self._obj, self._rg)
+
+        # Re-apply modifier inputs after mesh rebuild so GN dimensions are correct.
+        ensure_gn_modifier(self._obj)
 
         # Advance: end junction becomes start of next wall.
         self._start_junction_id = end_id

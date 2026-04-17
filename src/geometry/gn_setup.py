@@ -2,51 +2,56 @@
 # Creates a GN modifier that reads the 2D base mesh (edges + faces with named
 # attributes) and generates 3D wall geometry.
 #
-# Strategy: for each edge (wall axis), build a rectangular wall volume by
-# offsetting perpendicular to the edge direction by thickness/2, then
-# extruding up by wall_height.  Faces (rooms) become floor polygons.
+# Strategy (step 3.1): per-edge instance box.
+#   Phase 2 of Layer 3 sync pre-computes fp_direction (FLOAT_VECTOR) and
+#   fp_length (FLOAT) for each edge and stores them via mesh.attributes API.
+#   The GN tree reads those attributes via Named Attribute nodes, instances a
+#   unit cube per edge, and scales/rotates it to (length x thickness x height).
+#   Faces (rooms) from the original mesh pass through as floor polygons.
 
 import bpy
 
 
 TREE_NAME = "FloorPlanMaster_WallGen"
 MODIFIER_NAME = "FPM_Geometry"
+# Bump this whenever the GN tree structure changes. Trees with a lower
+# version (or no version at all) are automatically rebuilt.
+_TREE_VERSION = 2
 
 
-def ensure_gn_modifier(obj, thickness=0.3, height=2.5):
+def ensure_gn_modifier(obj):
     # Add GN modifier to obj if not already present. Returns the modifier.
-    # Modifier inputs are updated on every call so newly created walls are
-    # rendered at the dimensions passed by the calling operator.
+    # Wall dimensions are read per-edge from named attributes so no global
+    # modifier inputs are needed.
     mod = obj.modifiers.get(MODIFIER_NAME)
     if mod is None:
         mod = obj.modifiers.new(name=MODIFIER_NAME, type='NODES')
     tree = get_or_create_tree()
     mod.node_group = tree
-    _set_modifier_inputs(mod, tree, thickness, height)
     return mod
 
 
-def _set_modifier_inputs(mod, tree, thickness, height):
-    # Write group-input values into the modifier's custom properties.
-    for item in tree.interface.items_tree:
-        if item.item_type != 'SOCKET':
-            continue
-        if item.in_out != 'INPUT':
-            continue
-        if item.socket_type == 'NodeSocketGeometry':
-            continue
-        if item.name == "Wall Thickness":
-            mod[item.identifier] = thickness
-        elif item.name == "Wall Height":
-            mod[item.identifier] = height
-
-
 def get_or_create_tree():
-    # Return existing tree or build a new one.
+    # Return existing tree, rebuilding if it uses the old global-socket
+    # architecture, or build a new one when none exists yet.
     tree = bpy.data.node_groups.get(TREE_NAME)
     if tree is not None:
+        if _needs_rebuild(tree):
+            return rebuild_tree()
         return tree
     return _build_tree()
+
+
+def _needs_rebuild(tree):
+    # Rebuild when: (a) tree has the old global-socket architecture, or
+    # (b) tree version is outdated (code changed since last build).
+    if tree.get("_version", 0) < _TREE_VERSION:
+        return True
+    for item in tree.interface.items_tree:
+        if item.item_type == 'SOCKET' and item.in_out == 'INPUT':
+            if item.socket_type != 'NodeSocketGeometry':
+                return True
+    return False
 
 
 def rebuild_tree():
@@ -59,87 +64,140 @@ def rebuild_tree():
 
 def _build_tree():
     tree = bpy.data.node_groups.new(name=TREE_NAME, type='GeometryNodeTree')
-
     tree.nodes.clear()
 
-    # Interface: geometry in/out + wall dimension inputs.
+    # Interface: geometry in/out only. All wall dimensions come from per-edge
+    # named attributes written by Layer 3 Phase 2 sync.
     tree.interface.new_socket("Geometry", in_out='INPUT', socket_type='NodeSocketGeometry')
-    sock_thick = tree.interface.new_socket("Wall Thickness", in_out='INPUT', socket_type='NodeSocketFloat')
-    sock_thick.default_value = 0.3
-    sock_thick.min_value = 0.05
-    sock_thick.max_value = 1.0
-    sock_height = tree.interface.new_socket("Wall Height", in_out='INPUT', socket_type='NodeSocketFloat')
-    sock_height.default_value = 2.5
-    sock_height.min_value = 1.0
-    sock_height.max_value = 10.0
     tree.interface.new_socket("Geometry", in_out='OUTPUT', socket_type='NodeSocketGeometry')
 
-    # --- Create nodes ---
+    nodes = tree.nodes
+    links = tree.links
 
-    group_in = tree.nodes.new('NodeGroupInput')
+    group_in = nodes.new('NodeGroupInput')
     group_in.location = (-800, 0)
 
-    group_out = tree.nodes.new('NodeGroupOutput')
-    group_out.location = (800, 0)
+    group_out = nodes.new('NodeGroupOutput')
+    group_out.location = (1100, 0)
 
-    # Wall branch: convert edges to curves, sweep rectangular profile along them.
+    # Convert each edge to a point at its midpoint (Z=0).
+    # Named attributes on the EDGE domain are transferred automatically to
+    # the resulting POINT domain by Mesh to Points.
+    to_points = nodes.new('GeometryNodeMeshToPoints')
+    to_points.mode = 'EDGES'
+    to_points.location = (-600, 200)
 
-    mesh_to_curve = tree.nodes.new('GeometryNodeMeshToCurve')
-    mesh_to_curve.location = (-400, 200)
+    # Offset each point upward by wall_height / 2 so the cube sits on Z=0.
+    named_height_z = nodes.new('GeometryNodeInputNamedAttribute')
+    named_height_z.data_type = 'FLOAT'
+    named_height_z.inputs['Name'].default_value = 'wall_height'
+    named_height_z.location = (-400, -150)
 
-    # Rectangular cross-section driven by group inputs (not named attributes).
-    curve_rect = tree.nodes.new('GeometryNodeCurvePrimitiveQuadrilateral')
-    curve_rect.mode = 'RECTANGLE'
-    curve_rect.location = (-400, -200)
+    half_height = nodes.new('ShaderNodeMath')
+    half_height.operation = 'DIVIDE'
+    half_height.inputs[1].default_value = 2.0
+    half_height.location = (-200, -150)
 
-    # Sweep profile along wall curves to produce 3D wall boxes.
-    curve_to_mesh = tree.nodes.new('GeometryNodeCurveToMesh')
-    curve_to_mesh.location = (-100, 200)
-    curve_to_mesh.inputs['Fill Caps'].default_value = True
+    # Build offset vector (0, 0, wall_height/2).
+    comb_offset = nodes.new('ShaderNodeCombineXYZ')
+    comb_offset.location = (0, -150)
 
-    # Z-offset: the profile is centred on the curve; shift walls up by
-    # height / 2 so the bottom face sits on the ground plane.
-    set_position = tree.nodes.new('GeometryNodeSetPosition')
-    set_position.location = (100, 200)
+    set_pos = nodes.new('GeometryNodeSetPosition')
+    set_pos.location = (200, 200)
 
-    math_div = tree.nodes.new('ShaderNodeMath')
-    math_div.operation = 'DIVIDE'
-    math_div.inputs[1].default_value = 2.0
-    math_div.location = (-100, -100)
+    # Per-instance scale: (fp_length, wall_thickness, wall_height).
+    named_len = nodes.new('GeometryNodeInputNamedAttribute')
+    named_len.data_type = 'FLOAT'
+    named_len.inputs['Name'].default_value = 'fp_length'
+    named_len.location = (-400, 500)
 
-    combine_z = tree.nodes.new('ShaderNodeCombineXYZ')
-    combine_z.location = (100, -100)
+    named_thick = nodes.new('GeometryNodeInputNamedAttribute')
+    named_thick.data_type = 'FLOAT'
+    named_thick.inputs['Name'].default_value = 'wall_thickness'
+    named_thick.location = (-400, 380)
 
-    # Join wall boxes with the original mesh (floor faces at Z = 0).
-    join_geo = tree.nodes.new('GeometryNodeJoinGeometry')
-    join_geo.location = (400, 0)
+    named_height = nodes.new('GeometryNodeInputNamedAttribute')
+    named_height.data_type = 'FLOAT'
+    named_height.inputs['Name'].default_value = 'wall_height'
+    named_height.location = (-400, 260)
 
-    # Shade flat for cleaner viewport look.
-    set_shade = tree.nodes.new('GeometryNodeSetShadeSmooth')
-    set_shade.location = (600, 0)
+    scale_xyz = nodes.new('ShaderNodeCombineXYZ')
+    scale_xyz.location = (-100, 380)
+
+    # Per-instance rotation: align cube X-axis to wall direction.
+    # Direction is stored as two scalar float edge layers (fp_dir_x, fp_dir_y)
+    # to avoid FLOAT_VECTOR bmesh layer limitations; combined here into a vector.
+    named_dir_x = nodes.new('GeometryNodeInputNamedAttribute')
+    named_dir_x.data_type = 'FLOAT'
+    named_dir_x.inputs['Name'].default_value = 'fp_dir_x'
+    named_dir_x.location = (-400, 750)
+
+    named_dir_y = nodes.new('GeometryNodeInputNamedAttribute')
+    named_dir_y.data_type = 'FLOAT'
+    named_dir_y.inputs['Name'].default_value = 'fp_dir_y'
+    named_dir_y.location = (-400, 660)
+
+    dir_combine = nodes.new('ShaderNodeCombineXYZ')
+    dir_combine.inputs['Z'].default_value = 0.0
+    dir_combine.location = (-150, 700)
+
+    align_rot = nodes.new('FunctionNodeAlignRotationToVector')
+    align_rot.axis = 'X'
+    align_rot.pivot_axis = 'Z'
+    align_rot.location = (-100, 700)
+
+    # Unit cube (1x1x1) scaled per-instance.
+    unit_cube = nodes.new('GeometryNodeMeshCube')
+    unit_cube.inputs['Size'].default_value = (1.0, 1.0, 1.0)
+    unit_cube.location = (-100, 900)
+
+    inst_on_pts = nodes.new('GeometryNodeInstanceOnPoints')
+    inst_on_pts.location = (400, 500)
+
+    realize = nodes.new('GeometryNodeRealizeInstances')
+    realize.location = (600, 300)
+
+    # Join realized wall boxes with original mesh (room faces as floors).
+    join = nodes.new('GeometryNodeJoinGeometry')
+    join.location = (800, 100)
+
+    set_shade = nodes.new('GeometryNodeSetShadeSmooth')
     set_shade.inputs['Shade Smooth'].default_value = False
+    set_shade.location = (950, 50)
 
     # --- Links ---
 
-    # Wall branch
-    tree.links.new(group_in.outputs['Geometry'], mesh_to_curve.inputs['Mesh'])
-    tree.links.new(group_in.outputs['Wall Thickness'], curve_rect.inputs['Width'])
-    tree.links.new(group_in.outputs['Wall Height'], curve_rect.inputs['Height'])
-    tree.links.new(mesh_to_curve.outputs['Curve'], curve_to_mesh.inputs['Curve'])
-    tree.links.new(curve_rect.outputs['Curve'], curve_to_mesh.inputs['Profile Curve'])
-    tree.links.new(curve_to_mesh.outputs['Mesh'], set_position.inputs['Geometry'])
+    # Edges to Points
+    links.new(group_in.outputs['Geometry'], to_points.inputs['Mesh'])
 
-    # Z offset
-    tree.links.new(group_in.outputs['Wall Height'], math_div.inputs[0])
-    tree.links.new(math_div.outputs['Value'], combine_z.inputs['Z'])
-    tree.links.new(combine_z.outputs['Vector'], set_position.inputs['Offset'])
+    # Z offset: (0, 0, wall_height / 2)
+    links.new(named_height_z.outputs[0], half_height.inputs[0])
+    links.new(half_height.outputs['Value'], comb_offset.inputs['Z'])
+    links.new(to_points.outputs['Points'], set_pos.inputs['Geometry'])
+    links.new(comb_offset.outputs['Vector'], set_pos.inputs['Offset'])
 
-    # Join walls (from extrusion) + original input (floor faces at Z=0)
-    tree.links.new(set_position.outputs['Geometry'], join_geo.inputs['Geometry'])
-    tree.links.new(group_in.outputs['Geometry'], join_geo.inputs['Geometry'])
+    # Scale = (fp_length, wall_thickness, wall_height) per point
+    links.new(named_len.outputs[0], scale_xyz.inputs['X'])
+    links.new(named_thick.outputs[0], scale_xyz.inputs['Y'])
+    links.new(named_height.outputs[0], scale_xyz.inputs['Z'])
 
-    # Output
-    tree.links.new(join_geo.outputs['Geometry'], set_shade.inputs['Geometry'])
-    tree.links.new(set_shade.outputs['Geometry'], group_out.inputs['Geometry'])
+    # Rotation aligned to fp_dir_x / fp_dir_y
+    links.new(named_dir_x.outputs[0], dir_combine.inputs['X'])
+    links.new(named_dir_y.outputs[0], dir_combine.inputs['Y'])
+    links.new(dir_combine.outputs['Vector'], align_rot.inputs['Vector'])
 
+    # Instance cube at each wall-centre point
+    links.new(set_pos.outputs['Geometry'], inst_on_pts.inputs['Points'])
+    links.new(unit_cube.outputs['Mesh'], inst_on_pts.inputs['Instance'])
+    links.new(align_rot.outputs['Rotation'], inst_on_pts.inputs['Rotation'])
+    links.new(scale_xyz.outputs['Vector'], inst_on_pts.inputs['Scale'])
+
+    # Realize, join with floor faces, shade flat
+    links.new(inst_on_pts.outputs['Instances'], realize.inputs['Geometry'])
+    links.new(realize.outputs['Geometry'], join.inputs['Geometry'])
+    links.new(group_in.outputs['Geometry'], join.inputs['Geometry'])
+    links.new(join.outputs['Geometry'], set_shade.inputs['Geometry'])
+    links.new(set_shade.outputs['Geometry'], group_out.inputs['Geometry'])
+
+    tree["_version"] = _TREE_VERSION
     return tree

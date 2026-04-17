@@ -3,6 +3,7 @@
 #   Phase 1: topology — vertices, edges, faces mirroring L1/L2
 #   Phase 2: attributes — named attributes on mesh domains
 
+import math
 import bpy
 import bmesh
 
@@ -110,68 +111,95 @@ class AttributeSync:
         self._bm = bm
 
     # Phase 2: write named attributes on mesh domains.
+    # Attributes are written using the mesh.attributes API (not bmesh layers)
+    # because bmesh custom-data layers do not reliably transfer to the modern
+    # attribute system that GN Named Attribute nodes read from.
     def _phase2_attributes(self):
         mesh = self.obj.data
         bm = self._bm
-        bm.verts.ensure_lookup_table()
-        bm.edges.ensure_lookup_table()
-        bm.faces.ensure_lookup_table()
+
+        # Write topology (verts, edges, faces) to mesh first.
+        bm.to_mesh(mesh)
+        bm.free()
+        self._bm = None
 
         junctions = self.sg.get_all_junctions()
         walls = self.sg.get_all_walls()
         rooms = self.rg.get_all_rooms()
+        junctions_by_id = {j.id: j for j in junctions}
 
-        # Vertex attributes: junction_id
-        jid_layer = self._ensure_int_layer(bm.verts.layers.int, "junction_id")
+        # Vertex domain: junction_id
+        jid_attr = self._ensure_mesh_attr(mesh, "junction_id", 'INT', 'POINT')
         for j in junctions:
             vidx = self._jid_vidx.get(j.id)
             if vidx is not None:
-                bm.verts[vidx][jid_layer] = self.id_mapper.get(j.id)
+                jid_attr.data[vidx].value = self.id_mapper.get(j.id)
 
-        # Edge attributes: wall_id, wall_thickness, wall_height
-        wid_layer = self._ensure_int_layer(bm.edges.layers.int, "wall_id")
-        wthick_layer = self._ensure_float_layer(bm.edges.layers.float, "wall_thickness")
-        wheight_layer = self._ensure_float_layer(bm.edges.layers.float, "wall_height")
+        # Edge domain: wall_id, wall_thickness, wall_height,
+        # fp_length, fp_dir_x, fp_dir_y (pre-computed geometry for GN tree).
+        wid_attr = self._ensure_mesh_attr(mesh, "wall_id", 'INT', 'EDGE')
+        wthick_attr = self._ensure_mesh_attr(mesh, "wall_thickness", 'FLOAT', 'EDGE')
+        wheight_attr = self._ensure_mesh_attr(mesh, "wall_height", 'FLOAT', 'EDGE')
+        length_attr = self._ensure_mesh_attr(mesh, "fp_length", 'FLOAT', 'EDGE')
+        dir_x_attr = self._ensure_mesh_attr(mesh, "fp_dir_x", 'FLOAT', 'EDGE')
+        dir_y_attr = self._ensure_mesh_attr(mesh, "fp_dir_y", 'FLOAT', 'EDGE')
         for w in walls:
             eidx = self._wid_eidx.get(w.id)
             if eidx is not None:
-                e = bm.edges[eidx]
-                e[wid_layer] = self.id_mapper.get(w.id)
-                e[wthick_layer] = w.thickness
-                e[wheight_layer] = w.height
+                wid_attr.data[eidx].value = self.id_mapper.get(w.id)
+                wthick_attr.data[eidx].value = w.thickness
+                wheight_attr.data[eidx].value = w.height
+                j_start = junctions_by_id.get(w.junction_start)
+                j_end = junctions_by_id.get(w.junction_end)
+                if j_start and j_end:
+                    dx = j_end.position[0] - j_start.position[0]
+                    dy = j_end.position[1] - j_start.position[1]
+                    length = math.sqrt(dx * dx + dy * dy)
+                    length_attr.data[eidx].value = length
+                    if length > 1e-8:
+                        dir_x_attr.data[eidx].value = dx / length
+                        dir_y_attr.data[eidx].value = dy / length
+                    else:
+                        dir_x_attr.data[eidx].value = 1.0
+                        dir_y_attr.data[eidx].value = 0.0
+                else:
+                    length_attr.data[eidx].value = 0.0
+                    dir_x_attr.data[eidx].value = 1.0
+                    dir_y_attr.data[eidx].value = 0.0
 
-        # Face attributes: room_id, room_area, room_perimeter
-        rid_layer = self._ensure_int_layer(bm.faces.layers.int, "room_id")
-        rarea_layer = self._ensure_float_layer(bm.faces.layers.float, "room_area")
-        rperim_layer = self._ensure_float_layer(bm.faces.layers.float, "room_perimeter")
+        # Face domain: room_id, room_area, room_perimeter
+        rid_attr = self._ensure_mesh_attr(mesh, "room_id", 'INT', 'FACE')
+        rarea_attr = self._ensure_mesh_attr(mesh, "room_area", 'FLOAT', 'FACE')
+        rperim_attr = self._ensure_mesh_attr(mesh, "room_perimeter", 'FLOAT', 'FACE')
         for room in rooms:
             fidx = self._rid_fidx.get(room.id)
             if fidx is not None:
-                f = bm.faces[fidx]
-                f[rid_layer] = self.id_mapper.get(room.id)
-                f[rarea_layer] = room.area
-                f[rperim_layer] = room.perimeter
+                rid_attr.data[fidx].value = self.id_mapper.get(room.id)
+                rarea_attr.data[fidx].value = room.area
+                rperim_attr.data[fidx].value = room.perimeter
 
-        # Write updated attributes to mesh and free bmesh.
-        bm.to_mesh(mesh)
         mesh.update()
-        bm.free()
-        self._bm = None
 
-    # Helpers for ensuring bmesh custom data layers exist.
-    @staticmethod
-    def _ensure_int_layer(layers, name):
-        layer = layers.get(name)
-        if layer is None:
-            layer = layers.new(name)
-        return layer
+        # Tag the object so Blender's depsgraph re-evaluates the GN modifier.
+        self.obj.update_tag()
+        # Force an immediate depsgraph flush so the GN modifier reads the new
+        # named attributes on the same frame they are written. Without this,
+        # Blender defers re-evaluation until the next scene property change.
+        try:
+            bpy.context.view_layer.update()
+        except Exception:
+            pass
 
     @staticmethod
-    def _ensure_float_layer(layers, name):
-        layer = layers.get(name)
-        if layer is None:
-            layer = layers.new(name)
-        return layer
+    def _ensure_mesh_attr(mesh, name, attr_type, domain):
+        # Get or create a mesh attribute. If one exists with mismatched
+        # type/domain, remove and recreate it.
+        attr = mesh.attributes.get(name)
+        if attr is not None:
+            if attr.data_type == attr_type and attr.domain == domain:
+                return attr
+            mesh.attributes.remove(attr)
+        return mesh.attributes.new(name=name, type=attr_type, domain=domain)
 
 
 # Convenience function called from operators after any L1/L2 change.
@@ -183,28 +211,25 @@ def sync_graph_to_mesh(obj, sg, rg, id_mapper=None):
 
 
 # Reconstruction: rebuild L1 + L2 graphs from an existing mesh with named attributes.
+# Uses mesh.attributes API for reading (consistent with Phase 2 writing).
 def reconstruct_graphs_from_mesh(obj):
     mesh = obj.data
     if not mesh.vertices:
         return StructuralGraph(), None
 
     sg = StructuralGraph()
-    bm = bmesh.new()
-    bm.from_mesh(mesh)
-    bm.verts.ensure_lookup_table()
-    bm.edges.ensure_lookup_table()
 
-    # Read junction_id attribute.
-    jid_layer = bm.verts.layers.int.get("junction_id")
-    wid_layer = bm.edges.layers.int.get("wall_id")
-    wthick_layer = bm.edges.layers.float.get("wall_thickness")
-    wheight_layer = bm.edges.layers.float.get("wall_height")
+    # Read attribute accessors (may be None if mesh lacks them).
+    jid_attr = mesh.attributes.get("junction_id")
+    wid_attr = mesh.attributes.get("wall_id")
+    wthick_attr = mesh.attributes.get("wall_thickness")
+    wheight_attr = mesh.attributes.get("wall_height")
 
-    # Reconstruct junctions.
+    # Reconstruct junctions from vertices.
     vidx_to_jid = {}
-    for v in bm.verts:
+    for v in mesh.vertices:
         pos = (v.co.x, v.co.y)
-        int_id = v[jid_layer] if jid_layer else v.index
+        int_id = jid_attr.data[v.index].value if jid_attr else v.index
         jid_str = f"reconstructed_{int_id}"
         try:
             j = sg.add_junction(pos, junction_id=jid_str)
@@ -212,21 +237,19 @@ def reconstruct_graphs_from_mesh(obj):
         except Exception:
             pass
 
-    # Reconstruct walls.
-    for e in bm.edges:
-        v1_jid = vidx_to_jid.get(e.verts[0].index)
-        v2_jid = vidx_to_jid.get(e.verts[1].index)
+    # Reconstruct walls from edges.
+    for e in mesh.edges:
+        v1_jid = vidx_to_jid.get(e.vertices[0])
+        v2_jid = vidx_to_jid.get(e.vertices[1])
         if v1_jid and v2_jid:
-            thickness = e[wthick_layer] if wthick_layer else 0.2
-            height = e[wheight_layer] if wheight_layer else 3.0
-            int_id = e[wid_layer] if wid_layer else e.index
+            thickness = wthick_attr.data[e.index].value if wthick_attr else 0.2
+            height = wheight_attr.data[e.index].value if wheight_attr else 3.0
+            int_id = wid_attr.data[e.index].value if wid_attr else e.index
             wid_str = f"reconstructed_{int_id}"
             try:
                 sg.add_wall(v1_jid, v2_jid, thickness=thickness, height=height, wall_id=wid_str)
             except Exception:
                 pass
-
-    bm.free()
 
     # Build L2 from reconstructed L1.
     rg = RoomGraph(sg)
@@ -236,9 +259,6 @@ def reconstruct_graphs_from_mesh(obj):
     room_meta = obj.get("room_metadata")
     if room_meta and isinstance(room_meta, dict):
         for room in rg.get_all_rooms():
-            # room_metadata is keyed by integer room_id — we need to match.
-            # For reconstructed graphs the integer id is in the IdMapper, but
-            # we stored it as string key in the custom prop.
             pass  # TODO: implement metadata restore when FP3 persistence is done
 
     return sg, rg

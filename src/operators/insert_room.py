@@ -61,7 +61,7 @@ class FLOORPLAN_OT_insert_room(bpy.types.Operator):
         from .. import reset_graphs_for_obj
 
         obj = _get_floorplan_obj(context)
-        ensure_gn_modifier(obj, self.wall_thickness, self.wall_height)
+        ensure_gn_modifier(obj)
 
         # Rebuild Python graphs from the current mesh so that Blender's undo
         # (which restores mesh data but not Python objects) is the source of
@@ -117,5 +117,8 @@ class FLOORPLAN_OT_insert_room(bpy.types.Operator):
         rg.sync_from_structural_graph()
         sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
         sync_room_name_props(obj, rg)
+
+        # Re-apply modifier inputs after mesh rebuild so GN dimensions are correct.
+        ensure_gn_modifier(obj)
 
         return {'FINISHED'}
