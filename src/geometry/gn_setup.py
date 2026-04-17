@@ -15,6 +15,8 @@ MODIFIER_NAME = "FPM_Geometry"
 
 def ensure_gn_modifier(obj, thickness=0.3, height=2.5):
     # Add GN modifier to obj if not already present. Returns the modifier.
+    # Modifier inputs are updated on every call so newly created walls are
+    # rendered at the dimensions passed by the calling operator.
     mod = obj.modifiers.get(MODIFIER_NAME)
     if mod is None:
         mod = obj.modifiers.new(name=MODIFIER_NAME, type='NODES')
