@@ -45,6 +45,6 @@ Zápis do Vrstvy 1 nastane vždy až po potvrzení, nikdy průběžně při pohy
 Veškeré kreslení préview probíhá v GPU draw_handler registrovaném na 3D Viewport — neukládá se do geometrie ani datového modelu:
 
 - náhled stěny: čára od posledního junctionu ke kurzoru; odlišná barva od potvrzených stěn
-- HUD: délka navrhované stěny a úhel k poslednímu úseku (aktualizováno při každém pohybu myši)
+- HUD: délka navrhované stěny a úhel k poslednímu úseku (aktualizováno při každém pohybu myši); ve stavu ČEKÁNÍ zobrazuje zprávu „Waiting for input"
 - snap indikátor: barevný kruh u kurzoru při aktivním snapu
-- stavová zpráva: text v levém horním rohu viewportu (LMB = potvrdit, ESC = zrušit, Z = vrátit)
+- nápověda kláves: ikony kláves a myši zobrazené v dolní stavové liště Blenderu (STATUSBAR_HT_header); stav ČEKÁNÍ zobrazuje LMB / Z / ESC; stav KRESLENÍ zobrazuje aktualizovanou sadu; HUD nápovědu kláves nezobrazuje

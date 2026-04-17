@@ -8,14 +8,27 @@ HUD (Heads-Up Display) je textová a grafická vrstva překrývající viewport 
 
 HUD je vykreslován v `POST_PIXEL` režimu (souřadnice obrazovky) — text a indikátory tedy zůstávají čitelné a pozičně stabilní nezávisle na zoomu nebo rotaci pohledu. Technické odůvodnění tohoto rozhodnutí je rozvedeno v [porovnání přístupů k vykreslování](../02_Analysis/06_ta_ui_gpu.md).
 
-HUD zobrazuje v závislosti na aktuálním stavu automatu (FP1):
+HUD zobrazuje výhradně **měřicí data a indikátor fáze** — nápověda kláves do HUD nepatří:
 
 | Stav automatu | Obsah HUD |
 | :--- | :--- |
-| **ČEKÁNÍ** | Stavová zpráva: „LMB — umístit počáteční bod"; aktivní snap typ (mřížka/junction) |
-| **KRESLENÍ** | Délka navrhované stěny; úhel k poslednímu úseku; stavová zpráva: „LMB — potvrdit, Z — vrátit, ESC — zrušit" |
+| **ČEKÁNÍ** | Stavová zpráva „FloorPlan Pencil — Waiting for input" |
+| **KRESLENÍ** | Délka navrhované stěny; úhel k poslednímu úseku |
 
-Typografie HUD: výrazný font pro délku a úhel (klíčové hodnoty při kreslení), menší font pro stavovou nápovědu kláves. Stavová zpráva přijímá barvu odpovídající konvenci Blender nativních hlášení — bílá pro informace, oranžová pro varování.
+Typografie HUD: výrazný font pro délku a úhel (klíčové hodnoty při kreslení), menší font pro stavovou zprávu fáze. Stavová zpráva přijímá barvu odpovídající konvenci Blender nativních hlášení — bílá pro informace.
+
+## Nápověda kláves v dolní liště
+
+Klávesové zkratky platné pro aktuální stav operátoru jsou zobrazeny v **dolní stavové liště Blenderu** (Header oblasti `STATUSBAR`). Toto umístění je standardem Blender nativních nástrojů — Extrude, Knife Tool, Annotate i Loop Cut používají tentýž mechanismus. Nápověda kláves ve viewportu jako GPU text by narušovala architektonický vzor Blenderu a ztěžovala čitelnost scény.
+
+Technicky je nápověda implementována registrací draw funkce přes `bpy.types.STATUSBAR_HT_header.append()` při aktivaci operátoru a jejím odregistrováním při ukončení operátoru. Klávesy a tlačítka myši jsou zobrazeny jako **ikony** (`UILayout.label(icon=...)`), nikoliv jako prostý text — v souladu s Blender vizuálním jazykem:
+
+| Stav automatu | Nápověda v liště |
+| :--- | :--- |
+| **ČEKÁNÍ** | `LMB` Place first junction · `Z` Undo · `ESC` Exit tool |
+| **KRESLENÍ** | `LMB` Place next wall · `Z` Undo last wall · `ESC` Cancel line |
+
+Při ukončení operátoru se draw funkce z hlavičky odregistruje a lišta se vrátí do výchozího stavu Blenderu.
 
 ## Kótovací overlay (FP7)
 
