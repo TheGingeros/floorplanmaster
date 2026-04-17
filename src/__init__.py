@@ -74,6 +74,16 @@ def clear_graph_store():
 if _HAS_BPY:
     from bpy.props import FloatProperty, PointerProperty
 
+    def _on_settings_update(self, context):
+        # When the user changes default thickness/height in the settings panel,
+        # update the GN modifier inputs on the floorplan object so the viewport
+        # geometry reflects the new values immediately.
+        from .geometry.gn_setup import ensure_gn_modifier
+        for obj in context.scene.objects:
+            if obj.get("is_floorplan"):
+                ensure_gn_modifier(obj, self.default_thickness, self.default_height)
+                break
+
     # Scene-level addon settings (PropertyGroup on Scene)
     class FloorPlanSettings(bpy.types.PropertyGroup):
         default_thickness: FloatProperty(
@@ -84,6 +94,7 @@ if _HAS_BPY:
             max=1.0,
             precision=3,
             unit='LENGTH',
+            update=_on_settings_update,
         )
         default_height: FloatProperty(
             name="Default Wall Height",
@@ -93,6 +104,7 @@ if _HAS_BPY:
             max=10.0,
             precision=2,
             unit='LENGTH',
+            update=_on_settings_update,
         )
 
     from .operators import get_classes as get_operator_classes
