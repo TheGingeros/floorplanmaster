@@ -1,5 +1,5 @@
 Implementace - praktická
-    - projít současný prototyp a zjistit co chybý a co ne a udělat na to issues
+    - enhancement: height/thickness per edge todo
 Implementace - markdown
     - metoda shoru dolů - napsat si strukturu v implementaci markdownu
     - píšu jako příběh toho, jak jsem převedl návrh do praxe
