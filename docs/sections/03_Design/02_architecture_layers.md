@@ -26,7 +26,7 @@ V praxi systém funguje kaskádovitě: Vrstva 1 spravuje exaktní souřadnice sp
     - `area`: vypočítaná plocha v $m^2$
     - `perimeter`: vypočítaný obvod v metrech
     - `height`: výška místnosti
-    - `room_type`: typ místnosti (obytná, technická, komunikace)
+
     - `materials`: podlaha, strop, výchozí barva stěn
 - **hrany** ($E_r$) reprezentují relace sousednosti nebo prostupnosti
     - `wall_id`: odkaz na sdílenou stěnu ve Vrstvě 1

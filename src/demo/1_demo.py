@@ -7,7 +7,6 @@ import math
 from ..core.structural_graph import StructuralGraph
 from ..core.room_graph import RoomGraph
 from ..core.validators import ValidationError
-from ..utils.constants import RoomType
 L = 42  # left-column width for call → result alignment
 
 def _scene(title):
@@ -69,8 +68,6 @@ def scene_single_room():
 
     rg.set_room_name(r.id, "Living Room")
     _log('set_room_name(room, "Living Room")', f"name={r.name!r}")
-    rg.set_room_type(r.id, RoomType.LIVING)
-    _log("set_room_type(room, LIVING)", f"type={r.room_type.name}")
 
     return sg, rg
 

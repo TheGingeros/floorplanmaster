@@ -19,7 +19,6 @@ Sekce Místnosti je hlavním přehledem datového modelu — seznam všech uzlů
 
 **Seznam místností** zobrazuje pro každou místnost:
 - název místnosti (`room_name`) editovatelný přímo v řádku seznamu
-- typ místnosti (`room_type`) jako barevný štítek (obývák, ložnice, koupelna…)
 - plochu v nastaveném systému jednotek (aktualizuje se automaticky při každé změně Vrstvy 1)
 
 Kliknutím na položku v seznamu dojde k:
@@ -28,7 +27,7 @@ Kliknutím na položku v seznamu dojde k:
 3. rozbalení detailního pohledu přímo pod položkou v panelu
 
 **Detailní pohled vybrané místnosti** zobrazuje pod vybranou položkou:
-- editovatelný název místnosti a výběr z enumu typů místností
+- editovatelný název místnosti
 - obvod místnosti a počet stěn (pouze pro čtení)
 - vnořený seznam stěn místnosti — pro každou stěnu délku a tloušťku; kliknutím na stěnu v tomto seznamu se vybere příslušná hrana ve viewportu a zobrazí se gizmos výšky a tloušťky dané stěny
 

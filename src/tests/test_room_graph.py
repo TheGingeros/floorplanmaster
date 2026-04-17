@@ -2,7 +2,6 @@ import pytest
 
 from src.core.structural_graph import StructuralGraph
 from src.core.room_graph import RoomGraph, Room, Adjacency
-from src.utils.constants import RoomType
 
 
 # Helpers
@@ -143,13 +142,11 @@ class TestRoomPersistence:
         sg, rg, juncs = make_single_room()
         room = rg.get_all_rooms()[0]
         rg.set_room_name(room.id, "Living Room")
-        rg.set_room_type(room.id, RoomType.LIVING)
         # Resync after geometry change.
         sg.move_junction(juncs[2].id, (4, 4))
         rg.sync_from_structural_graph()
         room = rg.get_all_rooms()[0]
         assert room.name == "Living Room"
-        assert room.room_type == RoomType.LIVING
 
     def test_room_removed_on_wall_delete(self):
         sg, rg, _ = make_single_room()
@@ -205,25 +202,9 @@ class TestRoomQueries:
         _, rg, _ = make_single_room()
         assert rg.get_room("nonexistent") is None
 
-    def test_get_rooms_by_type(self):
-        _, rg, _ = make_two_rooms()
-        rooms = rg.get_all_rooms()
-        rg.set_room_type(rooms[0].id, RoomType.LIVING)
-        rg.set_room_type(rooms[1].id, RoomType.TECHNICAL)
-        assert len(rg.get_rooms_by_type(RoomType.LIVING)) == 1
-        assert len(rg.get_rooms_by_type(RoomType.TECHNICAL)) == 1
-        assert len(rg.get_rooms_by_type(RoomType.COMMUNICATION)) == 0
-
     def test_total_area(self):
         _, rg, _ = make_two_rooms()
         assert rg.total_area() == pytest.approx(18.0)
-
-    def test_total_area_by_type(self):
-        _, rg, _ = make_two_rooms()
-        rooms = rg.get_all_rooms()
-        rg.set_room_type(rooms[0].id, RoomType.LIVING)
-        assert rg.total_area(RoomType.LIVING) == pytest.approx(9.0)
-        assert rg.total_area(RoomType.TECHNICAL) == pytest.approx(0.0)
 
 
 # Room metadata
@@ -234,14 +215,3 @@ class TestRoomMetadata:
         room = rg.get_all_rooms()[0]
         rg.set_room_name(room.id, "Kitchen")
         assert room.name == "Kitchen"
-
-    def test_set_type(self):
-        _, rg, _ = make_single_room()
-        room = rg.get_all_rooms()[0]
-        rg.set_room_type(room.id, RoomType.COMMUNICATION)
-        assert room.room_type == RoomType.COMMUNICATION
-
-    def test_default_room_type(self):
-        _, rg, _ = make_single_room()
-        room = rg.get_all_rooms()[0]
-        assert room.room_type == RoomType.GENERIC

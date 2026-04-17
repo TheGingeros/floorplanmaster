@@ -30,7 +30,6 @@ classDiagram
         room_id : Integer
         room_area : Float
         room_perimeter : Float
-        room_type : Integer
         floor_material_id : Integer
         ceiling_material_id : Integer
     }
@@ -52,7 +51,6 @@ classDiagram
 | Face | `room_id` | Integer | 0 | identifikace místnosti | detekce/zánik cyklu |
 | Face | `room_area` | Float | 0.0 | plocha místnosti ($m^2$) | změna geometrie |
 | Face | `room_perimeter` | Float | 0.0 | obvod místnosti (m) | změna geometrie |
-| Face | `room_type` | Integer | 0 | klasifikace místnosti | změna typu |
 | Face | `floor_material_id` | Integer | 0 | index materiálu podlahy | změna materiálu |
 | Face | `ceiling_material_id` | Integer | 0 | index materiálu stropu | změna materiálu |
 

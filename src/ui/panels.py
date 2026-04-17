@@ -7,6 +7,40 @@ import bpy
 from ..operators.pencil_tool import _get_floorplan_obj
 
 
+def _sync_room_names_to_object(obj, rg):
+    # Sync room names between RoomGraph and object custom properties.
+    # Custom properties keyed by "room_name_{room.id}" enable inline prop() editing.
+    rooms = rg.get_all_rooms()
+    for room in rooms:
+        key = f"room_name_{room.id}"
+        if key not in obj:
+            obj[key] = room.name
+        else:
+            stored = obj[key]
+            if stored != room.name:
+                # Graph was updated externally (e.g. new room created with auto-name).
+                obj[key] = room.name
+
+    # Clean up orphaned keys for rooms that no longer exist.
+    room_ids = {room.id for room in rooms}
+    keys_to_remove = [
+        k for k in obj.keys()
+        if k.startswith("room_name_") and k[len("room_name_"):] not in room_ids
+    ]
+    for k in keys_to_remove:
+        del obj[k]
+
+
+def _push_room_names_from_object(obj, rg):
+    # Push any user edits from object custom properties back into the RoomGraph.
+    for room in rg.get_all_rooms():
+        key = f"room_name_{room.id}"
+        if key in obj:
+            stored = obj[key]
+            if stored != room.name:
+                rg.set_room_name(room.id, stored)
+
+
 # -- Main panel (tab header) --
 
 class FLOORPLAN_PT_main(bpy.types.Panel):
@@ -68,14 +102,17 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
             layout.label(text="No rooms detected yet.", icon='INFO')
             return
 
+        # Push any user edits from object custom props back into the graph,
+        # then sync graph names out to custom props (handles new rooms).
+        _push_room_names_from_object(obj, rg)
+        _sync_room_names_to_object(obj, rg)
+
         for room in rooms:
             box = layout.box()
 
-            # Room header row: name + type.
-            row = box.row()
-            name = room.name if room.name else f"Room {room.id[:8]}"
-            row.label(text=name, icon='HOME')
-            row.label(text=room.room_type.name)
+            # Room name — inline editable text field via object custom property.
+            key = f"room_name_{room.id}"
+            box.prop(obj, f'["{key}"]', text="", icon='HOME')
 
             # Metrics.
             col = box.column(align=True)
@@ -106,6 +143,3 @@ class FLOORPLAN_PT_settings(bpy.types.Panel):
         col = layout.column(align=True)
         col.prop(settings, "default_thickness")
         col.prop(settings, "default_height")
-        col.separator()
-        col.prop(settings, "grid_density")
-        col.prop(settings, "dimension_text_size")

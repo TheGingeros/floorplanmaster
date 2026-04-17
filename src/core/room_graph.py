@@ -1,6 +1,5 @@
 import uuid
 
-from ..utils.constants import RoomType
 from ..utils.math_helpers import polygon_area, polygon_centroid, polygon_perimeter, aspect_ratio
 from .validators import validate_room_area, validate_aspect_ratio, validate_room_vertex_count
 from .structural_graph import StructuralGraph
@@ -12,7 +11,6 @@ class Room:
         self.id = room_id or str(uuid.uuid4())
         self.cycle = list(cycle)  # ordered list of junction IDs
         self.name = ""
-        self.room_type = RoomType.GENERIC
         self.area = 0.0
         self.perimeter = 0.0
         self.centroid = (0.0, 0.0)
@@ -44,6 +42,8 @@ class RoomGraph:
         self._adjacencies = []       # list of Adjacency objects
         # Mapping: canonical cycle key -> room_id (for matching existing rooms).
         self._cycle_room_map = {}
+        # Auto-incrementing room number for default names.
+        self._next_room_number = 1
 
     # Synchronisation with Layer 1
     def sync_from_structural_graph(self):
@@ -89,6 +89,8 @@ class RoomGraph:
                 continue
 
             room = Room(cycle)
+            room.name = f"Room {self._next_room_number}"
+            self._next_room_number += 1
             room.area = area
             room.perimeter = polygon_perimeter(vertices)
             room.centroid = polygon_centroid(vertices)
@@ -122,12 +124,7 @@ class RoomGraph:
     def get_all_rooms(self):
         return list(self._rooms.values())
 
-    def get_rooms_by_type(self, room_type):
-        return [r for r in self._rooms.values() if r.room_type == room_type]
-
-    def total_area(self, room_type=None):
-        if room_type is not None:
-            return sum(r.area for r in self._rooms.values() if r.room_type == room_type)
+    def total_area(self):
         return sum(r.area for r in self._rooms.values())
 
     # Room metadata updates
@@ -135,11 +132,6 @@ class RoomGraph:
         room = self._rooms.get(room_id)
         if room:
             room.name = name
-
-    def set_room_type(self, room_id, room_type):
-        room = self._rooms.get(room_id)
-        if room:
-            room.room_type = room_type
 
     # Adjacency queries
     def get_adjacencies(self):

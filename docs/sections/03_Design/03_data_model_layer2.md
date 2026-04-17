@@ -5,12 +5,6 @@ Sémantická vrstva addonu, matematicky duální graf k Vrstvě 1. Dává topolo
 
 ```mermaid
 classDiagram
-    class RoomType {
-        <<enumeration>>
-        LIVING
-        TECHNICAL
-        CIRCULATION
-    }
     class ConnectionType {
         <<enumeration>>
         CLOSED
@@ -22,7 +16,6 @@ classDiagram
         +UUID id
         +UUID cycle_id
         +str name
-        +RoomType room_type
         +float area
         +float perimeter
         +float centroid_x
@@ -45,17 +38,15 @@ classDiagram
         +update_room_geometry(id) void
         +get_room(id) Room
         +get_all_rooms() list
-        +get_rooms_by_type(type) list
         +add_adjacency(a, b, wall) Adjacency
         +get_neighbors(room_id) list
         +are_adjacent(a, b) bool
-        +total_area(type) float
+        +total_area() float
         +find_external_rooms() list
     }
     RoomGraph "1" o-- "0..*" Room : obsahuje
     RoomGraph "1" o-- "0..*" Adjacency : obsahuje
     Adjacency "1" --> "2" Room : propojuje
-    Room --> RoomType : klasifikace
     Adjacency --> ConnectionType : typ propojení
 ```
 

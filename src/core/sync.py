@@ -140,11 +140,10 @@ class AttributeSync:
                 e[wthick_layer] = w.thickness
                 e[wheight_layer] = w.height
 
-        # Face attributes: room_id, room_area, room_perimeter, room_type
+        # Face attributes: room_id, room_area, room_perimeter
         rid_layer = self._ensure_int_layer(bm.faces.layers.int, "room_id")
         rarea_layer = self._ensure_float_layer(bm.faces.layers.float, "room_area")
         rperim_layer = self._ensure_float_layer(bm.faces.layers.float, "room_perimeter")
-        rtype_layer = self._ensure_int_layer(bm.faces.layers.int, "room_type")
         for room in rooms:
             fidx = self._rid_fidx.get(room.id)
             if fidx is not None:
@@ -152,7 +151,6 @@ class AttributeSync:
                 f[rid_layer] = self.id_mapper.get(room.id)
                 f[rarea_layer] = room.area
                 f[rperim_layer] = room.perimeter
-                f[rtype_layer] = int(room.room_type)
 
         # Write updated attributes to mesh and free bmesh.
         bm.to_mesh(mesh)

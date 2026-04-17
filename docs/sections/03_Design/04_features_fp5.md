@@ -16,7 +16,6 @@ Nabídka je vykreslena jako floating panel přes GPU/BLF overlay přímo na pozi
 
 **Kontext: místnost**
 - Přejmenovat místnost (editace `room_name` ve Vrstvě 2)
-- Změnit typ místnosti (editace `room_type` ve Vrstvě 2)
 - Změnit materiál podlahy / stropu
 - Smazat místnost (odebrání všech ohraničujících hran z Vrstvy 1 → kaskádový zánik cyklu → L2 + L3 sync)
 

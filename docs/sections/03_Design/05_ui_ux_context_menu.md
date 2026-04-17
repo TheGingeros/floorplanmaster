@@ -10,7 +10,6 @@ Obsah nabídky se dynamicky mění podle výsledku raycastu. Tato kontextová ci
 
 **Kontext: místnost** (klik na plochu uzavřeného cyklu Vrstvy 2)
 - Přejmenovat místnost — otevře inline textové pole pro editaci `room_name`
-- Změnit typ místnosti — rozbalovací seznam hodnot enumu `RoomType`
 - Smazat místnost — odstraní všechny ohraničující stěny z Vrstvy 1; spustí kaskádový zánik cyklu ve Vrstvě 2 a synchronizaci Vrstvy 3
 
 **Kontext: stěna** (klik na hranu Vrstvy 1 promítnutou přes Vrstvu 3)

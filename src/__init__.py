@@ -72,7 +72,7 @@ def clear_graph_store():
 
 
 if _HAS_BPY:
-    from bpy.props import FloatProperty, IntProperty, EnumProperty, PointerProperty
+    from bpy.props import FloatProperty, PointerProperty
 
     # Scene-level addon settings (PropertyGroup on Scene)
     class FloorPlanSettings(bpy.types.PropertyGroup):
@@ -93,22 +93,6 @@ if _HAS_BPY:
             max=10.0,
             precision=2,
             unit='LENGTH',
-        )
-        grid_density: FloatProperty(
-            name="Grid Density",
-            description="Snap grid spacing (meters)",
-            default=0.5,
-            min=0.01,
-            max=10.0,
-            precision=2,
-            unit='LENGTH',
-        )
-        dimension_text_size: IntProperty(
-            name="Dimension Text Size",
-            description="Font size for dimension overlay (pixels)",
-            default=14,
-            min=8,
-            max=48,
         )
 
     from .operators import get_classes as get_operator_classes
