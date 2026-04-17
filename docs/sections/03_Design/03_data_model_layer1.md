@@ -1,52 +1,64 @@
 # Vrstva 1: Strukturální graf
 Vrstva 1 je čistě matematická reprezentace půdorysu. Nemá ponětí o místnostech ani o 3D geometrii — vnímá prostor pouze jako množinu bodů spojených úsečkami v planárním 2D grafu. Na validitě a planaritě tohoto grafu závisí veškeré další výpočty, zejména detekce uzavřených prostorů ve Vrstvě 2 ([2.6 - Strukturální graf](../02_Analysis/06_ta_structural_graph.md)).
 
-## Model propojovacího bodu (Junction)
-Reprezentuje vrchol v topologickém grafu — místo, kde stěna začíná, končí nebo se setkává s jinými stěnami (roh, T-křižovatka). Souřadnice jsou striktně dvoudimenzionální pro garantování planarity.
+## Diagram tříd
 
-- `id`: unikátní identifikátor
-- `position`: $(x, y)$ — 2D souřadnice v prostoru scény; osa Z se doplňuje implicitně
-- `snap_priority`: celočíselná priorita pro algoritmus přichycování
+```mermaid
+classDiagram
+    class Junction {
+        +UUID id
+        +float x
+        +float y
+        +int snap_priority
+    }
+    class Wall {
+        +UUID id
+        +UUID junction_start
+        +UUID junction_end
+        +float thickness
+        +float height
+        +int material_id
+        +list openings
+        +bool is_external
+        +bool is_bearing
+    }
+    class StructuralGraph {
+        +add_junction(position) Junction
+        +remove_junction(id) void
+        +find_junctions_near(pos, radius) list
+        +get_all_junctions() list
+        +add_wall(j_start, j_end, params) Wall
+        +remove_wall(id) void
+        +get_walls_at_junction(id) list
+        +get_all_walls() list
+        +find_minimal_cycles() list
+        +validate_planarity() bool
+        +validate() list
+        +wall_length(wall_id) float
+        +wall_angle(wall_id) float
+    }
+    StructuralGraph "1" o-- "0..*" Junction : obsahuje
+    StructuralGraph "1" o-- "0..*" Wall : obsahuje
+    Wall "1" --> "2" Junction : propojuje
+```
 
-**Omezení**:
+Výchozí hodnoty: `thickness = 0.2` m, `height = 3.0` m.
+
+## Omezení
+
+### Propojovací bod (Junction)
 - pozice musí být v rámci grafu unikátní (žádné duplicitní body na stejných souřadnicích)
 - typ propojovacího bodu (roh, T-křižovatka, křížení) se odvozuje z počtu připojených hran
 
-## Model stěny (Wall)
-Reprezentuje hranu propojující právě dva existující propojovací body. Zapouzdřuje parametrické vlastnosti, které Vrstva 3 serializuje pro Geometry Nodes.
-
-- `id`: unikátní identifikátor
-- `junction_start`: odkaz na počáteční propojovací bod
-- `junction_end`: odkaz na koncový propojovací bod
-- `thickness`: tloušťka stěny v metrech (výchozí: 0.2)
-- `height`: výška stěny v metrech (výchozí: 3.0)
-- `material_id`: identifikátor materiálu
-- `openings`: seznam otvorů (okna, dveře) s pozicí a rozměry na této stěně
-- `is_external`: zda jde o vnější stěnu
-- `is_bearing`: zda jde o nosnou stěnu
-
-**Omezení**:
+### Stěna (Wall)
 - počáteční a koncový bod musí být různé (`junction_start` ≠ `junction_end`)
 - mezi dvěma konkrétními body může vést maximálně jedna stěna (prostý graf)
 - tloušťka a výška musí splňovat validační pravidla (viz [rodičovský soubor](./03_data_model.md))
 
 ## Operace strukturálního grafu
-Graf zapouzdřuje veškerou manipulaci s topologií podlaží. Po každé změně garantuje, že graf zůstane validní. CRUD = create, read, update, delete
+Graf zapouzdřuje veškerou manipulaci s topologií podlaží. Po každé změně garantuje, že graf zůstane validní. Operace jsou seskupeny do čtyř skupin:
 
-- **Propojovací body (CRUD)**:
-    - přidání bodu na zadanou pozici
-    - odebrání bodu (a všech napojených stěn)
-    - vyhledání bodů v okolí dané pozice (pro snapping)
-    - získání všech bodů
-- **Stěny (CRUD)**:
-    - přidání stěny mezi dva body s parametry
-    - odebrání stěny
-    - získání stěn napojených na konkrétní bod
-    - získání všech stěn
-- **Analýza topologie**:
-    - detekce všech minimálních cyklů (uzavřených prostorů) — klíčová operace pro Vrstvu 2
-    - validace planarity grafu
-    - celková validace topologie s výčtem chyb
-- **Geometrické výpočty**:
-    - délka stěny (vzdálenost mezi body)
-    - úhel stěny
+- **Propojovací body (CRUD)**: přidání, odebrání, vyhledání v okolí (snapping), výčet všech bodů
+- **Stěny (CRUD)**: přidání s parametry, odebrání, dotaz na stěny u daného bodu, výčet všech stěn
+- **Analýza topologie**: detekce minimálních cyklů (klíčová operace pro Vrstvu 2), validace planarity, celková validace s výčtem chyb
+- **Geometrické výpočty**: délka stěny, úhel stěny

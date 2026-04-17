@@ -6,53 +6,9 @@ Datový model operuje na úrovni jednoho podlaží. Vrstva 1 uchovává topologi
 ## [Vrstva 1: Strukturální graf](./03_data_model_layer1.md)
 ## [Vrstva 2: Graf místností](./03_data_model_layer2.md)
 
-## Vztah mezi vrstvami
-Vrstva 1 a Vrstva 2 jsou úzce provázány asymetrickým vztahem: Vrstva 1 (topologie) diktuje tvar a existenci Vrstvy 2 (sémantika). Synchronizace je automatická a jednosměrná.
+## [Vrstva 3: Atributový bridge](./03_data_model_layer3.md)
 
-```mermaid
-flowchart LR
-    subgraph V1["VRSTVA 1 — Strukturální"]
-        C1["Uzavřený cyklus stěn<br/>(geometrická hranice)"]:::v1
-        C2["Sdílená stěna<br/>(fyzický oddělovač)"]:::v1
-    end
-    subgraph V2["VRSTVA 2 — Sémantická"]
-        R1["UZEL: Místnost<br/>(nese metadata a ID)"]:::v2
-        R2["HRANA: Sousedství<br/>(dveře, okna, průchody)"]:::v2
-    end
-
-    C1 -->|"tvoří"| R1
-    C2 -->|"definuje"| R2
-
-    classDef v1 stroke:#4a90d9,stroke-width:2px
-    classDef v2 stroke:#9b4ad9,stroke-width:2px
-    linkStyle default stroke-width:2px
-```
-
-- přidání stěny do Vrstvy 1 → detekce nových cyklů → založení nové místnosti ve Vrstvě 2 s perzistentním ID
-- odebrání stěny → zánik nebo sloučení cyklů → odebrání nebo sloučení místností
-- posun propojovacího bodu → změna tvaru cyklu → přepočet plochy, obvodu a centroidu místnosti; ID a metadata zůstávají
-- tloušťka stěny (Vrstva 1) → vstupní parametr pro 3D generování ve View; výška stěny → maximální výška místnosti
-- materiál stěny (Vrstva 1) → slouží jako výchozí materiál vnitřního ohraničení místnosti ve Vrstvě 2
-
-## Atributové schéma (Vrstva 3)
-Pojmenované atributy na Blender mesh fungují jako datový bridge mezi Python grafy a Geometry Nodes. Každý atribut je vázán na konkrétní doménu mesh elementu (vertex, hrana, plocha). UUID identifikátory z Vrstev 1 a 2 se převádějí na celá čísla pro optimalizaci.
-
-| Doména | Atribut | Typ | Výchozí | Účel | Aktualizace při |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| Vertex | `junction_id` | Integer | 0 | identifikace propojovacího bodu | vytvoření/smazání junctionu |
-| Edge | `wall_id` | Integer | 0 | identifikace stěny | vytvoření/smazání stěny |
-| Edge | `wall_thickness` | Float | 0.2 | tloušťka stěny (m) | změna parametru |
-| Edge | `wall_height` | Float | 3.0 | výška stěny (m) | změna parametru |
-| Edge | `wall_material_id` | Integer | 0 | index materiálu | změna materiálu |
-| Face | `room_id` | Integer | 0 | identifikace místnosti | detekce/zánik cyklu |
-| Face | `room_area` | Float | 0.0 | plocha místnosti ($m^2$) | změna geometrie |
-| Face | `room_perimeter` | Float | 0.0 | obvod místnosti (m) | změna geometrie |
-| Face | `room_type` | Integer | 0 | klasifikace místnosti | změna typu |
-| Face | `floor_material_id` | Integer | 0 | index materiálu podlahy | změna materiálu |
-| Face | `ceiling_material_id` | Integer | 0 | index materiálu stropu | změna materiálu |
-
-- celoobjektová metadata se ukládají jako vlastnosti Blender objektu: systém měření, verze addonu, čítač verze struktury pro invalidaci cache
-- **projektová nastavení addonu** (výchozí tloušťka stěny, výchozí výška, hustota mřížky, systém jednotek, velikost textu kót) jsou uložena jako `Scene PropertyGroup` — jsou součástí `.blend` souboru, takže každý projekt má nezávislé hodnoty; výchozí hodnoty jsou zakódovány v definici PropertyGroup a nepotřebují `AddonPreferences` (viz [technická analýza persistence nastavení](../02_Analysis/06_ta_addon_preferences.md))
+## [Vztah mezi vrstvami](./03_data_model_relations.md)
 
 ## Validační pravidla
 Validace se aplikuje před zápisem dat do datových modelů. Zabraňuje vzniku degenerované geometrie, která by způsobila vizuální artefakty nebo selhání algoritmů.
