@@ -4,8 +4,8 @@ Implementace - markdown
     - metoda shoru dolů - napsat si strukturu v implementaci markdownu
     - píšu jako příběh toho, jak jsem převedl návrh do praxe
 Dodělání návrhu
-    - UI - vizuální návrh viz odkazy
-    - datový model - diagramy, relační schéma, něco takovýho
+    - UDĚLAT POTOM UI - vizuální návrh viz odkazy
+    - DONE datový model - diagramy, relační schéma, něco takovýho
 Napsat návrh
     - současné průchody návrhem jsou expertní, potřeba zmínit v textu že o uživatelským testováním vim a buď jsem je dělal nebo nedělal
 napsat Implementaci
