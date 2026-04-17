@@ -73,6 +73,10 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         bpy.ops.view3d.view_axis(type='TOP')
         context.region_data.view_perspective = 'ORTHO'
 
+        # Highlight the WorkSpaceTool icon in the T-panel regardless of how
+        # the operator was invoked (D shortcut or toolbar button click).
+        bpy.ops.wm.tool_set_by_id(name="floorplan.pencil_workspace_tool")
+
         self._state = WAITING
         context.window_manager.modal_handler_add(self)
         context.area.tag_redraw()
@@ -393,15 +397,15 @@ class FLOORPLAN_WT_pencil(bpy.types.WorkSpaceTool):
 
 
 def register_pencil_keymap():
-    # Register D shortcut to activate the WorkSpaceTool (not the operator directly).
-    # This ensures the T-panel icon highlights when D is pressed (05_ui_ux_shortcuts.md).
+    # Register D shortcut to invoke the operator directly so the tool activates
+    # immediately (top view + WAITING state) without a redundant first LMB click.
+    # invoke() calls tool_set_by_id internally to keep the T-panel in sync.
     wm = bpy.context.window_manager
     kc = wm.keyconfigs.addon
     if kc is None:
         return
     km = kc.keymaps.new(name='3D View', space_type='VIEW_3D')
-    kmi = km.keymap_items.new("wm.tool_set_by_id", type='D', value='PRESS')
-    kmi.properties.name = "floorplan.pencil_workspace_tool"
+    kmi = km.keymap_items.new("floorplan.pencil_tool", type='D', value='PRESS')
     return km, kmi
 
 
