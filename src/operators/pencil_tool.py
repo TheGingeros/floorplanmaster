@@ -393,13 +393,15 @@ class FLOORPLAN_WT_pencil(bpy.types.WorkSpaceTool):
 
 
 def register_pencil_keymap():
-    # Register D shortcut for Pencil Tool activation (05_ui_ux_shortcuts.md).
+    # Register D shortcut to activate the WorkSpaceTool (not the operator directly).
+    # This ensures the T-panel icon highlights when D is pressed (05_ui_ux_shortcuts.md).
     wm = bpy.context.window_manager
     kc = wm.keyconfigs.addon
     if kc is None:
         return
     km = kc.keymaps.new(name='3D View', space_type='VIEW_3D')
-    kmi = km.keymap_items.new("floorplan.pencil_tool", type='D', value='PRESS')
+    kmi = km.keymap_items.new("wm.tool_set_by_id", type='D', value='PRESS')
+    kmi.properties.name = "floorplan.pencil_workspace_tool"
     return km, kmi
 
 
