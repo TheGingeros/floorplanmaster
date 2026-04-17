@@ -58,12 +58,16 @@ class FLOORPLAN_OT_insert_room(bpy.types.Operator):
         return self.execute(context)
 
     def execute(self, context):
-        from .. import get_graphs, get_id_mapper
+        from .. import reset_graphs_for_obj
 
         obj = _get_floorplan_obj(context)
-        sg, rg = get_graphs(obj)
-        mapper = get_id_mapper(obj)
         ensure_gn_modifier(obj, self.wall_thickness, self.wall_height)
+
+        # Rebuild Python graphs from the current mesh so that Blender's undo
+        # (which restores mesh data but not Python objects) is the source of
+        # truth.  Without this, re-executing after a parameter change would
+        # add a second room on top of the first.
+        sg, rg, mapper = reset_graphs_for_obj(obj)
 
         # Room centred on 3D cursor (XY only).
         cursor = context.scene.cursor.location

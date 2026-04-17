@@ -63,6 +63,20 @@ def get_id_mapper(obj):
     return _graph_store[key][2]
 
 
+def reset_graphs_for_obj(obj):
+    # Rebuild Python graphs from the current mesh state and store them.
+    # Must be called at the start of any operator with REGISTER|UNDO before
+    # mutating graphs, so that Blender's undo-restored mesh is the source of
+    # truth and re-execution after undo does not create duplicates.
+    from .core.sync import IdMapper, reconstruct_graphs_from_mesh
+    sg, rg = reconstruct_graphs_from_mesh(obj)
+    if rg is None:
+        rg = RoomGraph(sg)
+    mapper = IdMapper()
+    _graph_store[obj.name] = (sg, rg, mapper)
+    return sg, rg, mapper
+
+
 def remove_graphs(obj):
     _graph_store.pop(obj.name, None)
 
