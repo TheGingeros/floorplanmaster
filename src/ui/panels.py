@@ -102,17 +102,16 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
             layout.label(text="No rooms detected yet.", icon='INFO')
             return
 
-        # Push any user edits from object custom props back into the graph,
-        # then sync graph names out to custom props (handles new rooms).
-        _push_room_names_from_object(obj, rg)
-        _sync_room_names_to_object(obj, rg)
-
         for room in rooms:
             box = layout.box()
 
-            # Room name — inline editable text field via object custom property.
+            # Room name — inline editable text field via object custom property
+            # (key must be initialised by the operator that created the room).
             key = f"room_name_{room.id}"
-            box.prop(obj, f'["{key}"]', text="", icon='HOME')
+            if key in obj:
+                box.prop(obj, f'["{key}"]', text="", icon='HOME')
+            else:
+                box.label(text=room.name, icon='HOME')
 
             # Metrics.
             col = box.column(align=True)

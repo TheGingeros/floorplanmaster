@@ -242,3 +242,19 @@ def reconstruct_graphs_from_mesh(obj):
             pass  # TODO: implement metadata restore when FP3 persistence is done
 
     return sg, rg
+
+
+def sync_room_name_props(obj, rg):
+    # Initialize / update "room_name_{id}" custom properties on obj.
+    # Must be called from operator execute() (write context), not from draw().
+    rooms = rg.get_all_rooms()
+    room_ids = {room.id for room in rooms}
+
+    for room in rooms:
+        key = f"room_name_{room.id}"
+        if key not in obj or obj[key] != room.name:
+            obj[key] = room.name
+
+    # Remove orphaned keys.
+    for k in [k for k in obj.keys() if k.startswith("room_name_") and k[len("room_name_"):] not in room_ids]:
+        del obj[k]
