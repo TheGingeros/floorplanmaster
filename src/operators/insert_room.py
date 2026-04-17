@@ -58,10 +58,11 @@ class FLOORPLAN_OT_insert_room(bpy.types.Operator):
         return self.execute(context)
 
     def execute(self, context):
-        from .. import get_graphs
+        from .. import get_graphs, get_id_mapper
 
         obj = _get_floorplan_obj(context)
         sg, rg = get_graphs(obj)
+        mapper = get_id_mapper(obj)
         ensure_gn_modifier(obj, self.wall_thickness, self.wall_height)
 
         # Room centred on 3D cursor (XY only).
@@ -110,6 +111,6 @@ class FLOORPLAN_OT_insert_room(bpy.types.Operator):
 
         # Sync L2 + L3.
         rg.sync_from_structural_graph()
-        sync_graph_to_mesh(obj, sg, rg)
+        sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
 
         return {'FINISHED'}

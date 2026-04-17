@@ -34,19 +34,33 @@ from .core.structural_graph import StructuralGraph
 from .core.room_graph import RoomGraph
 
 
-# Per-object graph storage: obj.name -> (StructuralGraph, RoomGraph)
+# Per-object graph storage: obj.name -> (StructuralGraph, RoomGraph, IdMapper)
 _graph_store = {}
 
 
 def get_graphs(obj):
     # Return (StructuralGraph, RoomGraph) for a FloorPlanMaster object.
-    # Creates new graphs if not yet tracked.
+    # Creates new graphs and a persistent IdMapper if not yet tracked.
+    from .core.sync import IdMapper
     key = obj.name
     if key not in _graph_store:
         sg = StructuralGraph()
         rg = RoomGraph(sg)
-        _graph_store[key] = (sg, rg)
-    return _graph_store[key]
+        _graph_store[key] = (sg, rg, IdMapper())
+    sg, rg, _ = _graph_store[key]
+    return sg, rg
+
+
+def get_id_mapper(obj):
+    # Return the persistent IdMapper for a FloorPlanMaster object.
+    # Ensures the same UUID->int assignments survive across sync calls.
+    from .core.sync import IdMapper
+    key = obj.name
+    if key not in _graph_store:
+        sg = StructuralGraph()
+        rg = RoomGraph(sg)
+        _graph_store[key] = (sg, rg, IdMapper())
+    return _graph_store[key][2]
 
 
 def remove_graphs(obj):

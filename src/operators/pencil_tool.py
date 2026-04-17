@@ -51,9 +51,10 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         self._placed_junctions = []
 
         # Get or create the FloorPlan object and its graphs.
-        from .. import get_graphs
+        from .. import get_graphs, get_id_mapper
         self._obj = _get_floorplan_obj(context)
         self._sg, self._rg = get_graphs(self._obj)
+        self._id_mapper = get_id_mapper(self._obj)
 
         # Read defaults from scene settings.
         settings = context.scene.floorplan
@@ -210,7 +211,7 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
 
         # Sync L2 + L3.
         self._rg.sync_from_structural_graph()
-        sync_graph_to_mesh(self._obj, self._sg, self._rg)
+        sync_graph_to_mesh(self._obj, self._sg, self._rg, id_mapper=self._id_mapper)
 
         # Advance: end junction becomes start of next wall.
         self._start_junction_id = end_id
@@ -241,7 +242,7 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
 
         # Sync.
         self._rg.sync_from_structural_graph()
-        sync_graph_to_mesh(self._obj, self._sg, self._rg)
+        sync_graph_to_mesh(self._obj, self._sg, self._rg, id_mapper=self._id_mapper)
 
         if self._placed_walls:
             # Revert start junction to end of previous wall.

@@ -14,28 +14,37 @@ from .room_graph import RoomGraph
 # Maintains a persistent mapping per sync session so IDs stay consistent.
 class IdMapper:
     def __init__(self):
-        self._map = {}
+        self._map = {}      # uuid_str -> int
+        self._reverse = {}  # int -> uuid_str
         self._next = 1
 
     def get(self, uuid_str):
         if uuid_str not in self._map:
-            self._map[uuid_str] = self._next
+            int_id = self._next
+            self._map[uuid_str] = int_id
+            self._reverse[int_id] = uuid_str
             self._next += 1
         return self._map[uuid_str]
 
+    def lookup_uuid(self, int_id):
+        # Reverse lookup: integer attribute value -> UUID string.
+        return self._reverse.get(int_id)
+
     def clear(self):
         self._map.clear()
+        self._reverse.clear()
         self._next = 1
 
 
 # Main sync class operating on one Blender object.
 class AttributeSync:
 
-    def __init__(self, obj, sg, rg):
+    def __init__(self, obj, sg, rg, id_mapper=None):
         self.obj = obj
         self.sg = sg
         self.rg = rg
-        self.id_mapper = IdMapper()
+        # Use the provided persistent mapper; fall back to a fresh one.
+        self.id_mapper = id_mapper if id_mapper is not None else IdMapper()
 
     def full_sync(self):
         # Run phase 1 + phase 2 in sequence.
@@ -168,8 +177,10 @@ class AttributeSync:
 
 
 # Convenience function called from operators after any L1/L2 change.
-def sync_graph_to_mesh(obj, sg, rg):
-    syncer = AttributeSync(obj, sg, rg)
+# Pass id_mapper from the per-object store so UUID->int assignments stay stable
+# across multiple sync calls (required for raycast reverse lookup).
+def sync_graph_to_mesh(obj, sg, rg, id_mapper=None):
+    syncer = AttributeSync(obj, sg, rg, id_mapper=id_mapper)
     syncer.full_sync()
 
 
