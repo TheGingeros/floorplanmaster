@@ -61,7 +61,7 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
             layout.label(text="No floor plan in scene.", icon='INFO')
             return
 
-        sg, rg = _graph_store[obj.name]
+        sg, rg, _mapper = _graph_store[obj.name]
         rooms = rg.get_all_rooms()
 
         if not rooms:

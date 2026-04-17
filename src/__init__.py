@@ -116,6 +116,7 @@ if _HAS_BPY:
         FLOORPLAN_WT_pencil,
         register_pencil_keymap,
         unregister_pencil_keymap,
+        _draw_pencil_status,
     )
     from .ui import get_classes as get_ui_classes
 
@@ -136,8 +137,10 @@ if _HAS_BPY:
 
         bpy.utils.register_tool(FLOORPLAN_WT_pencil)
         register_pencil_keymap()
+        bpy.types.STATUSBAR_HT_header.prepend(_draw_pencil_status)
 
     def unregister():
+        bpy.types.STATUSBAR_HT_header.remove(_draw_pencil_status)
         unregister_pencil_keymap()
         bpy.utils.unregister_tool(FLOORPLAN_WT_pencil)
 

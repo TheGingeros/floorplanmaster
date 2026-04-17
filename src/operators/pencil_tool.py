@@ -20,6 +20,40 @@ from ..utils.constants import SNAP_JUNCTION_TOLERANCE
 WAITING = "WAITING"
 DRAWING = "DRAWING"
 
+# Module-level state for the status bar draw function.
+# None = operator not active; WAITING or DRAWING = operator active.
+_pencil_state = None
+
+
+def _draw_pencil_status(self, context):
+    # Draw keyboard/mouse hints in the bottom status bar using Blender icons.
+    # Three states:
+    #   _pencil_state is None + tool active = tool selected, waiting for LMB activation
+    #   _pencil_state == WAITING = operator running, waiting for first junction
+    #   _pencil_state == DRAWING = operator running, placing walls
+    layout = self.layout
+
+    if _pencil_state is None:
+        # Operator not running — let Blender draw its default WS tool hints.
+        return
+
+    if _pencil_state == WAITING:
+        layout.label(text="", icon='MOUSE_LMB')
+        layout.label(text="Place first junction")
+        layout.label(text="", icon='EVENT_Z')
+        layout.label(text="Undo")
+        layout.label(text="", icon='EVENT_ESC')
+        layout.label(text="Exit tool")
+    else:  # DRAWING
+        layout.label(text="", icon='MOUSE_LMB')
+        layout.label(text="Place junction")
+        layout.label(text="", icon='EVENT_Z')
+        layout.label(text="Undo")
+        layout.label(text="", icon='EVENT_ESC')
+        layout.label(text="Cancel line")
+    # Spacer fills remaining width – prevents WS tool keymap hints from rendering.
+    layout.separator_spacer()
+
 
 def _get_floorplan_obj(context):
     # Find or create the FloorPlanMaster mesh object in the scene.
@@ -79,6 +113,9 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
 
         self._state = WAITING
         self._update_status_bar(context)
+        # Suppress Blender's default keymap hints ("FloorPlan Pencil Tool",
+        # "Rotate View", etc.) — our prepended draw function handles hints.
+        context.workspace.status_text_set(" ")
         context.window_manager.modal_handler_add(self)
         context.area.tag_redraw()
         return {'RUNNING_MODAL'}
@@ -272,6 +309,9 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         if self._draw_handler:
             bpy.types.SpaceView3D.draw_handler_remove(self._draw_handler, 'WINDOW')
             self._draw_handler = None
+        global _pencil_state
+        _pencil_state = None
+        # Restore default status bar (undo our status_text_set override).
         context.workspace.status_text_set(None)
         context.area.tag_redraw()
 
@@ -294,15 +334,10 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             self._draw_preview_line(context, region, rv3d)
 
     def _update_status_bar(self, context):
-        # Set keyboard hints in the bottom status bar (Blender convention).
-        if self._state == WAITING:
-            context.workspace.status_text_set(
-                "LMB: Place first junction    Z: Undo    ESC: Exit tool"
-            )
-        else:
-            context.workspace.status_text_set(
-                "LMB: Place next wall    Z: Undo last wall    ESC: Cancel line"
-            )
+        # Update module-level state; the draw function registered at addon
+        # load reads this variable and draws accordingly.
+        global _pencil_state
+        _pencil_state = self._state
 
     def _draw_status_text(self, context):
         font_id = 0
