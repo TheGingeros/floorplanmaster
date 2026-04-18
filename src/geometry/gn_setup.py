@@ -15,7 +15,7 @@ import bpy
 
 TREE_NAME = "FloorPlanMaster_WallGen"
 MODIFIER_NAME = "FPM_Geometry"
-_TREE_VERSION = 4
+_TREE_VERSION = 5
 
 
 def ensure_gn_modifier(obj):
@@ -57,64 +57,101 @@ def _build_tree():
     nodes = tree.nodes
     links = tree.links
 
-    group_in  = nodes.new('NodeGroupInput');  group_in.location  = (-900, 0)
-    group_out = nodes.new('NodeGroupOutput'); group_out.location = (1000, 0)
+    group_in  = nodes.new('NodeGroupInput');  group_in.location  = (-1200, 0)
+    group_out = nodes.new('NodeGroupOutput'); group_out.location = (1400, 0)
 
-    # Separate wall faces (is_wall == 1) from room floor faces (is_wall == 0).
+    # --- Step 1: Separate wall faces (is_wall == 1) from the rest ---
     named_is_wall = nodes.new('GeometryNodeInputNamedAttribute')
     named_is_wall.data_type = 'INT'
     named_is_wall.inputs['Name'].default_value = 'is_wall'
-    named_is_wall.location = (-700, -200)
+    named_is_wall.location = (-1000, -200)
 
-    # Compare: is_wall == 1  ->  Selection socket for SeparateGeometry.
-    compare = nodes.new('FunctionNodeCompare')
-    compare.data_type = 'INT'
-    compare.operation = 'EQUAL'
-    compare.inputs[3].default_value = 1   # B = 1
-    compare.location = (-500, -200)
+    compare_wall = nodes.new('FunctionNodeCompare')
+    compare_wall.data_type = 'INT'
+    compare_wall.operation = 'EQUAL'
+    compare_wall.inputs[3].default_value = 1
+    compare_wall.location = (-800, -200)
 
-    sep_geo = nodes.new('GeometryNodeSeparateGeometry')
-    sep_geo.domain = 'FACE'
-    sep_geo.location = (-300, 0)
+    sep_wall = nodes.new('GeometryNodeSeparateGeometry')
+    sep_wall.domain = 'FACE'
+    sep_wall.location = (-600, 0)
 
-    # Extrude wall faces by per-face wall_height named attribute.
+    # --- Step 2: From the rest, separate opening cutters (is_opening == 1) ---
+    named_is_opening = nodes.new('GeometryNodeInputNamedAttribute')
+    named_is_opening.data_type = 'INT'
+    named_is_opening.inputs['Name'].default_value = 'is_opening'
+    named_is_opening.location = (-600, -400)
+
+    compare_opening = nodes.new('FunctionNodeCompare')
+    compare_opening.data_type = 'INT'
+    compare_opening.operation = 'EQUAL'
+    compare_opening.inputs[3].default_value = 1
+    compare_opening.location = (-400, -400)
+
+    sep_opening = nodes.new('GeometryNodeSeparateGeometry')
+    sep_opening.domain = 'FACE'
+    sep_opening.location = (-200, -200)
+
+    # --- Step 3: Extrude wall faces by wall_height ---
     named_height = nodes.new('GeometryNodeInputNamedAttribute')
     named_height.data_type = 'FLOAT'
     named_height.inputs['Name'].default_value = 'wall_height'
-    named_height.location = (-300, 300)
+    named_height.location = (-200, 300)
 
-    extrude = nodes.new('GeometryNodeExtrudeMesh')
-    extrude.mode = 'FACES'
-    extrude.location = (100, 150)
-    # Individual = False so all wall faces extrude independently per their
-    # own height value (per-face attribute, read by the Extrude node socket).
+    extrude_walls = nodes.new('GeometryNodeExtrudeMesh')
+    extrude_walls.mode = 'FACES'
+    extrude_walls.location = (100, 150)
 
-    # Delete the original (Z=0) wall quad top-faces after extrusion so only
-    # the extruded solid remains (optional cosmetic — keeps mesh clean).
-    # We skip this for now; the base quads at Z=0 are covered by room floors.
-
-    # Shade flat.
     set_shade = nodes.new('GeometryNodeSetShadeSmooth')
     set_shade.inputs['Shade Smooth'].default_value = False
-    set_shade.location = (400, 150)
+    set_shade.location = (350, 150)
 
-    # Join walls + room floors.
+    # --- Step 4: Extrude opening cutter faces by opening_height ---
+    named_oheight = nodes.new('GeometryNodeInputNamedAttribute')
+    named_oheight.data_type = 'FLOAT'
+    named_oheight.inputs['Name'].default_value = 'opening_height'
+    named_oheight.location = (-200, -500)
+
+    extrude_cutters = nodes.new('GeometryNodeExtrudeMesh')
+    extrude_cutters.mode = 'FACES'
+    extrude_cutters.location = (100, -300)
+
+    # --- Step 5: Mesh Boolean (DIFFERENCE) — walls minus cutters ---
+    boolean_node = nodes.new('GeometryNodeMeshBoolean')
+    boolean_node.operation = 'DIFFERENCE'
+    boolean_node.location = (600, 0)
+
+    # --- Step 6: Join walls-with-holes + floor faces ---
     join = nodes.new('GeometryNodeJoinGeometry')
-    join.location = (700, 0)
+    join.location = (1000, 0)
 
     # --- Links ---
-    links.new(group_in.outputs['Geometry'], sep_geo.inputs['Geometry'])
-    links.new(named_is_wall.outputs[0], compare.inputs[2])   # A
-    links.new(compare.outputs['Result'], sep_geo.inputs['Selection'])
+    # Step 1: Separate wall faces.
+    links.new(group_in.outputs['Geometry'], sep_wall.inputs['Geometry'])
+    links.new(named_is_wall.outputs[0], compare_wall.inputs[2])
+    links.new(compare_wall.outputs['Result'], sep_wall.inputs['Selection'])
 
-    # Wall branch: selection → extrude → shade → join
-    links.new(sep_geo.outputs['Selection'], extrude.inputs['Mesh'])
-    links.new(named_height.outputs[0], extrude.inputs['Offset Scale'])
-    links.new(extrude.outputs['Mesh'], set_shade.inputs['Geometry'])
-    links.new(set_shade.outputs['Geometry'], join.inputs['Geometry'])
+    # Step 2: Separate opening cutters from floor faces.
+    links.new(sep_wall.outputs['Inverted'], sep_opening.inputs['Geometry'])
+    links.new(named_is_opening.outputs[0], compare_opening.inputs[2])
+    links.new(compare_opening.outputs['Result'], sep_opening.inputs['Selection'])
 
-    # Floor branch: inverted selection → join
-    links.new(sep_geo.outputs['Inverted'], join.inputs['Geometry'])
+    # Step 3: Extrude wall faces.
+    links.new(sep_wall.outputs['Selection'], extrude_walls.inputs['Mesh'])
+    links.new(named_height.outputs[0], extrude_walls.inputs['Offset Scale'])
+    links.new(extrude_walls.outputs['Mesh'], set_shade.inputs['Geometry'])
+
+    # Step 4: Extrude opening cutters.
+    links.new(sep_opening.outputs['Selection'], extrude_cutters.inputs['Mesh'])
+    links.new(named_oheight.outputs[0], extrude_cutters.inputs['Offset Scale'])
+
+    # Step 5: Mesh Boolean.
+    links.new(set_shade.outputs['Geometry'], boolean_node.inputs['Mesh 1'])
+    links.new(extrude_cutters.outputs['Mesh'], boolean_node.inputs['Mesh 2'])
+
+    # Step 6: Join result + floor faces.
+    links.new(boolean_node.outputs['Mesh'], join.inputs['Geometry'])
+    links.new(sep_opening.outputs['Inverted'], join.inputs['Geometry'])
 
     links.new(join.outputs['Geometry'], group_out.inputs['Geometry'])
 

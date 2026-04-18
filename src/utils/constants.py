@@ -13,5 +13,18 @@ MIN_ASPECT_RATIO = 0.1
 MAX_ASPECT_RATIO = 10.0
 MIN_ROOM_VERTICES = 3
 
+# Openings (doors, windows)
+MIN_OPENING_WIDTH = 0.3    # meters
+MAX_OPENING_WIDTH = 5.0
+DEFAULT_DOOR_WIDTH = 0.9
+DEFAULT_WINDOW_WIDTH = 1.2
+
+MIN_OPENING_HEIGHT = 0.3   # meters
+DEFAULT_DOOR_HEIGHT = 2.1
+DEFAULT_WINDOW_HEIGHT = 1.2
+DEFAULT_WINDOW_SILL = 0.9  # distance from floor to bottom of window
+
+OPENING_CUTTER_OVERSHOOT = 0.02  # extra depth beyond wall surface for boolean
+
 # Snapping
 SNAP_JUNCTION_TOLERANCE = 15  # pixels

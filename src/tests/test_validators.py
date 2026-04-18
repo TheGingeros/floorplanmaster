@@ -7,11 +7,20 @@ from src.core.validators import (
     validate_room_area,
     validate_aspect_ratio,
     validate_room_vertex_count,
+    validate_opening_width,
+    validate_opening_height,
+    validate_opening_placement,
+    validate_opening_sill,
     E_THICKNESS_OUT_OF_RANGE,
     E_HEIGHT_OUT_OF_RANGE,
     E_ROOM_TOO_SMALL,
     E_ROOM_BAD_ASPECT,
     E_ROOM_TOO_FEW_VERTICES,
+    E_OPENING_TOO_LARGE,
+    E_OPENING_OVERLAP,
+    E_OPENING_EXCEEDS_WALL,
+    E_OPENING_WIDTH_OUT_OF_RANGE,
+    E_OPENING_HEIGHT_OUT_OF_RANGE,
 )
 
 
@@ -113,3 +122,88 @@ class TestValidationErrorAttributes:
         except ValidationError as e:
             assert e.code == E_THICKNESS_OUT_OF_RANGE
             assert E_THICKNESS_OUT_OF_RANGE in str(e)
+
+
+class TestValidateOpeningWidth:
+    def test_valid(self):
+        validate_opening_width(0.9)
+
+    def test_minimum(self):
+        validate_opening_width(0.3)
+
+    def test_maximum(self):
+        validate_opening_width(5.0)
+
+    def test_too_narrow(self):
+        with pytest.raises(ValidationError, match=E_OPENING_WIDTH_OUT_OF_RANGE):
+            validate_opening_width(0.1)
+
+    def test_too_wide(self):
+        with pytest.raises(ValidationError, match=E_OPENING_WIDTH_OUT_OF_RANGE):
+            validate_opening_width(6.0)
+
+
+class TestValidateOpeningHeight:
+    def test_valid(self):
+        validate_opening_height(2.1)
+
+    def test_minimum(self):
+        validate_opening_height(0.3)
+
+    def test_too_short(self):
+        with pytest.raises(ValidationError, match=E_OPENING_HEIGHT_OUT_OF_RANGE):
+            validate_opening_height(0.1)
+
+    def test_exceeds_wall(self):
+        with pytest.raises(ValidationError, match=E_OPENING_HEIGHT_OUT_OF_RANGE):
+            validate_opening_height(4.0, wall_height=3.0)
+
+    def test_no_wall_height_check(self):
+        validate_opening_height(4.0)  # no wall_height -> no limit check
+
+
+class TestValidateOpeningPlacement:
+    def test_valid_center(self):
+        validate_opening_placement(0.5, 0.9, 2.0)
+
+    def test_extends_past_start(self):
+        with pytest.raises(ValidationError, match=E_OPENING_TOO_LARGE):
+            validate_opening_placement(0.1, 0.9, 2.0)
+
+    def test_extends_past_end(self):
+        with pytest.raises(ValidationError, match=E_OPENING_TOO_LARGE):
+            validate_opening_placement(0.9, 0.9, 2.0)
+
+    def test_exactly_full_wall(self):
+        # Opening = wall length, position centered -> should pass (within tolerance).
+        validate_opening_placement(0.5, 2.0, 2.0)
+
+    def test_overlap_detected(self):
+        from src.core.structural_graph import Opening
+        existing = Opening("w1", position=0.3, width=0.8)
+        with pytest.raises(ValidationError, match=E_OPENING_OVERLAP):
+            validate_opening_placement(0.5, 0.8, 2.0, existing_openings=[existing])
+
+    def test_no_overlap(self):
+        from src.core.structural_graph import Opening
+        existing = Opening("w1", position=0.2, width=0.5)
+        validate_opening_placement(0.8, 0.5, 2.0, existing_openings=[existing])
+
+
+class TestValidateOpeningSill:
+    def test_valid_door(self):
+        validate_opening_sill(0.0, 2.1, 3.0)
+
+    def test_valid_window(self):
+        validate_opening_sill(0.9, 1.2, 3.0)
+
+    def test_exceeds_wall(self):
+        with pytest.raises(ValidationError, match=E_OPENING_EXCEEDS_WALL):
+            validate_opening_sill(2.0, 2.0, 3.0)
+
+    def test_negative_sill(self):
+        with pytest.raises(ValidationError, match=E_OPENING_HEIGHT_OUT_OF_RANGE):
+            validate_opening_sill(-0.5, 2.0, 3.0)
+
+    def test_exact_fit(self):
+        validate_opening_sill(1.0, 2.0, 3.0)  # 1.0 + 2.0 = 3.0 exactly

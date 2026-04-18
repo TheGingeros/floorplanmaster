@@ -15,7 +15,7 @@ import math
 import bpy
 import bmesh
 
-from .structural_graph import StructuralGraph
+from .structural_graph import StructuralGraph, Opening
 from .room_graph import RoomGraph
 
 
@@ -175,6 +175,44 @@ def _compute_wall_quad(wall, junctions_by_id, sg):
     return (p0, p1, p2, p3)
 
 
+def _compute_opening_cutter_quad(opening, wall, junctions_by_id):
+    # Returns (p0, p1, p2, p3, z) — 4 corners of the cutter face at Z = sill_height.
+    # The quad extends along the wall direction by opening.width and perpendicular
+    # to the wall by wall.thickness + overshoot on each side (to ensure clean boolean).
+    from ..utils.constants import OPENING_CUTTER_OVERSHOOT
+
+    j_start = junctions_by_id.get(wall.junction_start)
+    j_end = junctions_by_id.get(wall.junction_end)
+    if not (j_start and j_end):
+        return None
+
+    sx, sy = j_start.position
+    ex, ey = j_end.position
+    dx = ex - sx
+    dy = ey - sy
+    L = math.sqrt(dx * dx + dy * dy)
+    if L < 1e-8:
+        return None
+
+    ux, uy = dx / L, dy / L
+    nx, ny = _perp(dx, dy)
+
+    # Center of opening along wall centerline.
+    cx = sx + opening.position * dx
+    cy = sy + opening.position * dy
+
+    half_w = opening.width / 2.0
+    half_d = wall.thickness / 2.0 + OPENING_CUTTER_OVERSHOOT
+
+    # Quad corners at Z = sill_height (will be extruded by opening.height in GN).
+    p0 = (cx - half_w * ux + half_d * nx, cy - half_w * uy + half_d * ny)
+    p1 = (cx + half_w * ux + half_d * nx, cy + half_w * uy + half_d * ny)
+    p2 = (cx + half_w * ux - half_d * nx, cy + half_w * uy - half_d * ny)
+    p3 = (cx - half_w * ux - half_d * nx, cy - half_w * uy - half_d * ny)
+
+    return (p0, p1, p2, p3, opening.sill_height)
+
+
 # Main sync class operating on one Blender object.
 class AttributeSync:
 
@@ -220,6 +258,24 @@ class AttributeSync:
             except ValueError:
                 pass
 
+        # Opening cutter faces — one face per opening, positioned at Z=sill_height.
+        oid_fidx = {}
+        for w in walls:
+            for op in w.openings:
+                result = _compute_opening_cutter_quad(op, w, junctions_by_id)
+                if result is None:
+                    continue
+                p0, p1, p2, p3, z = result
+                verts = [bm.verts.new((p[0], p[1], z)) for p in (p0, p1, p2, p3)]
+                wall_vert_count += 4
+                bm.verts.ensure_lookup_table()
+                try:
+                    bm.faces.new(verts[::-1])
+                    oid_fidx[op.id] = face_count
+                    face_count += 1
+                except ValueError:
+                    pass
+
         # Room centerline faces (floor polygons) — use junction positions.
         # These are separate faces tagged is_wall=0 so GN can filter them.
         jid_vidx = {}
@@ -247,6 +303,7 @@ class AttributeSync:
 
         self._wid_fidx = wid_fidx
         self._rid_fidx = rid_fidx
+        self._oid_fidx = oid_fidx
         self._bm = bm
 
     # Phase 2: write named attributes on face domain.
@@ -261,15 +318,17 @@ class AttributeSync:
         walls = self.sg.get_all_walls()
         rooms = self.rg.get_all_rooms()
 
-        # Face domain: is_wall (1 = wall quad, 0 = room floor), wall_id, wall_height,
-        # room_id, room_area, room_perimeter.
+        # Face domain: is_wall (1 = wall quad, 0 = room floor), is_opening (1 = cutter),
+        # wall_id, wall_height, room_id, room_area, room_perimeter, opening_height.
         is_wall_attr = self._ensure_mesh_attr(mesh, "is_wall", 'INT', 'FACE')
+        is_opening_attr = self._ensure_mesh_attr(mesh, "is_opening", 'INT', 'FACE')
         wid_attr = self._ensure_mesh_attr(mesh, "wall_id", 'INT', 'FACE')
         wheight_attr = self._ensure_mesh_attr(mesh, "wall_height", 'FLOAT', 'FACE')
         wthick_attr = self._ensure_mesh_attr(mesh, "wall_thickness", 'FLOAT', 'FACE')
         rid_attr = self._ensure_mesh_attr(mesh, "room_id", 'INT', 'FACE')
         rarea_attr = self._ensure_mesh_attr(mesh, "room_area", 'FLOAT', 'FACE')
         rperim_attr = self._ensure_mesh_attr(mesh, "room_perimeter", 'FLOAT', 'FACE')
+        oheight_attr = self._ensure_mesh_attr(mesh, "opening_height", 'FLOAT', 'FACE')
 
         walls_by_id = {w.id: w for w in walls}
         for wid, fidx in self._wid_fidx.items():
@@ -277,9 +336,20 @@ class AttributeSync:
             if w is None:
                 continue
             is_wall_attr.data[fidx].value = 1
+            is_opening_attr.data[fidx].value = 0
             wid_attr.data[fidx].value = self.id_mapper.get(w.id)
             wheight_attr.data[fidx].value = w.height
             wthick_attr.data[fidx].value = w.thickness
+
+        # Opening cutter faces.
+        all_openings = {op.id: op for w in walls for op in w.openings}
+        for oid, fidx in self._oid_fidx.items():
+            op = all_openings.get(oid)
+            if op is None:
+                continue
+            is_wall_attr.data[fidx].value = 0
+            is_opening_attr.data[fidx].value = 1
+            oheight_attr.data[fidx].value = op.height
 
         for room in rooms:
             fidx = self._rid_fidx.get(room.id)
@@ -331,6 +401,17 @@ def _persist_graphs(obj, sg, rg, id_mapper):
                 "end": w.junction_end,
                 "thickness": w.thickness,
                 "height": w.height,
+                "openings": [
+                    {
+                        "id": op.id,
+                        "type": op.opening_type,
+                        "position": op.position,
+                        "width": op.width,
+                        "height": op.height,
+                        "sill_height": op.sill_height,
+                    }
+                    for op in w.openings
+                ],
             }
             for w in sg.get_all_walls()
         ],
@@ -359,6 +440,17 @@ def reconstruct_graphs_from_mesh(obj):
             height=wd["height"],
             wall_id=wd["id"],
         )
+        # Restore openings for this wall.
+        for od in wd.get("openings", []):
+            sg.add_opening(
+                wd["id"],
+                opening_type=od.get("type", "DOOR"),
+                position=od.get("position", 0.5),
+                width=od.get("width", 0.9),
+                height=od.get("height", 2.1),
+                sill_height=od.get("sill_height", 0.0),
+                opening_id=od.get("id"),
+            )
     rg = RoomGraph(sg)
 
     # Restore IdMapper state so integer IDs stay stable.

@@ -1,8 +1,18 @@
 import math
 import pytest
 
-from src.core.structural_graph import StructuralGraph, Junction, Wall
-from src.core.validators import ValidationError, E_JUNCTION_DUPLICATE, E_WALL_DUPLICATE, E_WALL_SELF_LOOP
+from src.core.structural_graph import StructuralGraph, Junction, Wall, Opening
+from src.core.validators import (
+    ValidationError,
+    E_JUNCTION_DUPLICATE,
+    E_WALL_DUPLICATE,
+    E_WALL_SELF_LOOP,
+    E_OPENING_TOO_LARGE,
+    E_OPENING_OVERLAP,
+    E_OPENING_EXCEEDS_WALL,
+    E_OPENING_WIDTH_OUT_OF_RANGE,
+    E_OPENING_HEIGHT_OUT_OF_RANGE,
+)
 
 
 # Helpers
@@ -353,3 +363,154 @@ class TestCycleDetection:
         assert len(verts) == 4
         for v in verts:
             assert len(v) == 2  # (x, y) tuples
+
+
+# Opening CRUD
+class TestOpeningCRUD:
+    def _wall_2m(self):
+        sg = StructuralGraph()
+        j1 = sg.add_junction((0, 0))
+        j2 = sg.add_junction((2, 0))
+        w = sg.add_wall(j1.id, j2.id, height=3.0)
+        return sg, w
+
+    def test_add_door(self):
+        sg, w = self._wall_2m()
+        op = sg.add_opening(w.id, opening_type='DOOR', width=0.9, height=2.1, sill_height=0.0)
+        assert isinstance(op, Opening)
+        assert op.opening_type == 'DOOR'
+        assert op.width == 0.9
+        assert op.height == 2.1
+        assert op.sill_height == 0.0
+        assert op.position == 0.5
+
+    def test_add_window(self):
+        sg, w = self._wall_2m()
+        op = sg.add_opening(w.id, opening_type='WINDOW', width=1.2, height=1.2, sill_height=0.9)
+        assert op.opening_type == 'WINDOW'
+        assert op.sill_height == 0.9
+
+    def test_opening_stored_on_wall(self):
+        sg, w = self._wall_2m()
+        sg.add_opening(w.id)
+        assert len(w.openings) == 1
+
+    def test_get_opening(self):
+        sg, w = self._wall_2m()
+        op = sg.add_opening(w.id)
+        assert sg.get_opening(op.id) is op
+
+    def test_get_opening_nonexistent(self):
+        sg, w = self._wall_2m()
+        assert sg.get_opening("fake") is None
+
+    def test_get_openings_for_wall(self):
+        sg, w = self._wall_2m()
+        sg.add_opening(w.id, position=0.3, width=0.5)
+        sg.add_opening(w.id, position=0.8, width=0.5)
+        openings = sg.get_openings_for_wall(w.id)
+        assert len(openings) == 2
+
+    def test_remove_opening(self):
+        sg, w = self._wall_2m()
+        op = sg.add_opening(w.id)
+        assert sg.remove_opening(op.id) is True
+        assert len(w.openings) == 0
+        assert sg.get_opening(op.id) is None
+
+    def test_remove_opening_nonexistent(self):
+        sg, w = self._wall_2m()
+        assert sg.remove_opening("fake") is False
+
+    def test_update_opening(self):
+        sg, w = self._wall_2m()
+        op = sg.add_opening(w.id, width=0.9, height=2.1)
+        sg.update_opening(op.id, width=1.0, height=2.5)
+        assert op.width == 1.0
+        assert op.height == 2.5
+
+    def test_update_opening_type(self):
+        sg, w = self._wall_2m()
+        op = sg.add_opening(w.id, opening_type='DOOR')
+        sg.update_opening(op.id, opening_type='WINDOW', sill_height=0.9, height=1.2)
+        assert op.opening_type == 'WINDOW'
+        assert op.sill_height == 0.9
+
+    def test_wall_removal_cascades_openings(self):
+        sg, w = self._wall_2m()
+        op = sg.add_opening(w.id)
+        sg.remove_wall(w.id)
+        assert sg.get_opening(op.id) is None
+
+    # Validation tests
+    def test_opening_too_wide_for_wall(self):
+        sg, w = self._wall_2m()  # wall length = 2m
+        with pytest.raises(ValidationError, match=E_OPENING_TOO_LARGE):
+            sg.add_opening(w.id, width=2.5, position=0.5)
+
+    def test_opening_extends_beyond_wall_start(self):
+        sg, w = self._wall_2m()
+        with pytest.raises(ValidationError, match=E_OPENING_TOO_LARGE):
+            sg.add_opening(w.id, width=0.9, position=0.1)
+
+    def test_opening_extends_beyond_wall_end(self):
+        sg, w = self._wall_2m()
+        with pytest.raises(ValidationError, match=E_OPENING_TOO_LARGE):
+            sg.add_opening(w.id, width=0.9, position=0.9)
+
+    def test_opening_overlap_rejected(self):
+        sg, w = self._wall_2m()
+        sg.add_opening(w.id, width=0.8, position=0.3)
+        with pytest.raises(ValidationError, match=E_OPENING_OVERLAP):
+            sg.add_opening(w.id, width=0.8, position=0.5)
+
+    def test_opening_no_overlap(self):
+        sg, w = self._wall_2m()
+        sg.add_opening(w.id, width=0.5, position=0.2)
+        op2 = sg.add_opening(w.id, width=0.5, position=0.8)
+        assert op2 is not None
+
+    def test_opening_exceeds_wall_height(self):
+        sg, w = self._wall_2m()  # wall height = 3.0
+        with pytest.raises(ValidationError, match=E_OPENING_EXCEEDS_WALL):
+            sg.add_opening(w.id, height=2.0, sill_height=2.0)
+
+    def test_opening_width_too_small(self):
+        sg, w = self._wall_2m()
+        with pytest.raises(ValidationError, match=E_OPENING_WIDTH_OUT_OF_RANGE):
+            sg.add_opening(w.id, width=0.1)
+
+    def test_opening_width_too_large(self):
+        sg = StructuralGraph()
+        j1 = sg.add_junction((0, 0))
+        j2 = sg.add_junction((10, 0))
+        w = sg.add_wall(j1.id, j2.id)
+        with pytest.raises(ValidationError, match=E_OPENING_WIDTH_OUT_OF_RANGE):
+            sg.add_opening(w.id, width=6.0)
+
+    def test_opening_height_too_small(self):
+        sg, w = self._wall_2m()
+        with pytest.raises(ValidationError, match=E_OPENING_HEIGHT_OUT_OF_RANGE):
+            sg.add_opening(w.id, height=0.1)
+
+    def test_opening_height_exceeds_wall(self):
+        sg, w = self._wall_2m()  # wall height = 3.0
+        with pytest.raises(ValidationError, match=E_OPENING_HEIGHT_OUT_OF_RANGE):
+            sg.add_opening(w.id, height=4.0)
+
+    def test_negative_sill_rejected(self):
+        sg, w = self._wall_2m()
+        with pytest.raises(ValidationError, match=E_OPENING_HEIGHT_OUT_OF_RANGE):
+            sg.add_opening(w.id, sill_height=-0.1)
+
+    def test_nonexistent_wall_rejected(self):
+        sg, w = self._wall_2m()
+        with pytest.raises(ValueError):
+            sg.add_opening("fake_wall_id")
+
+    def test_update_opening_overlap_rejected(self):
+        sg, w = self._wall_2m()
+        sg.add_opening(w.id, width=0.5, position=0.2)
+        op2 = sg.add_opening(w.id, width=0.5, position=0.8)
+        with pytest.raises(ValidationError, match=E_OPENING_OVERLAP):
+            sg.update_opening(op2.id, position=0.3)

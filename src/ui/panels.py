@@ -182,3 +182,28 @@ class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
         col = layout.column(align=True)
         col.prop(settings, "active_wall_thickness")
         col.prop(settings, "active_wall_height")
+
+        layout.separator()
+        layout.operator("floorplan.add_opening", text="Add Opening", icon='MESH_CUBE')
+
+        # List existing openings on this wall.
+        if obj is not None and obj.name in _graph_store:
+            sg, _, mapper = _graph_store[obj.name]
+            openings = sg.get_openings_for_wall(wall_uuid)
+            if openings:
+                layout.separator()
+                layout.label(text="Openings:", icon='OUTLINER_OB_LATTICE')
+                for op in openings:
+                    box = layout.box()
+                    row = box.row()
+                    op_num = mapper.get(op.id)
+                    type_icon = 'IMPORT' if op.opening_type == 'DOOR' else 'WINDOW'
+                    row.label(text=f"{op.opening_type.title()} #{op_num}", icon=type_icon)
+                    remove_op = row.operator("floorplan.remove_opening", text="", icon='X')
+                    remove_op.opening_id = op.id
+
+                    col = box.column(align=True)
+                    col.label(text=f"Width: {op.width:.3f} m")
+                    col.label(text=f"Height: {op.height:.3f} m")
+                    if op.opening_type == 'WINDOW':
+                        col.label(text=f"Sill: {op.sill_height:.3f} m")

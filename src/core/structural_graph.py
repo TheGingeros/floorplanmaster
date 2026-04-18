@@ -8,6 +8,10 @@ from .validators import (
     ValidationError,
     validate_thickness,
     validate_height,
+    validate_opening_width,
+    validate_opening_height,
+    validate_opening_placement,
+    validate_opening_sill,
     E_WALL_DUPLICATE,
     E_WALL_SELF_LOOP,
     E_JUNCTION_DUPLICATE,
@@ -40,9 +44,34 @@ class Wall:
         self.junction_end = junction_end_id
         self.thickness = thickness
         self.height = height
+        self.openings = []  # list of Opening objects
 
     def __repr__(self):
         return f"Wall({self.id[:8]}, {self.junction_start[:8]}→{self.junction_end[:8]})"
+
+
+# Opening — door or window on a wall
+class Opening:
+    def __init__(
+        self,
+        wall_id,
+        opening_type='DOOR',
+        position=0.5,
+        width=0.9,
+        height=2.1,
+        sill_height=0.0,
+        opening_id=None,
+    ):
+        self.id = opening_id or str(uuid.uuid4())
+        self.wall_id = wall_id
+        self.opening_type = opening_type  # 'DOOR' or 'WINDOW'
+        self.position = position          # 0.0–1.0 along wall centerline
+        self.width = width
+        self.height = height
+        self.sill_height = sill_height    # distance from floor (0 for doors)
+
+    def __repr__(self):
+        return f"Opening({self.id[:8]}, {self.opening_type}, t={self.position:.2f})"
 
 
 # StructuralGraph — Layer 1
@@ -201,6 +230,89 @@ class StructuralGraph:
         if "height" in kwargs:
             validate_height(kwargs["height"])
             w.height = kwargs["height"]
+
+    # Opening CRUD
+    def add_opening(
+        self,
+        wall_id,
+        opening_type='DOOR',
+        position=0.5,
+        width=0.9,
+        height=2.1,
+        sill_height=0.0,
+        opening_id=None,
+    ):
+        w = self._walls.get(wall_id)
+        if w is None:
+            raise ValueError(f"Wall {wall_id} does not exist")
+
+        validate_opening_width(width)
+        validate_opening_height(height, wall_height=w.height)
+        validate_opening_sill(sill_height, height, w.height)
+
+        wl = self.wall_length(wall_id)
+        validate_opening_placement(position, width, wl, existing_openings=w.openings)
+
+        op = Opening(
+            wall_id,
+            opening_type=opening_type,
+            position=position,
+            width=width,
+            height=height,
+            sill_height=sill_height,
+            opening_id=opening_id,
+        )
+        w.openings.append(op)
+        return op
+
+    def remove_opening(self, opening_id):
+        for w in self._walls.values():
+            for i, op in enumerate(w.openings):
+                if op.id == opening_id:
+                    w.openings.pop(i)
+                    return True
+        return False
+
+    def get_opening(self, opening_id):
+        for w in self._walls.values():
+            for op in w.openings:
+                if op.id == opening_id:
+                    return op
+        return None
+
+    def get_openings_for_wall(self, wall_id):
+        w = self._walls.get(wall_id)
+        if w is None:
+            return []
+        return list(w.openings)
+
+    def update_opening(self, opening_id, **kwargs):
+        op = self.get_opening(opening_id)
+        if op is None:
+            return
+        w = self._walls.get(op.wall_id)
+        if w is None:
+            return
+
+        new_width = kwargs.get("width", op.width)
+        new_height = kwargs.get("height", op.height)
+        new_sill = kwargs.get("sill_height", op.sill_height)
+        new_pos = kwargs.get("position", op.position)
+        new_type = kwargs.get("opening_type", op.opening_type)
+
+        validate_opening_width(new_width)
+        validate_opening_height(new_height, wall_height=w.height)
+        validate_opening_sill(new_sill, new_height, w.height)
+
+        wl = self.wall_length(op.wall_id)
+        others = [o for o in w.openings if o.id != opening_id]
+        validate_opening_placement(new_pos, new_width, wl, existing_openings=others)
+
+        op.width = new_width
+        op.height = new_height
+        op.sill_height = new_sill
+        op.position = new_pos
+        op.opening_type = new_type
 
 
     # Geometry queries
