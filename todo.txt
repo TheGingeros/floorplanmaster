@@ -1,5 +1,4 @@
 Implementace - praktická
-    - enhancement: height/thickness per edge todo
     - fix: opakovaně zmáčknuté D pro aktivaci pencil tool opakovaně spouští pencil tool
 Implementace - markdown
     - metoda shoru dolů - napsat si strukturu v implementaci markdownu
