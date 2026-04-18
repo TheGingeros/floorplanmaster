@@ -11,7 +11,7 @@ from gpu_extras.batch import batch_for_shader
 from bpy_extras import view3d_utils
 from mathutils import Vector
 
-from ..core.sync import sync_graph_to_mesh, sync_room_name_props
+from ..core.sync import sync_graph_to_mesh
 from ..geometry.gn_setup import ensure_gn_modifier
 from ..utils.constants import SNAP_JUNCTION_TOLERANCE
 
@@ -244,7 +244,6 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         # Sync L2 + L3.
         self._rg.sync_from_structural_graph()
         sync_graph_to_mesh(self._obj, self._sg, self._rg, id_mapper=self._id_mapper)
-        sync_room_name_props(self._obj, self._rg)
 
         # Re-apply modifier inputs after mesh rebuild so GN dimensions are correct.
         ensure_gn_modifier(self._obj)
@@ -279,7 +278,6 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         # Sync.
         self._rg.sync_from_structural_graph()
         sync_graph_to_mesh(self._obj, self._sg, self._rg, id_mapper=self._id_mapper)
-        sync_room_name_props(self._obj, self._rg)
 
         if self._placed_walls:
             # Revert start junction to end of previous wall.

@@ -6,7 +6,7 @@
 import bpy
 from bpy.props import FloatProperty
 
-from ..core.sync import sync_graph_to_mesh, sync_room_name_props
+from ..core.sync import sync_graph_to_mesh
 from ..geometry.gn_setup import ensure_gn_modifier
 from .pencil_tool import _get_floorplan_obj
 
@@ -116,7 +116,6 @@ class FLOORPLAN_OT_insert_room(bpy.types.Operator):
         # Sync L2 + L3.
         rg.sync_from_structural_graph()
         sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
-        sync_room_name_props(obj, rg)
 
         # Re-apply modifier inputs after mesh rebuild so GN dimensions are correct.
         ensure_gn_modifier(obj)
