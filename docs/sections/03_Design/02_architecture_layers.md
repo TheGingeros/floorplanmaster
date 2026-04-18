@@ -1,7 +1,7 @@
 # Třívrstvá hybridní architektura
 Systém stojí na oddělení abstraktní datové logiky od 3D zobrazení pomocí tří specializovaných vrstev. První dvě vrstvy běží čistě v Pythonu a starají se o topologii a sémantiku půdorysu. Třetí vrstva funguje jako jednosměrný most do vykreslovacího jádra Blenderu.
 
-V praxi systém funguje kaskádovitě: Vrstva 1 spravuje exaktní souřadnice spojů a stěn jako planární 2D graf. Jakmile stěny vytvoří uzavřený prostor, Vrstva 2 jej automaticky detekuje jako novou místnost a vypočítá její vlastnosti. Tato data se jednosměrně zrcadlí do Vrstvy 3, která je zapíše do Blender mesh ve formě pojmenovaných atributů. Na tyto atributy čekají Geometry Nodes, které z nich v reálném čase vygenerují finální 3D geometrii. 3D model je tak vždy jen vizuálním odrazem podkladových grafů, což umožňuje zcela nedestruktivní úpravy.
+V praxi systém funguje kaskádovitě: Vrstva 1 spravuje souřadnice spojů a stěn jako planární 2D graf. Jakmile stěny vytvoří uzavřený prostor, Vrstva 2 jej automaticky detekuje jako novou místnost a vypočítá její vlastnosti. Tato data se jednosměrně zrcadlí do Vrstvy 3, která je zapíše do Blender mesh ve formě pojmenovaných atributů. Na tyto atributy čekají Geometry Nodes, které z nich v reálném čase vygenerují finální 3D geometrii. 3D model je tak vždy jen vizuálním odrazem podkladových grafů, což umožňuje zcela nedestruktivní úpravy.
 
 ## Vrstva 1: Topologický skelet (Strukturální graf)
 - realizována jako planární graf ([2.6 - Datový model](../02_Analysis/06_ta_data_model.md))
