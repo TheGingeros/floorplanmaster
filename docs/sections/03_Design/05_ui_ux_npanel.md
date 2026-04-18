@@ -40,9 +40,7 @@ Sekce Nastavení obsahuje globální parametry scény uložené v `Scene Propert
 | Parametr | Výchozí hodnota | Popis |
 | :--- | :--- | :--- |
 | Systém jednotek | Metrický | Přepíná zobrazení rozměrů v kótování i panelu; hodnoty jsou interně vždy v metrech |
-| Hustota mřížky | 0,5 m | Rastrová vzdálenost pro volitelný snap na mřížku (FP1 — should-have) |
 | Výchozí tloušťka stěny | 0,3 m | Přednabídnuto při každém novém kreslení nebo vkládání místnosti |
 | Výchozí výška stěny | 2,5 m | Přednabídnuto pro nové stěny |
-| Velikost textu kót | 14 px | Velikost BLF textu overlay kótování (FP7) |
 
 Záměrně jsou do Nastavení zařazeny pouze parametry ovlivňující chování celého projektu, nikoliv parametry jednotlivých prvků — ty patří do detailního pohledu místnosti nebo jsou dostupné přes gizmos.
