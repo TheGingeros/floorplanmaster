@@ -167,9 +167,17 @@ class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
         from .. import _graph_store, find_floorplan_obj
         obj = find_floorplan_obj(context)
 
-        # Show wall label (short UUID).
         wall_uuid = settings.active_wall_id
-        layout.label(text=f"Wall: {wall_uuid[:8]}…", icon='MOD_BUILD')
+        wall_label = "Wall"
+        if obj is not None and obj.name in _graph_store:
+            sg, _, mapper = _graph_store[obj.name]
+            wall = sg.get_wall(wall_uuid)
+            if wall is not None:
+                wall_num = mapper.get(wall_uuid)
+                length = sg.wall_length(wall_uuid)
+                wall_label = f"Wall #{wall_num}  ({length:.2f} m)"
+
+        layout.label(text=wall_label, icon='MOD_BUILD')
 
         col = layout.column(align=True)
         col.prop(settings, "active_wall_thickness")
