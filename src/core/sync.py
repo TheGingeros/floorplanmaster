@@ -133,13 +133,16 @@ def _compute_wall_quad(wall, junctions_by_id, sg):
             nb_ht = nb.thickness / 2.0
 
             # Determine which side of the neighbour wall to intersect with.
-            # cross uses the outgoing direction (reverses at end junction).
-            cross = wall_dir[0] * nb_uy - wall_dir[1] * nb_ux
-            # is_local_left uses the CONSTANT wall normal (nx, ny) so it
-            # does NOT flip at the end junction — side_off is always defined
-            # relative to the forward direction.
+            # nb direction is outgoing from junction.  If junction is the
+            # neighbour's START, outgoing = forward, so _perp gives the true
+            # forward-left normal.  If junction is the neighbour's END,
+            # outgoing = -forward, so _perp gives the forward-RIGHT normal
+            # (labels are flipped).  We always want same-side pairing
+            # (our left ↔ nb forward-left, our right ↔ nb forward-right),
+            # so flip when the neighbour connects at its end.
             is_local_left = (side_off[0] * nx + side_off[1] * ny) > 0
-            use_nb_left = (is_local_left != (cross > 0))
+            nb_at_start = (junction.id == nb.junction_start)
+            use_nb_left = is_local_left if nb_at_start else not is_local_left
             if use_nb_left:
                 nb_side_off = (nb_nx * nb_ht, nb_ny * nb_ht)
             else:
