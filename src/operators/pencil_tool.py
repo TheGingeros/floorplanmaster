@@ -66,6 +66,11 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def invoke(self, context, event):
+        # Guard: refuse to start a second instance if already running.
+        global _pencil_state
+        if _pencil_state is not None:
+            return {'CANCELLED'}
+
         self._state = WAITING
         self._start_junction_id = None
         self._mouse_pos = (0, 0)
