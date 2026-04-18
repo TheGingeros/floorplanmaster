@@ -61,10 +61,3 @@ classDiagram
 ### Sousedství (Adjacency)
 - sousedství vzniká automaticky při detekci sdílené stěny mezi dvěma cykly
 - jedna dvojice místností může sdílet nejvýše jednu hranu sousedství (prostý graf místností)
-
-## Operace grafu místností
-Graf slouží jako hlavní rozhraní pro dotazování a manipulaci se sémantickými daty. Operace jsou seskupeny do tří skupin:
-
-- **Místnosti (CRUD)**: automatické zakládání z cyklů, odebrání při zániku cyklu, aktualizace vypočítaných vlastností (plocha, obvod, centroid), dotazy podle ID nebo typu
-- **Sousedství**: automatické přidání při detekci sdílené stěny, dotaz na sousedy dané místnosti, test sousedství dvou místností
-- **Analýza a dotazy**: celková plocha (volitelně dle typu), identifikace vnějších a vnitřních místností, analýza poměrů stran
