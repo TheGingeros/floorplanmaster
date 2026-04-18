@@ -6,6 +6,7 @@ Implementace - markdown
 Dodělání návrhu
     - UDĚLAT POTOM UI - vizuální návrh viz odkazy
     - DONE datový model - diagramy, relační schéma, něco takovýho
+    - volba na jaké straně generovat zdi, asi should have
 Napsat návrh
     - současné průchody návrhem jsou expertní, potřeba zmínit v textu že o uživatelským testováním vim a buď jsem je dělal nebo nedělal
 napsat Implementaci
