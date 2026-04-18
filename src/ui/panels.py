@@ -142,3 +142,38 @@ class FLOORPLAN_PT_settings(bpy.types.Panel):
         col = layout.column(align=True)
         col.prop(settings, "default_thickness")
         col.prop(settings, "default_height")
+
+
+# -- Section: Wall Properties (visible only when a wall is selected) --
+
+class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
+    bl_label = "Wall Properties"
+    bl_idname = "FLOORPLAN_PT_wall_properties"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "FloorPlanMaster"
+    bl_parent_id = "FLOORPLAN_PT_main"
+
+    @classmethod
+    def poll(cls, context):
+        if not hasattr(context.scene, "floorplan"):
+            return False
+        return context.scene.floorplan.active_wall_id != ""
+
+    def draw(self, context):
+        layout = self.layout
+        settings = context.scene.floorplan
+
+        from .. import _graph_store, find_floorplan_obj
+        obj = find_floorplan_obj(context)
+
+        # Show wall label (short UUID).
+        wall_uuid = settings.active_wall_id
+        layout.label(text=f"Wall: {wall_uuid[:8]}…", icon='MOD_BUILD')
+
+        col = layout.column(align=True)
+        col.prop(settings, "active_wall_thickness")
+        col.prop(settings, "active_wall_height")
+
+        # Deselect button.
+        layout.operator("floorplan.deselect_wall", text="Deselect", icon='X')

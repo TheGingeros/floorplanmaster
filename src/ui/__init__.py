@@ -5,6 +5,7 @@ from .panels import (
     FLOORPLAN_PT_tools,
     FLOORPLAN_PT_rooms,
     FLOORPLAN_PT_settings,
+    FLOORPLAN_PT_wall_properties,
 )
 
 
@@ -14,4 +15,5 @@ def get_classes():
         FLOORPLAN_PT_tools,
         FLOORPLAN_PT_rooms,
         FLOORPLAN_PT_settings,
+        FLOORPLAN_PT_wall_properties,
     ]

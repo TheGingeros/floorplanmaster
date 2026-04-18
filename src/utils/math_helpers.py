@@ -114,3 +114,24 @@ def aspect_ratio(vertices):
     if width < 1e-12 or height < 1e-12:
         return 1.0
     return width / height
+
+
+# https://en.wikipedia.org/wiki/Point_in_polygon — winding number / ray casting
+def point_in_polygon(point, polygon):
+    # Ray-casting test: cast ray in +X from *point*, count edge crossings.
+    # Returns True if point is strictly inside or on the boundary.
+    x, y = point
+    n = len(polygon)
+    if n < 3:
+        return False
+    inside = False
+    for i in range(n):
+        x0, y0 = polygon[i]
+        x1, y1 = polygon[(i + 1) % n]
+        if ((y0 <= y < y1) or (y1 <= y < y0)):
+            # X coordinate of the edge at height y.
+            t = (y - y0) / (y1 - y0)
+            x_intersect = x0 + t * (x1 - x0)
+            if x < x_intersect:
+                inside = not inside
+    return inside

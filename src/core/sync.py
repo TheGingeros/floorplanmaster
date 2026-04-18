@@ -10,6 +10,7 @@
 # its height.  This produces geometrically correct joints at any angle without
 # any instancing, trimming or shift logic.
 
+import json
 import math
 import bpy
 import bmesh
@@ -307,17 +308,64 @@ class AttributeSync:
 
 # Convenience function called from operators after any L1/L2 change.
 def sync_graph_to_mesh(obj, sg, rg, id_mapper=None):
+    if id_mapper is None:
+        id_mapper = IdMapper()
     syncer = AttributeSync(obj, sg, rg, id_mapper=id_mapper)
     syncer.full_sync()
+    _persist_graphs(obj, sg, rg, id_mapper)
 
 
-# Reconstruction: rebuild L1 + L2 graphs from an existing mesh with named attributes.
+# Persistence: store graph data as JSON on the Blender object so that
+# reconstruction works after addon reload / undo / file load.
+
+def _persist_graphs(obj, sg, rg, id_mapper):
+    data = {
+        "junctions": [
+            {"id": j.id, "x": j.position[0], "y": j.position[1]}
+            for j in sg.get_all_junctions()
+        ],
+        "walls": [
+            {
+                "id": w.id,
+                "start": w.junction_start,
+                "end": w.junction_end,
+                "thickness": w.thickness,
+                "height": w.height,
+            }
+            for w in sg.get_all_walls()
+        ],
+        "id_map": id_mapper._map if id_mapper else {},
+    }
+    obj["_floorplan_graphs"] = json.dumps(data)
+
+
 def reconstruct_graphs_from_mesh(obj):
-    mesh = obj.data
-    if not mesh.vertices:
-        return StructuralGraph(), None
+    raw = obj.get("_floorplan_graphs")
+    if not raw:
+        return StructuralGraph(), None, IdMapper()
+
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        return StructuralGraph(), None, IdMapper()
 
     sg = StructuralGraph()
-    # TODO: persist junction positions as vertex attributes for reliable reconstruction.
-    # For now, return an empty graph (re-draw from scratch).
-    return sg, None
+    for jd in data.get("junctions", []):
+        sg.add_junction((jd["x"], jd["y"]), junction_id=jd["id"])
+    for wd in data.get("walls", []):
+        sg.add_wall(
+            wd["start"], wd["end"],
+            thickness=wd["thickness"],
+            height=wd["height"],
+            wall_id=wd["id"],
+        )
+    rg = RoomGraph(sg)
+
+    # Restore IdMapper state so integer IDs stay stable.
+    id_mapper = IdMapper()
+    for uuid_str, int_id in data.get("id_map", {}).items():
+        id_mapper._map[uuid_str] = int(int_id)
+        id_mapper._reverse[int(int_id)] = uuid_str
+    id_mapper._next = max(id_mapper._reverse.keys(), default=0) + 1
+
+    return sg, rg, id_mapper

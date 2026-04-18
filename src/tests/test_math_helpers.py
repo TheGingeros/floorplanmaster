@@ -10,6 +10,7 @@ from src.utils.math_helpers import (
     edge_angle,
     angle_between_edges,
     aspect_ratio,
+    point_in_polygon,
 )
 
 
@@ -154,3 +155,51 @@ class TestAspectRatio:
 
     def test_degenerate(self):
         assert aspect_ratio([(0, 0), (1, 0)]) == 1.0
+
+
+# point_in_polygon
+
+class TestPointInPolygon:
+    def test_inside_square(self):
+        square = [(0, 0), (2, 0), (2, 2), (0, 2)]
+        assert point_in_polygon((1, 1), square) is True
+
+    def test_outside_square(self):
+        square = [(0, 0), (2, 0), (2, 2), (0, 2)]
+        assert point_in_polygon((3, 1), square) is False
+
+    def test_outside_above(self):
+        square = [(0, 0), (2, 0), (2, 2), (0, 2)]
+        assert point_in_polygon((1, 3), square) is False
+
+    def test_inside_triangle(self):
+        tri = [(0, 0), (4, 0), (2, 3)]
+        assert point_in_polygon((2, 1), tri) is True
+
+    def test_outside_triangle(self):
+        tri = [(0, 0), (4, 0), (2, 3)]
+        assert point_in_polygon((0, 3), tri) is False
+
+    def test_inside_thin_wall_quad(self):
+        # Thin horizontal wall quad: 4m long, 0.3m thick, centered at Y=0.
+        quad = [(-2, -0.15), (2, -0.15), (2, 0.15), (-2, 0.15)]
+        assert point_in_polygon((0, 0), quad) is True
+        assert point_in_polygon((1.5, 0.1), quad) is True
+
+    def test_outside_thin_wall_quad(self):
+        quad = [(-2, -0.15), (2, -0.15), (2, 0.15), (-2, 0.15)]
+        assert point_in_polygon((0, 0.2), quad) is False
+        assert point_in_polygon((2.5, 0), quad) is False
+
+    def test_degenerate_line(self):
+        assert point_in_polygon((0, 0), [(0, 0), (1, 0)]) is False
+
+    def test_empty(self):
+        assert point_in_polygon((0, 0), []) is False
+
+    def test_concave_l_shape(self):
+        # L-shape polygon.
+        verts = [(0, 0), (3, 0), (3, 1), (1, 1), (1, 2), (0, 2)]
+        assert point_in_polygon((0.5, 0.5), verts) is True  # bottom part
+        assert point_in_polygon((0.5, 1.5), verts) is True  # left column
+        assert point_in_polygon((2, 1.5), verts) is False   # outside the L
