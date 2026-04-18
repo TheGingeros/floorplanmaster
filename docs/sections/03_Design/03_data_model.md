@@ -1,7 +1,5 @@
 # 3.3 Datový model
-Architektura (kapitola 3.2) definuje třívrstvou hybridní architekturu a tok dat mezi vrstvami. Tato sekce přibližuje pohled na úroveň samotných dat — exaktně definuje strukturu datových entit (uzly, hrany, plochy), jejich parametry (unikátní ID, tloušťka, výška, materiál, obvod, plocha) a validační pravidla. Zatímco předchozí kapitola řešila vrstvy a toky, tato část specifikuje strukturu "balíčků" informací, které těmito vrstvami protékají.
-
-Datový model operuje na úrovni jednoho podlaží. Vrstva 1 uchovává topologii stěn a propojovacích bodů, Vrstva 2 z ní odvozuje sémantiku místností a vztahů sousedství. Vrstva 3 přenáší data obou grafů do Blender mesh ve formě pojmenovaných atributů, kde je Geometry Nodes čtou a vizualizují.
+Architektura (kapitola 3.2) definuje třívrstvou hybridní architekturu a tok dat mezi vrstvami. Tato sekce přibližuje pohled na úroveň samotných dat — definuje strukturu datových entit (uzly, hrany, plochy), jejich parametry (unikátní ID, tloušťka, výška, materiál, obvod, plocha) a validační pravidla. Zatímco předchozí kapitola řešila vrstvy a toky, tato část specifikuje strukturu "balíčků" informací, které těmito vrstvami protékají.
 
 ## [Vrstva 1: Strukturální graf](./03_data_model_layer1.md)
 ## [Vrstva 2: Graf místností](./03_data_model_layer2.md)
