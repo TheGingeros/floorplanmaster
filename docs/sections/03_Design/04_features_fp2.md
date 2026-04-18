@@ -15,7 +15,7 @@ Tento update je levnější než přidání/odebrání stěny — neprovádí se
 
 ## Otvory — GN Mesh Boolean *(must-have)*
 
-Otvory (dveře, okna) jsou definovány jako závislé objekty vázané na konkrétní stěnu ve Vrstvě 1. Každý otvor nese pozici na stěně (relativní parametr $t \in [0, 1]$), šířku a výšku. Tvorba otvorů probíhá výhradně ve View vrstvě — Python předá poziční data jako pojmenované atributy a Geometry Nodes uzly díru dynamicky vyříznou.
+Otvory (dveře, okna) jsou definovány jako závislé objekty vázané na konkrétní stěnu ve Vrstvě 1. Každý otvor nese pozici na stěně, šířku a výšku. Tvorba otvorů probíhá výhradně ve View vrstvě — Python předá poziční data jako pojmenované atributy a Geometry Nodes uzly díru dynamicky vyříznou.
 
 Architektura addonu reprezentuje stěny jako **hrany base meshe** s pojmenovanými atributy:
 
@@ -30,8 +30,8 @@ Python nikdy nemanipuluje s polygony stěny přímo — veškerá geometrie otvo
 Vedle Pencil Toolu (FP1) existuje druhý způsob vložení místnosti: uživatel zadá rozměry přímo v N-panelu a addon automaticky vytvoří pravoúhlou místnost.
 Vstupní parametry (zadané v N-panelu, sekce Nástroje):
 - **šířka** a **hloubka** místnosti (m) — nebo alternativně **plocha** + **poměr stran**, ze kterých addon šířku a hloubku dopočítá
-- **výška stěn** (přednaplněna výchozí hodnotou ze Scene PropertyGroup)
-- **tloušťka stěn** (přednaplněna výchozí hodnotou)
+- **výška stěn**
+- **tloušťka stěn**
 
 Po potvrzení se pravoúhlá místnost vloží se středem v poloze 3D kurzoru Blenderu. Uživatel ručně nastaví pozici 3D kurzoru před vložením (standardní Blender konvence: `Shift+RMB`).
 
