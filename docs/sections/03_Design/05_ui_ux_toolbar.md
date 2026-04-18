@@ -14,8 +14,6 @@ Zvažovány byly tři alternativní přístupy:
 | Pouze klávesová zkratka | Nejrychlejší pro zkušené uživatele | Neobjektovatelné pro nové uživatele; žádný vizuální příznak aktivního nástroje |
 | Tlačítko pouze v N-panelu | Centralizuje všechny vstupy do jednoho místa | Porušuje Blender konvenci; N-panel je pro parametry, ne pro spouštění nástrojů vyžadujících modální vstup |
 
-Přístup s WorkspaceTool je vzorem zavedeným Blenderem od verze 2.80, kdy byl Toolbar přepracován ze sady operátorů na sadu WorkspaceTools s persistentním stavem. Archimesh ani Archipack tento vzor nevyužívají — obě přidávají jednoduché tlačítko do N-panelu — protože jejich operátory jsou instantní (vyvolají dialog, nikoliv modální smyčku). Pencil Tool je naopak zásadně modální a kontinuální, proto WorkspaceTool je správnou volbou.
-
 ## Vizuální podoba v Toolbaru
 
 Ikona nástroje je umístěna v sekci Toolbaru přiřazené addonům, oddělena vizuálním oddělovačem od nativních Blender nástrojů. Při aktivaci se ikona graficky zvýrazní (Blender standardní zvýraznění aktivního nástroje), čímž uživatel vždy vidí, zda je nástroj aktivní, aniž by sledoval kurzor nebo viewport.
