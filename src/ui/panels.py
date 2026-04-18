@@ -174,6 +174,3 @@ class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
         col = layout.column(align=True)
         col.prop(settings, "active_wall_thickness")
         col.prop(settings, "active_wall_height")
-
-        # Deselect button.
-        layout.operator("floorplan.deselect_wall", text="Deselect", icon='X')

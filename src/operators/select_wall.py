@@ -15,9 +15,10 @@ from ..utils.math_helpers import point_in_polygon
 
 
 def _pick_element(context, sg, mx, my):
-    # Project wall 3D faces (bottom quad at Z=0, top quad at Z=height, and
-    # four side quads) to 2D screen space and test the mouse point against
-    # those screen-space polygons.  Works in any view (ortho, perspective).
+    # Project wall 3D box faces to 2D screen space, collect all walls whose
+    # screen projection contains the mouse, then return the one closest to the
+    # camera (highest view-space Z) so occluded walls behind visible ones are
+    # never accidentally selected.
     # Returns ('wall', wall_uuid) or None.
     region = context.region
     rv3d = context.region_data
@@ -30,27 +31,27 @@ def _pick_element(context, sg, mx, my):
     junctions = sg.get_all_junctions()
     junctions_by_id = {j.id: j for j in junctions}
 
+    hits = []  # (view_z, wall_id) — view_z is higher (less negative) for closer walls
+
     for wall in walls:
         quad = _compute_wall_quad(wall, junctions_by_id, sg)
         if quad is None:
             continue
 
         h = wall.height
-        # 3D corners: bottom (Z=0) and top (Z=h)
-        # quad = (p0, p1, p2, p3) — 2D tuples, CCW from above
         b = [Vector((p[0], p[1], 0.0)) for p in quad]
         t = [Vector((p[0], p[1], h)) for p in quad]
 
-        # 6 faces of the wall box: bottom, top, 4 sides
         faces_3d = [
-            b,                          # bottom
-            t,                          # top
-            [b[0], b[1], t[1], t[0]],   # side 0-1
-            [b[1], b[2], t[2], t[1]],   # side 1-2
-            [b[2], b[3], t[3], t[2]],   # side 2-3
-            [b[3], b[0], t[0], t[3]],   # side 3-0
+            b,
+            t,
+            [b[0], b[1], t[1], t[0]],
+            [b[1], b[2], t[2], t[1]],
+            [b[2], b[3], t[3], t[2]],
+            [b[3], b[0], t[0], t[3]],
         ]
 
+        wall_hit = False
         for face3d in faces_3d:
             pts_2d = []
             skip = False
@@ -63,9 +64,24 @@ def _pick_element(context, sg, mx, my):
             if skip:
                 continue
             if point_in_polygon(mouse, pts_2d):
-                return ('wall', wall.id)
+                wall_hit = True
+                break
 
-    return None
+        if wall_hit:
+            # Compute view-space Z of wall centre; closer walls have higher (less
+            # negative) Z in Blender view space (camera looks along -Z).
+            cx = sum(p[0] for p in quad) / 4.0
+            cy = sum(p[1] for p in quad) / 4.0
+            center_3d = Vector((cx, cy, h / 2.0))
+            view_z = (rv3d.view_matrix @ center_3d).z
+            hits.append((view_z, wall.id))
+
+    if not hits:
+        return None
+
+    # Highest view_z = closest to camera.
+    hits.sort(key=lambda item: -item[0])
+    return ('wall', hits[0][1])
 
 
 class FLOORPLAN_OT_select_wall(bpy.types.Operator):
@@ -114,17 +130,8 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
 
         # Missed — clear selection and let Blender handle the click.
         settings.active_wall_id = ""
+        context.area.tag_redraw()
         return {'PASS_THROUGH'}
-
-
-class FLOORPLAN_OT_deselect_wall(bpy.types.Operator):
-    bl_idname = "floorplan.deselect_wall"
-    bl_label = "Deselect Wall"
-    bl_description = "Clear the current wall selection"
-
-    def execute(self, context):
-        context.scene.floorplan.active_wall_id = ""
-        return {'FINISHED'}
 
 
 def register_select_keymap():
