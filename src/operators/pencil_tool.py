@@ -99,6 +99,13 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             self._draw_callback, (context,), 'WINDOW', 'POST_PIXEL'
         )
 
+        # Save current view so it can be restored when the tool exits.
+        rv3d = context.region_data
+        self._saved_view_matrix = rv3d.view_matrix.copy()
+        self._saved_view_perspective = rv3d.view_perspective
+        self._saved_view_distance = rv3d.view_distance
+        self._saved_view_location = rv3d.view_location.copy()
+
         # Switch to top-down orthographic view for 2D floor plan drawing.
         bpy.ops.view3d.view_axis(type='TOP')
         context.region_data.view_perspective = 'ORTHO'
@@ -317,6 +324,15 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             self._draw_handler = None
         global _pencil_state
         _pencil_state = None
+
+        # Restore the view that was active before the tool was invoked.
+        rv3d = context.region_data
+        if rv3d and hasattr(self, '_saved_view_matrix'):
+            rv3d.view_perspective = self._saved_view_perspective
+            rv3d.view_distance = self._saved_view_distance
+            rv3d.view_location = self._saved_view_location
+            rv3d.view_matrix = self._saved_view_matrix
+
         context.area.tag_redraw()
 
     # -- GPU overlay draw callback --
