@@ -294,6 +294,28 @@ if _HAS_BPY:
     )
     from .ui import get_classes as get_ui_classes
 
+    def _rebuild_graph_store():
+        # Repopulate _graph_store from any floorplan objects already in the scene.
+        # Called on addon register() (covers in-session F8 reload) and from
+        # _load_post_handler (covers file load).  After reconstruction the room
+        # graph is explicitly synced so the N-panel can show rooms immediately.
+        try:
+            scenes = bpy.data.scenes
+        except Exception:
+            return
+        seen = set()
+        for scene in scenes:
+            for obj in scene.objects:
+                if obj.get("is_floorplan") and obj.name not in seen:
+                    seen.add(obj.name)
+                    sg, rg, mapper = reset_graphs_for_obj(obj)
+                    rg.sync_from_structural_graph()
+                    _graph_store[obj.name] = (sg, rg, mapper)
+
+    @bpy.app.handlers.persistent
+    def _load_post_handler(dummy):
+        _rebuild_graph_store()
+
     _addon_classes = [
         FloorPlanSettings,
     ]
@@ -319,7 +341,13 @@ if _HAS_BPY:
             _draw_wall_selection, (), 'WINDOW', 'POST_VIEW'
         )
 
+        bpy.app.handlers.load_post.append(_load_post_handler)
+        _rebuild_graph_store()
+
     def unregister():
+        if _load_post_handler in bpy.app.handlers.load_post:
+            bpy.app.handlers.load_post.remove(_load_post_handler)
+
         global _selection_draw_handle
         if _selection_draw_handle is not None:
             bpy.types.SpaceView3D.draw_handler_remove(_selection_draw_handle, 'WINDOW')

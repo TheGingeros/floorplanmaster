@@ -83,7 +83,7 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        from .. import _graph_store
+        from .. import _graph_store, reset_graphs_for_obj
 
         obj = None
         for o in context.scene.objects:
@@ -91,9 +91,14 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
                 obj = o
                 break
 
-        if obj is None or obj.name not in _graph_store:
+        if obj is None:
             layout.label(text="No floor plan in scene.", icon='INFO')
             return
+
+        if obj.name not in _graph_store:
+            # Lazy-populate after addon reload or module reload.
+            sg, rg, mapper = reset_graphs_for_obj(obj)
+            rg.sync_from_structural_graph()
 
         sg, rg, _mapper = _graph_store[obj.name]
         rooms = rg.get_all_rooms()
