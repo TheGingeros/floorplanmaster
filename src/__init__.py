@@ -102,7 +102,7 @@ if _HAS_BPY:
     from gpu_extras.batch import batch_for_shader
     from mathutils import Vector
     from bpy.props import FloatProperty, StringProperty, PointerProperty
-    from .core.sync import sync_graph_to_mesh, _compute_wall_quad
+    from .core.sync import sync_graph_to_mesh
 
     # Update callback guard — prevents recursive sync when the select operator
     # populates the props (which triggers the update callback).
@@ -209,6 +209,8 @@ if _HAS_BPY:
     def _draw_wall_selection():
         # Persistent POST_VIEW draw handler — draws a semi-transparent orange
         # box over the currently selected wall using UNIFORM_COLOR + TRIS.
+        # Box is a simple OBB from junction-to-junction axis + wall.thickness;
+        # does not depend on the mitered mesh geometry.
         # Registered at addon load; reads active_wall_id from FloorPlanSettings.
         context = bpy.context
         if not context or not getattr(context, 'scene', None):
@@ -223,23 +225,40 @@ if _HAS_BPY:
         wall = sg.get_wall(settings.active_wall_id)
         if wall is None:
             return
-        junctions_by_id = {j.id: j for j in sg.get_all_junctions()}
-        quad = _compute_wall_quad(wall, junctions_by_id, sg)
-        if quad is None:
+        j1 = sg.get_junction(wall.junction_start)
+        j2 = sg.get_junction(wall.junction_end)
+        if j1 is None or j2 is None:
             return
+        ax, ay = j1.position
+        bx, by = j2.position
+        length = math.hypot(bx - ax, by - ay)
+        if length < 1e-9:
+            return
+        # Unit direction along the wall and perpendicular.
+        dx, dy = (bx - ax) / length, (by - ay) / length
+        nx, ny = -dy, dx
+        EXPAND = 0.03  # metres — extra clearance on top of neighbour insets
+        hw = wall.thickness / 2.0 + EXPAND
         h = wall.height
-        EXPAND = 0.03  # metres — push vertices out to avoid z-fighting
-        cx = sum(p[0] for p in quad) / 4.0
-        cy = sum(p[1] for p in quad) / 4.0
-        b = []
-        for p in quad:
-            dx, dy = p[0] - cx, p[1] - cy
-            norm = math.hypot(dx, dy)
-            if norm > 1e-9:
-                dx, dy = dx / norm * EXPAND, dy / norm * EXPAND
-            else:
-                dx, dy = 0.0, 0.0
-            b.append(Vector((p[0] + dx, p[1] + dy, -EXPAND)))
+        # Extend each end by the max half-thickness of walls connecting there
+        # so the selection box covers the joint area at both junctions.
+        all_walls = sg.get_all_walls()
+        def _max_half_t(junction_id):
+            return max(
+                (w.thickness / 2.0 for w in all_walls
+                 if w.id != wall.id and junction_id in (w.junction_start, w.junction_end)),
+                default=0.0,
+            )
+        start_ext = _max_half_t(j1.id) + EXPAND
+        end_ext   = _max_half_t(j2.id) + EXPAND
+        # 4 base corners: start and end extended along the wall axis.
+        s0x, s0y = ax - dx * start_ext, ay - dy * start_ext
+        e0x, e0y = bx + dx * end_ext,   by + dy * end_ext
+        b0 = Vector((s0x + nx * hw, s0y + ny * hw, -EXPAND))
+        b1 = Vector((e0x + nx * hw, e0y + ny * hw, -EXPAND))
+        b2 = Vector((e0x - nx * hw, e0y - ny * hw, -EXPAND))
+        b3 = Vector((s0x - nx * hw, s0y - ny * hw, -EXPAND))
+        b = [b0, b1, b2, b3]
         t = [Vector((v.x, v.y, h + EXPAND)) for v in b]
         # 6 faces x 2 triangles = 12 tris; both sides rendered (no culling).
         tris = []
