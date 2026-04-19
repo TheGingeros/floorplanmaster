@@ -176,10 +176,11 @@ def _compute_wall_quad(wall, junctions_by_id, sg):
 
 
 def _compute_opening_cutter_quad(opening, wall, junctions_by_id):
-    # Returns (p0, p1, p2, p3, z) — 4 corners of the cutter face at Z = sill_height.
-    # The quad extends along the wall direction by opening.width and perpendicular
-    # to the wall by wall.thickness + overshoot on each side (to ensure clean boolean).
-    from ..utils.constants import OPENING_CUTTER_OVERSHOOT
+    # Returns (p0, p1, p2, p3, z, effective_height) — 4 corners of the cutter
+    # face + Z position + extrusion height.  The cutter extends well beyond
+    # the wall on both sides to guarantee clean boolean, and overshoots
+    # vertically to avoid coplanar faces with the wall top/bottom.
+    from ..utils.constants import OPENING_CUTTER_OVERSHOOT, OPENING_CUTTER_Z_OVERSHOOT
 
     j_start = junctions_by_id.get(wall.junction_start)
     j_end = junctions_by_id.get(wall.junction_end)
@@ -202,15 +203,24 @@ def _compute_opening_cutter_quad(opening, wall, junctions_by_id):
     cy = sy + opening.position * dy
 
     half_w = opening.width / 2.0
+    # Extend cutter slightly beyond the wall surface on each side.
+    # wall.thickness/2 reaches the wall surface; OVERSHOOT adds a small
+    # margin to guarantee penetration even after junction corner resolution.
+    # Must NOT be too large — oversized cutters can reach adjacent walls at
+    # junctions and cause the boolean solver to produce degenerate results.
     half_d = wall.thickness / 2.0 + OPENING_CUTTER_OVERSHOOT
 
-    # Quad corners at Z = sill_height (will be extruded by opening.height in GN).
+    # Quad corners at Z position (will be extruded by effective_height in GN).
     p0 = (cx - half_w * ux + half_d * nx, cy - half_w * uy + half_d * ny)
     p1 = (cx + half_w * ux + half_d * nx, cy + half_w * uy + half_d * ny)
     p2 = (cx + half_w * ux - half_d * nx, cy + half_w * uy - half_d * ny)
     p3 = (cx - half_w * ux - half_d * nx, cy - half_w * uy - half_d * ny)
 
-    return (p0, p1, p2, p3, opening.sill_height)
+    # Shift Z down and height up to avoid coplanar faces with wall floor/top.
+    z = max(opening.sill_height - OPENING_CUTTER_Z_OVERSHOOT, -OPENING_CUTTER_Z_OVERSHOOT)
+    effective_height = opening.height + 2 * OPENING_CUTTER_Z_OVERSHOOT
+
+    return (p0, p1, p2, p3, z, effective_height)
 
 
 # Main sync class operating on one Blender object.
@@ -258,23 +268,39 @@ class AttributeSync:
             except ValueError:
                 pass
 
-        # Opening cutter faces — one face per opening, positioned at Z=sill_height.
+        # Opening cutter boxes — 6-face watertight box per opening.
+        # Creating a proper closed manifold with consistent outward normals
+        # is critical for the EXACT boolean solver to produce clean results.
+        # ExtrudeMesh leaves the bottom face normal pointing inward, which
+        # breaks boolean; building boxes in Python avoids this entirely.
         oid_fidx = {}
         for w in walls:
             for op in w.openings:
                 result = _compute_opening_cutter_quad(op, w, junctions_by_id)
                 if result is None:
                     continue
-                p0, p1, p2, p3, z = result
-                verts = [bm.verts.new((p[0], p[1], z)) for p in (p0, p1, p2, p3)]
-                wall_vert_count += 4
+                p0, p1, p2, p3, z, eff_h = result
+                z_top = z + eff_h
+                b = [bm.verts.new((p[0], p[1], z)) for p in (p0, p1, p2, p3)]
+                t = [bm.verts.new((p[0], p[1], z_top)) for p in (p0, p1, p2, p3)]
+                wall_vert_count += 8
                 bm.verts.ensure_lookup_table()
-                try:
-                    bm.faces.new(verts[::-1])
-                    oid_fidx[op.id] = face_count
-                    face_count += 1
-                except ValueError:
-                    pass
+                first_fidx = face_count
+                box_faces = [
+                    (b[0], b[1], b[2], b[3]),  # bottom — normal -Z
+                    (t[3], t[2], t[1], t[0]),  # top — normal +Z
+                    (b[1], b[0], t[0], t[1]),  # side 0-1
+                    (b[2], b[1], t[1], t[2]),  # side 1-2
+                    (b[3], b[2], t[2], t[3]),  # side 2-3
+                    (b[0], b[3], t[3], t[0]),  # side 3-0
+                ]
+                for fv in box_faces:
+                    try:
+                        bm.faces.new(fv)
+                        face_count += 1
+                    except ValueError:
+                        pass
+                oid_fidx[op.id] = list(range(first_fidx, face_count))
 
         # Room centerline faces (floor polygons) — use junction positions.
         # These are separate faces tagged is_wall=0 so GN can filter them.
@@ -319,7 +345,7 @@ class AttributeSync:
         rooms = self.rg.get_all_rooms()
 
         # Face domain: is_wall (1 = wall quad, 0 = room floor), is_opening (1 = cutter),
-        # wall_id, wall_height, room_id, room_area, room_perimeter, opening_height.
+        # wall_id, wall_height, room_id, room_area, room_perimeter.
         is_wall_attr = self._ensure_mesh_attr(mesh, "is_wall", 'INT', 'FACE')
         is_opening_attr = self._ensure_mesh_attr(mesh, "is_opening", 'INT', 'FACE')
         wid_attr = self._ensure_mesh_attr(mesh, "wall_id", 'INT', 'FACE')
@@ -328,7 +354,6 @@ class AttributeSync:
         rid_attr = self._ensure_mesh_attr(mesh, "room_id", 'INT', 'FACE')
         rarea_attr = self._ensure_mesh_attr(mesh, "room_area", 'FLOAT', 'FACE')
         rperim_attr = self._ensure_mesh_attr(mesh, "room_perimeter", 'FLOAT', 'FACE')
-        oheight_attr = self._ensure_mesh_attr(mesh, "opening_height", 'FLOAT', 'FACE')
 
         walls_by_id = {w.id: w for w in walls}
         for wid, fidx in self._wid_fidx.items():
@@ -341,20 +366,17 @@ class AttributeSync:
             wheight_attr.data[fidx].value = w.height
             wthick_attr.data[fidx].value = w.thickness
 
-        # Opening cutter faces.
-        all_openings = {op.id: op for w in walls for op in w.openings}
-        for oid, fidx in self._oid_fidx.items():
-            op = all_openings.get(oid)
-            if op is None:
-                continue
-            is_wall_attr.data[fidx].value = 0
-            is_opening_attr.data[fidx].value = 1
-            oheight_attr.data[fidx].value = op.height
+        # Opening cutter faces — all faces of each box are tagged is_opening=1.
+        for oid, fidx_list in self._oid_fidx.items():
+            for fidx in fidx_list:
+                is_wall_attr.data[fidx].value = 0
+                is_opening_attr.data[fidx].value = 1
 
         for room in rooms:
             fidx = self._rid_fidx.get(room.id)
             if fidx is not None:
                 is_wall_attr.data[fidx].value = 0
+                is_opening_attr.data[fidx].value = 0
                 rid_attr.data[fidx].value = self.id_mapper.get(room.id)
                 rarea_attr.data[fidx].value = room.area
                 rperim_attr.data[fidx].value = room.perimeter
@@ -368,10 +390,12 @@ class AttributeSync:
 
     @staticmethod
     def _ensure_mesh_attr(mesh, name, attr_type, domain):
+        # Always remove and recreate to avoid stale data from prior syncs
+        # (bm.to_mesh() does not clear named attributes added via
+        # mesh.attributes API, so old values at shifted face indices could
+        # leak through).
         attr = mesh.attributes.get(name)
         if attr is not None:
-            if attr.data_type == attr_type and attr.domain == domain:
-                return attr
             mesh.attributes.remove(attr)
         return mesh.attributes.new(name=name, type=attr_type, domain=domain)
 

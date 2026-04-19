@@ -24,7 +24,8 @@ DEFAULT_DOOR_HEIGHT = 2.1
 DEFAULT_WINDOW_HEIGHT = 1.2
 DEFAULT_WINDOW_SILL = 0.9  # distance from floor to bottom of window
 
-OPENING_CUTTER_OVERSHOOT = 0.02  # extra depth beyond wall surface for boolean
+OPENING_CUTTER_OVERSHOOT = 0.05  # extra depth beyond wall surface for boolean
+OPENING_CUTTER_Z_OVERSHOOT = 0.01  # vertical overshoot to avoid coplanar faces
 
 # Snapping
 SNAP_JUNCTION_TOLERANCE = 15  # pixels

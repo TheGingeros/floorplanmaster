@@ -15,7 +15,7 @@ import bpy
 
 TREE_NAME = "FloorPlanMaster_WallGen"
 MODIFIER_NAME = "FPM_Geometry"
-_TREE_VERSION = 5
+_TREE_VERSION = 10
 
 
 def ensure_gn_modifier(obj):
@@ -106,22 +106,15 @@ def _build_tree():
     set_shade.inputs['Shade Smooth'].default_value = False
     set_shade.location = (350, 150)
 
-    # --- Step 4: Extrude opening cutter faces by opening_height ---
-    named_oheight = nodes.new('GeometryNodeInputNamedAttribute')
-    named_oheight.data_type = 'FLOAT'
-    named_oheight.inputs['Name'].default_value = 'opening_height'
-    named_oheight.location = (-200, -500)
-
-    extrude_cutters = nodes.new('GeometryNodeExtrudeMesh')
-    extrude_cutters.mode = 'FACES'
-    extrude_cutters.location = (100, -300)
-
-    # --- Step 5: Mesh Boolean (DIFFERENCE) — walls minus cutters ---
+    # --- Step 4: Mesh Boolean (DIFFERENCE) — walls minus cutters ---
+    # Cutter boxes are built as watertight 6-face solids in Python (sync.py)
+    # with consistent outward normals.  No extrusion needed here.
     boolean_node = nodes.new('GeometryNodeMeshBoolean')
     boolean_node.operation = 'DIFFERENCE'
+    boolean_node.solver = 'EXACT'
     boolean_node.location = (600, 0)
 
-    # --- Step 6: Join walls-with-holes + floor faces ---
+    # --- Step 5: Join walls-with-holes + floor faces ---
     join = nodes.new('GeometryNodeJoinGeometry')
     join.location = (1000, 0)
 
@@ -141,15 +134,11 @@ def _build_tree():
     links.new(named_height.outputs[0], extrude_walls.inputs['Offset Scale'])
     links.new(extrude_walls.outputs['Mesh'], set_shade.inputs['Geometry'])
 
-    # Step 4: Extrude opening cutters.
-    links.new(sep_opening.outputs['Selection'], extrude_cutters.inputs['Mesh'])
-    links.new(named_oheight.outputs[0], extrude_cutters.inputs['Offset Scale'])
-
-    # Step 5: Mesh Boolean.
+    # Step 4: Mesh Boolean — extruded walls minus 3D cutter boxes.
     links.new(set_shade.outputs['Geometry'], boolean_node.inputs['Mesh 1'])
-    links.new(extrude_cutters.outputs['Mesh'], boolean_node.inputs['Mesh 2'])
+    links.new(sep_opening.outputs['Selection'], boolean_node.inputs['Mesh 2'])
 
-    # Step 6: Join result + floor faces.
+    # Step 5: Join result + floor faces.
     links.new(boolean_node.outputs['Mesh'], join.inputs['Geometry'])
     links.new(sep_opening.outputs['Inverted'], join.inputs['Geometry'])
 
