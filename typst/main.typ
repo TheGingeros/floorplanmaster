@@ -17,11 +17,23 @@
 ]
 
 #let abstract-ENG = [
-  TODO
+  Creating architectural floor plans in the freely available 3D modelling software Blender is, in its native form, a destructive process: every modification of wall dimensions or repositioning of an opening requires manual correction of the surrounding geometry, significantly disrupting the fluidity of the design workflow. None of the available extensions for Blender provides a comprehensive tool for natural floor plan sketching combined with automatic room detection and non-destructive opening management.
+
+  The aim of this thesis was to design and implement the FloorPlanMaster extension for Blender, enabling parametric and non-destructive modelling of spatial floor plans. Based on the analysis of three target user groups (architects, 3D visualizers, and game designers) and a comparative analysis of existing tools, functional and non-functional requirements were elicited and a three-layer hybrid architecture was designed: a structural graph (Layer~1) managing wall and junction topology, a semantic room graph (Layer~2) automatically detecting closed cycles, and a synchronization layer (Layer~3) transferring data into the Blender mesh with named attributes read by the Geometry Nodes module.
+
+  The result is a functional add-on implemented in Python, encompassing an interactive wall drawing tool based on a modal operator, parametric editing of wall thickness and height, automatic room detection with area computation, and support for openings (doors and windows) with positional validation.
+
+  The contribution of the thesis lies in filling an identified gap in the Blender ecosystem: the add-on provides a workflow comparable to professional architectural tools, with the entire lifecycle from initial floor plan sketch to the final mesh taking place within a single environment.
 ]
 
 #let abstract-CZE = [
-  TODO
+  Tvorba architektonických půdorysů ve volně dostupném 3D modelovacím softwaru Blender je v nativní podobě destruktivní proces: každá úprava rozměrů stěny nebo přesun otvoru vyžaduje ruční korekci sousední geometrie, což výrazně narušuje plynulost návrhového procesu. Žádný z dostupných rozšiřovacích modulů pro Blender přitom neposkytuje komplexní nástroj pro přirozené kreslení půdorysu v kombinaci s automatickou detekcí místností a nedestruktivní správou otvorů.
+
+  Cílem práce bylo navrhnout a implementovat rozšiřovací modul FloorPlanMaster pro Blender, který umožňuje parametrické a nedestruktivní modelování prostorových dispozic. Na základě analýzy tří cílových skupin (architekti, 3D vizualizátoři a game designéři) a komparativní analýzy existujících nástrojů byly strukturovány funkční a nefunkční požadavky a navržena třívrstvá hybridní architektura: strukturální graf (Vrstva~1) spravuje topologii stěn a styků, sémantický graf místností (Vrstva~2) automaticky detekuje uzavřené cykly a synchronizační vrstva (Vrstva~3) přenáší data do Blender meshe s pojmenovanými atributy čtenými modulem Geometry Nodes.
+
+  Výsledkem je funkční add-on implementovaný v Pythonu zahrnující interaktivní nástroj pro kreslení stěn (modální operátor), parametrickou editaci tloušťky a výšky stěn, automatickou detekci místností a jejich ploch a podporu otvorů (dveře, okna) s poziční validací.
+
+  Přínos práce spočívá v zaplnění identifikované mezery v ekosystému Blenderu: add-on poskytuje workflow srovnatelné s profesionálními architektonickými nástroji, přičemž celý životní cyklus od prvního náčrtu dispozice po finální mesh probíhá v jednom prostředí.
 ]
 
 #show: ctufit-thesis.with(
