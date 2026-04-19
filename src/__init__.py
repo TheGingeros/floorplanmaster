@@ -207,17 +207,14 @@ if _HAS_BPY:
         )
 
     def _draw_wall_selection():
-        # Persistent POST_VIEW draw handler — draws an orange wireframe outline
-        # around the currently selected wall using 3D_POLYLINE_UNIFORM_COLOR.
+        # Persistent POST_VIEW draw handler — draws a semi-transparent orange
+        # box over the currently selected wall using UNIFORM_COLOR + TRIS.
         # Registered at addon load; reads active_wall_id from FloorPlanSettings.
         context = bpy.context
         if not context or not getattr(context, 'scene', None):
             return
         settings = getattr(context.scene, 'floorplan', None)
         if not settings or not settings.active_wall_id:
-            return
-        region = getattr(context, 'region', None)
-        if region is None:
             return
         obj = find_floorplan_obj(context)
         if obj is None or obj.name not in _graph_store:
@@ -231,24 +228,36 @@ if _HAS_BPY:
         if quad is None:
             return
         h = wall.height
-        b = [Vector((p[0], p[1], 0.0)) for p in quad]
-        t = [Vector((p[0], p[1], h)) for p in quad]
-        # 12 edges: 4 bottom + 4 top + 4 verticals
-        edges = []
+        EXPAND = 0.03  # metres — push vertices out to avoid z-fighting
+        cx = sum(p[0] for p in quad) / 4.0
+        cy = sum(p[1] for p in quad) / 4.0
+        b = []
+        for p in quad:
+            dx, dy = p[0] - cx, p[1] - cy
+            norm = math.hypot(dx, dy)
+            if norm > 1e-9:
+                dx, dy = dx / norm * EXPAND, dy / norm * EXPAND
+            else:
+                dx, dy = 0.0, 0.0
+            b.append(Vector((p[0] + dx, p[1] + dy, -EXPAND)))
+        t = [Vector((v.x, v.y, h + EXPAND)) for v in b]
+        # 6 faces x 2 triangles = 12 tris; both sides rendered (no culling).
+        tris = []
+        # Bottom
+        tris += [b[0], b[1], b[2],  b[0], b[2], b[3]]
+        # Top
+        tris += [t[0], t[2], t[1],  t[0], t[3], t[2]]
+        # Sides
         for i in range(4):
-            edges += [b[i], b[(i + 1) % 4]]
-        for i in range(4):
-            edges += [t[i], t[(i + 1) % 4]]
-        for i in range(4):
-            edges += [b[i], t[i]]
-        shader = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
+            n = (i + 1) % 4
+            tris += [b[i], b[n], t[n],  b[i], t[n], t[i]]
+        shader = gpu.shader.from_builtin('UNIFORM_COLOR')
         gpu.state.blend_set('ALPHA')
         gpu.state.depth_test_set('LESS_EQUAL')
-        batch = batch_for_shader(shader, 'LINES', {"pos": edges})
+        gpu.state.face_culling_set('NONE')
+        batch = batch_for_shader(shader, 'TRIS', {"pos": tris})
         shader.bind()
-        shader.uniform_float("color", (1.0, 0.55, 0.1, 1.0))
-        shader.uniform_float("lineWidth", 2.5)
-        shader.uniform_float("viewportSize", (float(region.width), float(region.height)))
+        shader.uniform_float("color", (1.0, 0.55, 0.1, 0.25))
         batch.draw(shader)
         gpu.state.depth_test_set('NONE')
         gpu.state.blend_set('NONE')
