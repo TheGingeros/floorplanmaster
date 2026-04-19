@@ -216,9 +216,19 @@ def _compute_opening_cutter_quad(opening, wall, junctions_by_id):
     p2 = (cx + half_w * ux - half_d * nx, cy + half_w * uy - half_d * ny)
     p3 = (cx - half_w * ux - half_d * nx, cy - half_w * uy - half_d * ny)
 
-    # Shift Z down and height up to avoid coplanar faces with wall floor/top.
-    z = max(opening.sill_height - OPENING_CUTTER_Z_OVERSHOOT, -OPENING_CUTTER_Z_OVERSHOOT)
-    effective_height = opening.height + 2 * OPENING_CUTTER_Z_OVERSHOOT
+    # Doors (sill_height == 0): place cutter bottom just ABOVE Z=0 (+0.01 m).
+    # This keeps the cutter entirely within the wall solid (Z=[0, wall_height]),
+    # which is a simpler boolean operation than when the cutter extends below Z=0.
+    # Extending below Z=0 requires the EXACT solver to intersect the cutter with
+    # the wall's bottom face at exactly Z=0, which causes intermittent failures.
+    # The resulting 1 cm gap at the very base of the door is imperceptible.
+    # Windows (sill_height > 0): cutter is already above Z=0; keep original formula.
+    if opening.sill_height == 0.0:
+        z = OPENING_CUTTER_Z_OVERSHOOT  # +0.01 m above Z=0
+        effective_height = opening.height + OPENING_CUTTER_Z_OVERSHOOT  # overshoot at top
+    else:
+        z = max(opening.sill_height - OPENING_CUTTER_Z_OVERSHOOT, -OPENING_CUTTER_Z_OVERSHOOT)
+        effective_height = opening.height + 2 * OPENING_CUTTER_Z_OVERSHOOT
 
     return (p0, p1, p2, p3, z, effective_height)
 
@@ -304,6 +314,9 @@ class AttributeSync:
 
         # Room centerline faces (floor polygons) — use junction positions.
         # These are separate faces tagged is_wall=0 so GN can filter them.
+        # Note: door cutters now start at z=+0.01 (above Z=0), so the wall
+        # solid's bottom face is preserved at door positions — no threshold
+        # face is needed to fill the gap at floor level.
         jid_vidx = {}
         for i, j in enumerate(junctions):
             bm.verts.new((j.position[0], j.position[1], 0.0))
