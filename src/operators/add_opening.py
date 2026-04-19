@@ -278,9 +278,10 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
                     self.cached_wall_height = wall.height
                     self.cached_wall_length = sg.wall_length(wall_uuid)
 
-        # Leave prev_type as '' so that execute() always detects it as a
-        # type switch on the first run and applies proper defaults.  This
-        # avoids duplicating default-setting logic between invoke and execute.
+        # Seed prev_type so check() can detect a type switch in the redo panel.
+        # Leaving it as '' causes check() to skip the default-application branch
+        # on the first-ever invocation because '' satisfies the guard condition.
+        self.prev_type = self.opening_type
         return self.execute(context)
 
     def draw(self, context):
