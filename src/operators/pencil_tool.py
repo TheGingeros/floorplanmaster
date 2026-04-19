@@ -63,7 +63,7 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
     bl_idname = "floorplan.pencil_tool"
     bl_label = "FloorPlan Pencil Tool"
     bl_description = "Draw walls by placing junctions. LMB to place, Z to undo last, ESC to cancel"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
 
     def invoke(self, context, event):
         # Guard: refuse to start a second instance if already running.
@@ -80,11 +80,11 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         self._placed_walls = []
         self._placed_junctions = []
 
-        # Get or create the FloorPlan object and its graphs.
-        from .. import get_graphs, get_id_mapper
+        # Get or create the FloorPlan object and rebuild graphs from the current
+        # mesh so that any previous undo restoring the mesh is the source of truth.
+        from .. import reset_graphs_for_obj
         self._obj = _get_floorplan_obj(context)
-        self._sg, self._rg = get_graphs(self._obj)
-        self._id_mapper = get_id_mapper(self._obj)
+        self._sg, self._rg, self._id_mapper = reset_graphs_for_obj(self._obj)
 
         # Read defaults from scene settings.
         settings = context.scene.floorplan
@@ -132,6 +132,12 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
                 return {'RUNNING_MODAL'}
             else:
                 self._finish(context)
+                # Return FINISHED (not CANCELLED) when walls were drawn so
+                # Blender commits a proper undo step for the session.
+                # Without this, the undo stack has no "room created" entry and
+                # the Add Opening redo panel cannot revert to the room state.
+                if self._placed_walls:
+                    return {'FINISHED'}
                 return {'CANCELLED'}
 
         # RMB passthrough for context menu.
@@ -252,6 +258,10 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
 
         # Re-apply modifier inputs after mesh rebuild so GN dimensions are correct.
         ensure_gn_modifier(self._obj)
+
+        # Commit this wall as a discrete undo step so Ctrl+Z removes one wall
+        # at a time instead of collapsing the whole session into a single step.
+        bpy.ops.ed.undo_push(message="Add Wall")
 
         # Advance: end junction becomes start of next wall.
         self._start_junction_id = end_id

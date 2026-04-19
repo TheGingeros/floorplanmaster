@@ -74,6 +74,11 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
     # Snapshot of the target wall UUID at invoke time — redo always targets
     # this wall, even if the user selects a different wall in between.
     target_wall_id: StringProperty(options={'HIDDEN'}, default='')
+    # UUID of the opening created by this operator instance.
+    # Stored after first execute() so that each redo can remove-and-re-add
+    # (idempotent) instead of colliding with the previous run's opening that
+    # may still be in sg when Blender's undo failed to revert the mesh.
+    target_opening_id: StringProperty(options={'HIDDEN'}, default='')
 
     @classmethod
     def poll(cls, context):
@@ -82,17 +87,30 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
         return context.scene.floorplan.active_wall_id != ""
 
     def check(self, context):
-        # Clamp all values to valid ranges based on wall dimensions.
-        # Called before every execute() triggered by the redo panel.
-        # NOTE: type-switch defaults are applied in execute() only, so that
-        # prev_type stays at the old value and execute() can reliably detect
-        # the switch even if Blender re-reads stored property values between
-        # check() and execute().
         changed = False
+
+        # Detect type switch and apply type-specific defaults.
+        # Must happen here (not in execute()) so that Blender updates the
+        # redo-panel UI sliders to the new values before re-executing.
+        # execute() modifying self.* properties does NOT update the UI.
+        if self.prev_type not in ('', self.opening_type):
+            if self.opening_type == 'WINDOW':
+                self.sill_height = DEFAULT_WINDOW_SILL
+                self.width = DEFAULT_WINDOW_WIDTH
+                self.height = DEFAULT_WINDOW_HEIGHT
+            else:
+                self.sill_height = 0.0
+                self.width = DEFAULT_DOOR_WIDTH
+                self.height = DEFAULT_DOOR_HEIGHT
+            changed = True
+        self.prev_type = self.opening_type
+
         wh = self.cached_wall_height
         wl = self.cached_wall_length
 
-        if wh <= 0 or wl <= 0:
+        # A wall shorter than the minimum opening width cannot hold any opening;
+        # skip clamping to avoid half_norm overflow in the position section below.
+        if wh <= 0 or wl < MIN_OPENING_WIDTH:
             return changed
 
         # Doors always have sill = 0.
@@ -125,7 +143,9 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
             changed = True
 
         # Clamp position so opening stays within wall bounds.
-        if wl > 0:
+        # Guard uses MIN_OPENING_WIDTH (not 0) so that half_norm never overflows
+        # for degenerate walls — such walls already fail sg.add_opening validation.
+        if wl >= MIN_OPENING_WIDTH:
             half_norm = (self.width / 2.0) / wl
             min_pos = half_norm + 0.005
             max_pos = 1.0 - half_norm - 0.005
@@ -164,6 +184,15 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
         # undoes the mesh, then re-executes with updated params).
         sg, rg, mapper = reset_graphs_for_obj(obj)
 
+        # Idempotent: if a previous execute() placed an opening for this
+        # operator instance, remove it before re-adding with new params.
+        # This handles the case where Blender's undo stack could not revert
+        # the mesh (e.g. first opening in a fresh scene with no prior undo
+        # step), leaving the old opening still present in sg after rebuild.
+        if self.target_opening_id:
+            sg.remove_opening(self.target_opening_id)
+            self.target_opening_id = ''
+
         wall = sg.get_wall(wall_uuid)
         if wall is None:
             self.report({'WARNING'}, "Wall no longer exists")
@@ -173,21 +202,8 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
         self.cached_wall_height = wall.height
         wl = sg.wall_length(wall_uuid)
         self.cached_wall_length = wl
-
-        # Detect type switch and apply type-specific defaults.  This is the
-        # authoritative place for type defaults — check() only clamps.
-        # Blender's redo panel may not preserve check()-modified values for
-        # execute(), so execute() must handle the switch independently.
-        if self.prev_type != self.opening_type:
-            if self.opening_type == 'WINDOW':
-                self.sill_height = DEFAULT_WINDOW_SILL
-                self.width = DEFAULT_WINDOW_WIDTH
-                self.height = DEFAULT_WINDOW_HEIGHT
-            else:
-                self.sill_height = 0.0
-                self.width = DEFAULT_DOOR_WIDTH
-                self.height = DEFAULT_DOOR_HEIGHT
-            self.prev_type = self.opening_type
+        # Keep prev_type in sync so check() can detect the next type switch.
+        self.prev_type = self.opening_type
 
         # Clamp values using ACTUAL wall dimensions.
         sill = 0.0 if self.opening_type == 'DOOR' else self.sill_height
@@ -205,7 +221,8 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
             sill = 0.0
 
         # Width must fit within wall length.
-        if wl > 0:
+        # Guard uses MIN_OPENING_WIDTH (not 0) so half_norm stays bounded.
+        if wl >= MIN_OPENING_WIDTH:
             max_w = min(MAX_OPENING_WIDTH, wl * 0.98)
             width = max(MIN_OPENING_WIDTH, min(width, max_w))
 
@@ -218,7 +235,7 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
             position = max(min_pos, min(position, max_pos))
 
         try:
-            sg.add_opening(
+            op = sg.add_opening(
                 wall_uuid,
                 opening_type=self.opening_type,
                 position=position,
@@ -226,6 +243,7 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
                 height=height,
                 sill_height=sill,
             )
+            self.target_opening_id = op.id
         except Exception as e:
             self.report({'ERROR'}, str(e))
             return {'CANCELLED'}
@@ -243,6 +261,10 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
         settings = context.scene.floorplan
         wall_uuid = settings.active_wall_id
         self.target_wall_id = wall_uuid
+        # Reset so a fresh invocation never inherits the UUID from a previous
+        # one (Blender's REGISTER flag carries last-used property values into
+        # the next invocation for "Repeat Last" functionality).
+        self.target_opening_id = ''
 
         # Cache wall dimensions for check() clamping.
         obj = find_floorplan_obj(context)
