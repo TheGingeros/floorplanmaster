@@ -514,3 +514,79 @@ class TestOpeningCRUD:
         op2 = sg.add_opening(w.id, width=0.5, position=0.8)
         with pytest.raises(ValidationError, match=E_OPENING_OVERLAP):
             sg.update_opening(op2.id, position=0.3)
+
+
+# junction_inset() and inset-aware opening placement
+class TestJunctionInset:
+    def test_free_endpoint_returns_zero(self):
+        # A wall with no connecting walls has inset 0 at both ends.
+        sg = StructuralGraph()
+        j1 = sg.add_junction((0, 0))
+        j2 = sg.add_junction((4, 0))
+        w = sg.add_wall(j1.id, j2.id)
+        assert sg.junction_inset(j1.id, w.id) == pytest.approx(0.0)
+        assert sg.junction_inset(j2.id, w.id) == pytest.approx(0.0)
+
+    def test_t_junction_inset_equals_connecting_half_thickness(self):
+        # Wall A (horizontal, 4m) has a perpendicular wall B (thickness=0.2)
+        # connecting at j2. Inset at j2 for wall A = 0.2/2 = 0.1.
+        sg = StructuralGraph()
+        j1 = sg.add_junction((0, 0))
+        j2 = sg.add_junction((4, 0))
+        j3 = sg.add_junction((4, 2))
+        wA = sg.add_wall(j1.id, j2.id, thickness=0.15)
+        wB = sg.add_wall(j2.id, j3.id, thickness=0.2)
+        assert sg.junction_inset(j1.id, wA.id) == pytest.approx(0.0)  # free end
+        assert sg.junction_inset(j2.id, wA.id) == pytest.approx(0.1)  # wB.thickness/2
+
+    def test_multiple_neighbors_takes_max(self):
+        # Center junction connected to three walls. The inset for each wall
+        # at the center junction is max(other two thicknesses) / 2.
+        sg = StructuralGraph()
+        jc = sg.add_junction((0, 0))
+        j1 = sg.add_junction((-2, 0))
+        j2 = sg.add_junction((2, 0))
+        j3 = sg.add_junction((0, 2))
+        w1 = sg.add_wall(jc.id, j1.id, thickness=0.1)
+        w2 = sg.add_wall(jc.id, j2.id, thickness=0.2)
+        w3 = sg.add_wall(jc.id, j3.id, thickness=0.3)
+        # For w1 at jc: neighbors are w2 (t=0.2) and w3 (t=0.3) -> max half = 0.15
+        assert sg.junction_inset(jc.id, w1.id) == pytest.approx(0.15)
+        # For w3 at jc: neighbors are w1 (t=0.1) and w2 (t=0.2) -> max half = 0.1
+        assert sg.junction_inset(jc.id, w3.id) == pytest.approx(0.1)
+
+    def test_inset_enforced_on_add_opening(self):
+        # Wall 4m long, connecting wall (t=0.4) at start junction -> inset_start=0.2
+        # t_min = 0.2/4 = 0.05
+        # Opening at position=0.08 with half_norm=0.05 -> t_start=0.03 < 0.05 -> raises
+        sg = StructuralGraph()
+        j1 = sg.add_junction((0, 0))
+        j2 = sg.add_junction((4, 0))
+        j3 = sg.add_junction((0, 2))
+        wA = sg.add_wall(j1.id, j2.id, height=3.0)
+        sg.add_wall(j1.id, j3.id, thickness=0.4)
+        with pytest.raises(ValidationError, match=E_OPENING_TOO_LARGE):
+            sg.add_opening(wA.id, width=0.4, position=0.08)
+
+    def test_inset_allows_placement_in_usable_span(self):
+        # Same geometry but placement well within usable span -> should succeed.
+        sg = StructuralGraph()
+        j1 = sg.add_junction((0, 0))
+        j2 = sg.add_junction((4, 0))
+        j3 = sg.add_junction((0, 2))
+        wA = sg.add_wall(j1.id, j2.id, height=3.0)
+        sg.add_wall(j1.id, j3.id, thickness=0.4)
+        op = sg.add_opening(wA.id, width=0.9, position=0.5)
+        assert op is not None
+
+    def test_inset_on_update_opening_enforced(self):
+        # Moving an opening from center into the inset zone should be rejected.
+        sg = StructuralGraph()
+        j1 = sg.add_junction((0, 0))
+        j2 = sg.add_junction((4, 0))
+        j3 = sg.add_junction((4, 2))
+        wA = sg.add_wall(j1.id, j2.id, height=3.0)
+        sg.add_wall(j2.id, j3.id, thickness=0.4)  # inset_end = 0.2 -> t_max = 1 - 0.05 = 0.95
+        op = sg.add_opening(wA.id, width=0.9, position=0.5)
+        with pytest.raises(ValidationError, match=E_OPENING_TOO_LARGE):
+            sg.update_opening(op.id, position=0.97)  # t_end = 0.97 + 0.1125 = 1.0825 > 0.95

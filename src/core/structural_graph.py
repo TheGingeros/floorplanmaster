@@ -251,7 +251,10 @@ class StructuralGraph:
         validate_opening_sill(sill_height, height, w.height)
 
         wl = self.wall_length(wall_id)
-        validate_opening_placement(position, width, wl, existing_openings=w.openings)
+        inset_s = self.junction_inset(w.junction_start, wall_id)
+        inset_e = self.junction_inset(w.junction_end, wall_id)
+        validate_opening_placement(position, width, wl, existing_openings=w.openings,
+                                   inset_start=inset_s, inset_end=inset_e)
 
         op = Opening(
             wall_id,
@@ -306,7 +309,10 @@ class StructuralGraph:
 
         wl = self.wall_length(op.wall_id)
         others = [o for o in w.openings if o.id != opening_id]
-        validate_opening_placement(new_pos, new_width, wl, existing_openings=others)
+        inset_s = self.junction_inset(w.junction_start, op.wall_id)
+        inset_e = self.junction_inset(w.junction_end, op.wall_id)
+        validate_opening_placement(new_pos, new_width, wl, existing_openings=others,
+                                   inset_start=inset_s, inset_end=inset_e)
 
         op.width = new_width
         op.height = new_height
@@ -323,6 +329,16 @@ class StructuralGraph:
         p1 = self._junctions[w.junction_start].position
         p2 = self._junctions[w.junction_end].position
         return edge_length(p1, p2)
+
+    def junction_inset(self, junction_id, wall_id):
+        # Conservative inset along wall_id at junction_id caused by connecting walls.
+        # Returns max(neighbor.thickness / 2) for all walls sharing that junction.
+        # Returns 0.0 for free endpoints (no connecting walls).
+        # Used to restrict opening positions to the visible (non-overlapping) wall surface.
+        neighbors = [w for w in self.get_walls_for_junction(junction_id) if w.id != wall_id]
+        if not neighbors:
+            return 0.0
+        return max(w.thickness / 2.0 for w in neighbors)
 
     def wall_angle(self, wall_id):
         w = self._walls.get(wall_id)

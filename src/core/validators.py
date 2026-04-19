@@ -97,15 +97,19 @@ def validate_opening_height(value, wall_height=None):
         )
 
 
-def validate_opening_placement(position, width, wall_length, existing_openings=None):
-    # Check that opening fits within the wall.
+def validate_opening_placement(position, width, wall_length, existing_openings=None,
+                               inset_start=0.0, inset_end=0.0):
+    # Check that opening fits within the usable wall span (excluding junction inset zones).
+    # inset_start / inset_end are the miter-inset distances (in meters) at each end.
     half_norm = (width / 2.0) / wall_length if wall_length > 0 else 0.5
     t_start = position - half_norm
     t_end = position + half_norm
-    if t_start < -1e-6 or t_end > 1.0 + 1e-6:
+    t_min = (inset_start / wall_length) if wall_length > 0 else 0.0
+    t_max = 1.0 - (inset_end / wall_length) if wall_length > 0 else 1.0
+    if t_start < t_min - 1e-6 or t_end > t_max + 1e-6:
         raise ValidationError(
             E_OPENING_TOO_LARGE,
-            f"Opening (t={position}, w={width}) extends beyond wall (length={wall_length:.3f})",
+            f"Opening (t={position}, w={width}) extends beyond usable wall span (length={wall_length:.3f})",
         )
 
     # Check overlap with existing openings.

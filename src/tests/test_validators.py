@@ -189,6 +189,27 @@ class TestValidateOpeningPlacement:
         existing = Opening("w1", position=0.2, width=0.5)
         validate_opening_placement(0.8, 0.5, 2.0, existing_openings=[existing])
 
+    def test_inset_blocks_placement_at_start(self):
+        # inset_start = 0.2 on a 2m wall -> t_min = 0.1
+        # opening at position=0.15 with half_norm=0.1 -> t_start=0.05 < 0.1
+        with pytest.raises(ValidationError, match=E_OPENING_TOO_LARGE):
+            validate_opening_placement(0.15, 0.4, 2.0, inset_start=0.2)
+
+    def test_inset_blocks_placement_at_end(self):
+        # inset_end = 0.2 on a 2m wall -> t_max = 0.9
+        # opening at position=0.85 with half_norm=0.1 -> t_end=0.95 > 0.9
+        with pytest.raises(ValidationError, match=E_OPENING_TOO_LARGE):
+            validate_opening_placement(0.85, 0.4, 2.0, inset_end=0.2)
+
+    def test_inset_allows_placement_inside_usable_span(self):
+        # inset_start=0.2, inset_end=0.2 on a 2m wall -> usable [0.1, 0.9]
+        # opening at 0.5 with half_norm=0.1 -> [0.4, 0.6] fully inside
+        validate_opening_placement(0.5, 0.4, 2.0, inset_start=0.2, inset_end=0.2)
+
+    def test_inset_zero_behaves_like_original(self):
+        # Explicitly passing zero insets should behave identically to omitting them.
+        validate_opening_placement(0.5, 0.9, 2.0, inset_start=0.0, inset_end=0.0)
+
 
 class TestValidateOpeningSill:
     def test_valid_door(self):
