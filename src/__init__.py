@@ -43,27 +43,19 @@ _selection_draw_handle = None
 
 def get_graphs(obj):
     # Return (StructuralGraph, RoomGraph) for a FloorPlanMaster object.
-    # Creates new graphs and a persistent IdMapper if not yet tracked.
-    from .core.sync import IdMapper
-    key = obj.name
-    if key not in _graph_store:
-        sg = StructuralGraph()
-        rg = RoomGraph(sg)
-        _graph_store[key] = (sg, rg, IdMapper())
-    sg, rg, _ = _graph_store[key]
+    # Reconstructs from persisted JSON if not yet in the cache.
+    if obj.name not in _graph_store:
+        reset_graphs_for_obj(obj)
+    sg, rg, _ = _graph_store[obj.name]
     return sg, rg
 
 
 def get_id_mapper(obj):
     # Return the persistent IdMapper for a FloorPlanMaster object.
     # Ensures the same UUID->int assignments survive across sync calls.
-    from .core.sync import IdMapper
-    key = obj.name
-    if key not in _graph_store:
-        sg = StructuralGraph()
-        rg = RoomGraph(sg)
-        _graph_store[key] = (sg, rg, IdMapper())
-    return _graph_store[key][2]
+    if obj.name not in _graph_store:
+        reset_graphs_for_obj(obj)
+    return _graph_store[obj.name][2]
 
 
 def reset_graphs_for_obj(obj):
@@ -71,10 +63,16 @@ def reset_graphs_for_obj(obj):
     # Must be called at the start of any operator with REGISTER|UNDO before
     # mutating graphs, so that Blender's undo-restored mesh is the source of
     # truth and re-execution after undo does not create duplicates.
+    #
+    # Room detection runs immediately after reconstruction so the graph is
+    # fully consistent without needing a subsequent sync_graph_to_mesh() call
+    # (e.g. after addon reload or file load).
     from .core.sync import reconstruct_graphs_from_mesh
     sg, rg, mapper = reconstruct_graphs_from_mesh(obj)
     if rg is None:
         rg = RoomGraph(sg)
+    if sg.get_all_walls():
+        rg.sync_from_structural_graph()
     _graph_store[obj.name] = (sg, rg, mapper)
     return sg, rg, mapper
 
@@ -308,9 +306,7 @@ if _HAS_BPY:
             for obj in scene.objects:
                 if obj.get("is_floorplan") and obj.name not in seen:
                     seen.add(obj.name)
-                    sg, rg, mapper = reset_graphs_for_obj(obj)
-                    rg.sync_from_structural_graph()
-                    _graph_store[obj.name] = (sg, rg, mapper)
+                    reset_graphs_for_obj(obj)
 
     @bpy.app.handlers.persistent
     def _load_post_handler(dummy):

@@ -96,9 +96,9 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
             return
 
         if obj.name not in _graph_store:
-            # Lazy-populate after addon reload or module reload.
-            sg, rg, mapper = reset_graphs_for_obj(obj)
-            rg.sync_from_structural_graph()
+            # Lazy-populate after VS Code extension module reload,
+            # which does importlib.reload() without calling register().
+            reset_graphs_for_obj(obj)
 
         sg, rg, _mapper = _graph_store[obj.name]
         rooms = rg.get_all_rooms()
