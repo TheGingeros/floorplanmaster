@@ -127,42 +127,54 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
             self.sill_height = 0.0
             changed = True
 
-        # Clamp height to fit within wall.
-        max_h = wh - self.sill_height
-        if max_h < MIN_OPENING_HEIGHT:
-            max_h = MIN_OPENING_HEIGHT
-        if self.height > max_h:
-            self.height = max_h
+        # Clamp height to the absolute wall bounds — height is fixed, sill gives way.
+        if self.height > wh:
+            self.height = wh
+            changed = True
+        if self.height < MIN_OPENING_HEIGHT:
+            self.height = MIN_OPENING_HEIGHT
             changed = True
 
-        # Clamp sill so opening doesn't exceed wall top.
+        # Clamp sill so the top of the opening doesn't exceed the wall.
+        # Height is intentionally NOT reduced here — sill is the one that moves.
         max_sill = wh - self.height
-        if max_sill < 0:
-            max_sill = 0
+        if max_sill < 0.0:
+            max_sill = 0.0
         if self.sill_height > max_sill:
             self.sill_height = max_sill
-            changed = True
-
-        # Clamp width to fit within the usable wall span (excluding junction insets).
-        inset_s = self.cached_inset_start
-        inset_e = self.cached_inset_end
-        usable = wl - inset_s - inset_e
-        if usable < MIN_OPENING_WIDTH:
-            usable = MIN_OPENING_WIDTH
-        max_w = min(MAX_OPENING_WIDTH, usable * 0.98)
-        if max_w < MIN_OPENING_WIDTH:
-            max_w = MIN_OPENING_WIDTH
-        if self.width > max_w:
-            self.width = max_w
             changed = True
 
         # Clamp position so opening stays within the usable wall span.
         # Guard uses MIN_OPENING_WIDTH (not 0) so that half_norm never overflows
         # for degenerate walls — such walls already fail sg.add_opening validation.
+        inset_s = self.cached_inset_start
+        inset_e = self.cached_inset_end
         if wl >= MIN_OPENING_WIDTH:
-            half_norm = (self.width / 2.0) / wl
             inset_s_norm = inset_s / wl
             inset_e_norm = inset_e / wl
+            # Clamp position into the inset-safe range first (without width influence),
+            # so width is then bounded by the space available at the clamped position.
+            pos_min_bare = inset_s_norm + 0.005
+            pos_max_bare = 1.0 - inset_e_norm - 0.005
+            if pos_min_bare > pos_max_bare:
+                pos_min_bare = pos_max_bare = (inset_s_norm + 1.0 - inset_e_norm) / 2.0
+            if self.position < pos_min_bare:
+                self.position = pos_min_bare
+                changed = True
+            if self.position > pos_max_bare:
+                self.position = pos_max_bare
+                changed = True
+
+            # Width max is the space available at the current position.
+            space_start = max(0.0, self.position * wl - inset_s)
+            space_end = max(0.0, (1.0 - self.position) * wl - inset_e)
+            max_w = min(MAX_OPENING_WIDTH, max(MIN_OPENING_WIDTH, 2.0 * min(space_start, space_end)))
+            if self.width > max_w:
+                self.width = max_w
+                changed = True
+
+            # Re-clamp position now that width is finalised.
+            half_norm = (self.width / 2.0) / wl
             min_pos = inset_s_norm + half_norm + 0.005
             max_pos = 1.0 - inset_e_norm - half_norm - 0.005
             if min_pos > max_pos:
@@ -229,28 +241,29 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
         width = self.width
         position = self.position
 
-        # Height + sill must fit within wall.
-        if sill + height > wall.height:
-            height = wall.height - sill
-        if height < MIN_OPENING_HEIGHT:
-            height = MIN_OPENING_HEIGHT
-            sill = min(sill, wall.height - height)
-        if sill < 0:
-            sill = 0.0
+        # Height is clamped to wall bounds; sill gives way, not height.
+        height = max(MIN_OPENING_HEIGHT, min(height, wall.height))
+        sill = max(0.0, min(sill, wall.height - height))
 
-        # Width must fit within the usable wall span (excluding junction insets).
-        # Guard uses MIN_OPENING_WIDTH (not 0) so half_norm stays bounded.
+        # Width and position — clamp position into inset-safe range first,
+        # then bound width by space available at that position.
         inset_s = self.cached_inset_start
         inset_e = self.cached_inset_end
         if wl >= MIN_OPENING_WIDTH:
-            usable = max(MIN_OPENING_WIDTH, wl - inset_s - inset_e)
-            max_w = min(MAX_OPENING_WIDTH, usable * 0.98)
-            width = max(MIN_OPENING_WIDTH, min(width, max_w))
-
-            # Position so opening stays within the usable wall span.
-            half_norm = (width / 2.0) / wl
             inset_s_norm = inset_s / wl
             inset_e_norm = inset_e / wl
+            pos_min_bare = inset_s_norm + 0.005
+            pos_max_bare = 1.0 - inset_e_norm - 0.005
+            if pos_min_bare > pos_max_bare:
+                pos_min_bare = pos_max_bare = (inset_s_norm + 1.0 - inset_e_norm) / 2.0
+            position = max(pos_min_bare, min(position, pos_max_bare))
+
+            space_start = max(0.0, position * wl - inset_s)
+            space_end = max(0.0, (1.0 - position) * wl - inset_e)
+            max_w = min(MAX_OPENING_WIDTH, max(MIN_OPENING_WIDTH, 2.0 * min(space_start, space_end)))
+            width = max(MIN_OPENING_WIDTH, min(width, max_w))
+
+            half_norm = (width / 2.0) / wl
             min_pos = inset_s_norm + half_norm + 0.005
             max_pos = 1.0 - inset_e_norm - half_norm - 0.005
             if min_pos > max_pos:
