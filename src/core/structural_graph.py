@@ -85,6 +85,11 @@ class StructuralGraph:
         self._walls = {}       # id -> Wall
         # Spatial index: rounded position -> junction id (for duplicate detection).
         self._pos_index = {}
+        # Cache for the leaf-pruned graph used by detect_minimal_cycles.
+        # Invalidated whenever topology changes (add/remove junction or wall,
+        # move junction).  Avoids an O(V+E) graph copy on every wall placement.
+        self._pruned_graph_cache = None
+        self._topology_dirty = True
 
     # -- helpers --
     @staticmethod
@@ -108,6 +113,7 @@ class StructuralGraph:
         self._junctions[j.id] = j
         self._graph.add_node(j.id, pos=j.position)
         self._pos_index[pk] = j.id
+        self._topology_dirty = True
         return j
 
     def remove_junction(self, junction_id):
@@ -126,6 +132,7 @@ class StructuralGraph:
         self._pos_index.pop(pk, None)
         self._graph.remove_node(junction_id)
         del self._junctions[junction_id]
+        self._topology_dirty = True
 
     def get_junction(self, junction_id):
         return self._junctions.get(junction_id)
@@ -159,6 +166,7 @@ class StructuralGraph:
         j.position = tuple(new_position)
         self._pos_index[new_pk] = junction_id
         self._graph.nodes[junction_id]["pos"] = j.position
+        self._topology_dirty = True
 
     # Wall CRUD
     def add_wall(
@@ -189,6 +197,7 @@ class StructuralGraph:
         )
         self._walls[w.id] = w
         self._graph.add_edge(junction_start_id, junction_end_id, wall_id=w.id)
+        self._topology_dirty = True
         return w
 
     def remove_wall(self, wall_id):
@@ -199,6 +208,7 @@ class StructuralGraph:
         if self._graph.has_edge(*ek):
             self._graph.remove_edge(*ek)
         del self._walls[wall_id]
+        self._topology_dirty = True
 
     def get_wall(self, wall_id):
         return self._walls.get(wall_id)
@@ -349,22 +359,60 @@ class StructuralGraph:
         return edge_angle(p1, p2)
 
     # Topology analysis
+    def _prune_leaves(self, g):
+        # Iteratively remove degree-0 and degree-1 nodes until stable.
+        # Dangling endpoints (open wall segments) are degree-1; they have no
+        # role in any closed cycle and their presence confuses the planar
+        # embedding — NetworkX may route them "inside" an existing face,
+        # causing traverse_face() to revisit a junction twice and return a
+        # degenerate cycle that destroys the existing room floor face.
+        #
+        # Result is cached and only recomputed when _topology_dirty is set,
+        # which happens on every add/remove junction/wall and move_junction.
+        # This avoids an O(V+E) graph copy on every wall placement click.
+        if not self._topology_dirty and self._pruned_graph_cache is not None:
+            return self._pruned_graph_cache
+        pruned = g.copy()
+        changed = True
+        while changed:
+            leaves = [n for n, d in pruned.degree() if d <= 1]
+            changed = bool(leaves)
+            pruned.remove_nodes_from(leaves)
+        self._pruned_graph_cache = pruned
+        self._topology_dirty = False
+        return pruned
+
     def detect_minimal_cycles(self):
         # Detect all minimal (face) cycles in the planar graph.
         # Uses NetworkX planar embedding for face traversal when possible,
         # falls back to minimum_cycle_basis for non-planar or disconnected graphs.
         # Returns list of cycles, each cycle is a list of junction IDs in order.
+        #
+        # Leaf pruning is applied before dispatch: dangling wall segments
+        # (degree-1 nodes) are stripped so the planar embedding only sees
+        # nodes that belong to closed cycles.  Without pruning, drawing a
+        # single open wall from a junction of an existing room would make
+        # NetworkX route the dangling node inside the existing face, causing
+        # traverse_face() to return a cycle with a repeated junction (the
+        # shared endpoint appears twice).  That invalid cycle is then used
+        # as the room's floor polygon, which: (a) overwrites the old room in
+        # the room graph, and (b) makes bm.faces.new() raise ValueError
+        # (duplicate vertex), silently swallowed — leaving no floor face in
+        # the mesh until the new room is fully closed.
         if self._graph.number_of_edges() < 3:
+            return []
+        pruned = self._prune_leaves(self._graph)
+        if pruned.number_of_edges() < 3:
             return []
 
         try:
-            return self._detect_cycles_planar()
+            return self._detect_cycles_planar(pruned)
         except nx.NetworkXException:
-            return self._detect_cycles_fallback()
+            return self._detect_cycles_fallback(pruned)
 
-    def _detect_cycles_planar(self):
+    def _detect_cycles_planar(self, graph):
         # Use the planar embedding traverse_face() to enumerate all faces.
-        is_planar, embedding = nx.check_planarity(self._graph)
+        is_planar, embedding = nx.check_planarity(graph)
         if not is_planar:
             raise nx.NetworkXException("Graph is not planar")
 
@@ -392,23 +440,25 @@ class StructuralGraph:
 
         return faces
 
-    def _detect_cycles_fallback(self):
+    def _detect_cycles_fallback(self, graph):
         # Fallback for disconnected or non-planar graphs.
         try:
-            basis = nx.minimum_cycle_basis(self._graph)
+            basis = nx.minimum_cycle_basis(graph)
         except nx.NetworkXError:
             return []
         # minimum_cycle_basis returns sets of nodes; we need ordered cycles.
         ordered_cycles = []
         for cycle_nodes in basis:
-            ordered = self._order_cycle(cycle_nodes)
+            ordered = self._order_cycle(cycle_nodes, graph)
             if ordered and len(ordered) >= 3:
                 ordered_cycles.append(ordered)
         return ordered_cycles
 
-    def _order_cycle(self, node_set):
+    def _order_cycle(self, node_set, graph=None):
         # Given a set of nodes forming a cycle, return them in traversal order.
-        sub = self._graph.subgraph(node_set)
+        if graph is None:
+            graph = self._graph
+        sub = graph.subgraph(node_set)
         try:
             cycle = nx.find_cycle(sub)
             return [e[0] for e in cycle]

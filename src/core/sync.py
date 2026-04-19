@@ -396,10 +396,11 @@ class AttributeSync:
 
         mesh.update()
         self.obj.update_tag()
-        try:
-            bpy.context.view_layer.update()
-        except Exception:
-            pass
+        # Do NOT call view_layer.update() here — it forces synchronous GN
+        # evaluation (including the EXACT boolean solver) blocking Python until
+        # the depsgraph finishes.  With many rooms the cost compounds with each
+        # wall placement.  update_tag() is sufficient: Blender will re-evaluate
+        # the GN modifier lazily on the next viewport redraw.
 
     @staticmethod
     def _ensure_mesh_attr(mesh, name, attr_type, domain):

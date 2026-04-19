@@ -260,7 +260,8 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             return
 
         # Sync L2 + L3.
-        self._rg.sync_from_structural_graph()
+        # Note: sync_graph_to_mesh -> _phase1_topology already calls
+        # rg.sync_from_structural_graph() internally, so no need to call it here.
         sync_graph_to_mesh(self._obj, self._sg, self._rg, id_mapper=self._id_mapper)
 
         # Re-apply modifier inputs after mesh rebuild so GN dimensions are correct.
@@ -298,7 +299,6 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
                 self._placed_junctions.remove(end_id)
 
         # Sync.
-        self._rg.sync_from_structural_graph()
         sync_graph_to_mesh(self._obj, self._sg, self._rg, id_mapper=self._id_mapper)
 
         if self._placed_walls:

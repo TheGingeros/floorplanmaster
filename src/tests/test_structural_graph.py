@@ -364,6 +364,62 @@ class TestCycleDetection:
         for v in verts:
             assert len(v) == 2  # (x, y) tuples
 
+    def test_dangling_wall_from_room_junction_preserves_room(self):
+        # Core regression: drawing an open wall from a junction of an existing
+        # room must NOT destroy that room's cycle.  Before the leaf-prune fix,
+        # NetworkX could route the dangling node inside the existing face,
+        # causing traverse_face() to return a degenerate cycle with a repeated
+        # junction — which then replaced the valid room in the room graph.
+        sg, juncs, _ = make_square_graph()
+        j_dangling = sg.add_junction((0.5, 2.0))
+        # Attach dangling wall to the top-left junction of the square.
+        sg.add_wall(juncs[3].id, j_dangling.id)
+        cycles = sg.detect_minimal_cycles()
+        # Exactly one room — the original square; the dangling wall forms no cycle.
+        assert len(cycles) == 1
+        assert len(cycles[0]) == 4
+        # No junction should appear twice in the returned cycle.
+        assert len(set(cycles[0])) == len(cycles[0])
+
+    def test_dangling_wall_no_cycles_yet(self):
+        # A single open wall should return no cycles even with a junction snapped
+        # to a previously-isolated point.
+        sg = StructuralGraph()
+        j1 = sg.add_junction((0, 0))
+        j2 = sg.add_junction((3, 0))
+        sg.add_wall(j1.id, j2.id)
+        assert sg.detect_minimal_cycles() == []
+
+    def test_multiple_dangling_walls_from_room_junction(self):
+        # Two dangling walls from two different junctions of the same room must
+        # not corrupt cycle detection.
+        sg, juncs, _ = make_square_graph()
+        jd1 = sg.add_junction((2.0, 0.5))
+        jd2 = sg.add_junction((-1.0, 0.5))
+        sg.add_wall(juncs[1].id, jd1.id)
+        sg.add_wall(juncs[0].id, jd2.id)
+        cycles = sg.detect_minimal_cycles()
+        assert len(cycles) == 1
+        assert len(set(cycles[0])) == len(cycles[0])
+
+    def test_room_cycles_correct_after_closing_dangling_wall(self):
+        # After closing the dangling wall into a second room, both rooms must be
+        # detected and each cycle must contain only distinct junction IDs.
+        sg, juncs, _ = make_square_graph()
+        # Add three walls to form a second room sharing j3–j0 (top edge).
+        jd1 = sg.add_junction((0.0, 2.0))
+        jd2 = sg.add_junction((1.0, 2.0))
+        # juncs order from make_square_graph: (0,0) (1,0) (1,1) (0,1)
+        top_left = juncs[3]   # (0, 1)
+        top_right = juncs[2]  # (1, 1)
+        sg.add_wall(top_left.id, jd1.id)
+        sg.add_wall(jd1.id, jd2.id)
+        sg.add_wall(jd2.id, top_right.id)
+        cycles = sg.detect_minimal_cycles()
+        assert len(cycles) == 2
+        for c in cycles:
+            assert len(set(c)) == len(c), f"Cycle has repeated junction: {c}"
+
 
 # Opening CRUD
 class TestOpeningCRUD:
