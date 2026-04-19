@@ -40,7 +40,7 @@ Zápis do Vrstvy 1 nastane vždy až po potvrzení, nikdy průběžně při pohy
 - **Vrácení** → `L1.remove_wall(last_wall_id)` + odstranění osiřelých junctionů → L2 + L3 sync
 - **Zrušení** → žádný zápis do dat; GPU overlay se vypne
 
-## Vizuální zpětná vazba (GPU overlay) *(nice-to-have)*
+## Vizuální zpětná vazba (GPU overlay) *(must-have)*
 
 Veškeré kreslení préview probíhá v GPU draw_handler registrovaném na 3D Viewport — neukládá se do geometrie ani datového modelu:
 
@@ -48,3 +48,11 @@ Veškeré kreslení préview probíhá v GPU draw_handler registrovaném na 3D V
 - HUD: délka navrhované stěny a úhel k poslednímu úseku (aktualizováno při každém pohybu myši); ve stavu ČEKÁNÍ zobrazuje zprávu „Waiting for input"
 - snap indikátor: barevný kruh u kurzoru při aktivním snapu
 - nápověda kláves: ikony kláves a myši zobrazené v dolní stavové liště Blenderu (STATUSBAR_HT_header); stav ČEKÁNÍ zobrazuje LMB / Z / ESC; stav KRESLENÍ zobrazuje aktualizovanou sadu; HUD nápovědu kláves nezobrazuje
+
+## Mód preview čáry stěny *(should-have)*
+
+Možnost vybírat, zda se stěna generuje na středu preview čáry nebo pod nebo nad. Podobně jako ve vektorových a jiných programech. Možnost tyto módy interaktivně přepínat v rámci UI tohoto operátoru. 
+
+- **Generování stěny podle středu čáry**
+- **Generování stěny pod středem čáry**
+- **Generování stěny nad středem čáry**
