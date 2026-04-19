@@ -144,37 +144,23 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
             self.sill_height = max_sill
             changed = True
 
-        # Clamp position so opening stays within the usable wall span.
-        # Guard uses MIN_OPENING_WIDTH (not 0) so that half_norm never overflows
-        # for degenerate walls — such walls already fail sg.add_opening validation.
+        # Width max is the usable wall span — independent of position.
+        # This ensures moving position never silently shrinks the width.
         inset_s = self.cached_inset_start
         inset_e = self.cached_inset_end
+        usable = max(MIN_OPENING_WIDTH, wl - inset_s - inset_e)
+        max_w = min(MAX_OPENING_WIDTH, usable * 0.98)
+        if self.width > max_w:
+            self.width = max_w
+            changed = True
+
+        # Clamp position so the opening fits at the current width.
+        # Guard uses MIN_OPENING_WIDTH (not 0) so that half_norm never overflows
+        # for degenerate walls — such walls already fail sg.add_opening validation.
         if wl >= MIN_OPENING_WIDTH:
+            half_norm = (self.width / 2.0) / wl
             inset_s_norm = inset_s / wl
             inset_e_norm = inset_e / wl
-            # Clamp position into the inset-safe range first (without width influence),
-            # so width is then bounded by the space available at the clamped position.
-            pos_min_bare = inset_s_norm + 0.005
-            pos_max_bare = 1.0 - inset_e_norm - 0.005
-            if pos_min_bare > pos_max_bare:
-                pos_min_bare = pos_max_bare = (inset_s_norm + 1.0 - inset_e_norm) / 2.0
-            if self.position < pos_min_bare:
-                self.position = pos_min_bare
-                changed = True
-            if self.position > pos_max_bare:
-                self.position = pos_max_bare
-                changed = True
-
-            # Width max is the space available at the current position.
-            space_start = max(0.0, self.position * wl - inset_s)
-            space_end = max(0.0, (1.0 - self.position) * wl - inset_e)
-            max_w = min(MAX_OPENING_WIDTH, max(MIN_OPENING_WIDTH, 2.0 * min(space_start, space_end)))
-            if self.width > max_w:
-                self.width = max_w
-                changed = True
-
-            # Re-clamp position now that width is finalised.
-            half_norm = (self.width / 2.0) / wl
             min_pos = inset_s_norm + half_norm + 0.005
             max_pos = 1.0 - inset_e_norm - half_norm - 0.005
             if min_pos > max_pos:
@@ -245,25 +231,18 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
         height = max(MIN_OPENING_HEIGHT, min(height, wall.height))
         sill = max(0.0, min(sill, wall.height - height))
 
-        # Width and position — clamp position into inset-safe range first,
-        # then bound width by space available at that position.
+        # Width: wall-level cap, independent of position.
         inset_s = self.cached_inset_start
         inset_e = self.cached_inset_end
         if wl >= MIN_OPENING_WIDTH:
-            inset_s_norm = inset_s / wl
-            inset_e_norm = inset_e / wl
-            pos_min_bare = inset_s_norm + 0.005
-            pos_max_bare = 1.0 - inset_e_norm - 0.005
-            if pos_min_bare > pos_max_bare:
-                pos_min_bare = pos_max_bare = (inset_s_norm + 1.0 - inset_e_norm) / 2.0
-            position = max(pos_min_bare, min(position, pos_max_bare))
-
-            space_start = max(0.0, position * wl - inset_s)
-            space_end = max(0.0, (1.0 - position) * wl - inset_e)
-            max_w = min(MAX_OPENING_WIDTH, max(MIN_OPENING_WIDTH, 2.0 * min(space_start, space_end)))
+            usable = max(MIN_OPENING_WIDTH, wl - inset_s - inset_e)
+            max_w = min(MAX_OPENING_WIDTH, usable * 0.98)
             width = max(MIN_OPENING_WIDTH, min(width, max_w))
 
+            # Position: clamp so the opening fits at the current width.
             half_norm = (width / 2.0) / wl
+            inset_s_norm = inset_s / wl
+            inset_e_norm = inset_e / wl
             min_pos = inset_s_norm + half_norm + 0.005
             max_pos = 1.0 - inset_e_norm - half_norm - 0.005
             if min_pos > max_pos:
