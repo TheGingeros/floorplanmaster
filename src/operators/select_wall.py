@@ -125,11 +125,13 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
             finally:
                 _addon._updating_wall_props = False
 
+            _addon.populate_opening_items(settings, sg, wall_uuid)
             context.area.tag_redraw()
             return {'FINISHED'}
 
         # Missed — clear selection and let Blender handle the click.
         settings.active_wall_id = ""
+        settings.opening_items.clear()
         context.area.tag_redraw()
         return {'PASS_THROUGH'}
 

@@ -99,7 +99,7 @@ if _HAS_BPY:
     import math
     from gpu_extras.batch import batch_for_shader
     from mathutils import Vector
-    from bpy.props import FloatProperty, StringProperty, PointerProperty
+    from bpy.props import CollectionProperty, EnumProperty, FloatProperty, StringProperty, PointerProperty
     from .core.sync import sync_graph_to_mesh
 
     # Update callback guard — prevents recursive sync when the select operator
@@ -156,6 +156,236 @@ if _HAS_BPY:
             return
         sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
 
+    # Opening constants — used by OpeningItem PropertyGroup and its callbacks.
+    from .utils.constants import (
+        DEFAULT_DOOR_WIDTH, DEFAULT_WINDOW_WIDTH,
+        DEFAULT_DOOR_HEIGHT, DEFAULT_WINDOW_HEIGHT,
+        DEFAULT_WINDOW_SILL,
+        MIN_OPENING_WIDTH, MAX_OPENING_WIDTH,
+        MIN_OPENING_HEIGHT, MAX_HEIGHT,
+    )
+
+    # Guard — prevents opening item callbacks from firing during collection population.
+    _updating_opening_items = False
+
+    def _on_opening_type_update(self, context):
+        global _updating_opening_items
+        if _updating_opening_items:
+            return
+        _updating_opening_items = True
+        try:
+            if self.opening_type == 'WINDOW':
+                self.sill_height = DEFAULT_WINDOW_SILL
+                self.width = DEFAULT_WINDOW_WIDTH
+                self.height = DEFAULT_WINDOW_HEIGHT
+            else:
+                self.sill_height = 0.0
+                self.width = DEFAULT_DOOR_WIDTH
+                self.height = DEFAULT_DOOR_HEIGHT
+        finally:
+            _updating_opening_items = False
+        opening_id = self.opening_id
+        if not opening_id:
+            return
+        obj = find_floorplan_obj(context)
+        if obj is None or obj.name not in _graph_store:
+            return
+        sg, rg, mapper = _graph_store[obj.name]
+        try:
+            sg.update_opening(
+                opening_id,
+                opening_type=self.opening_type,
+                width=self.width,
+                height=self.height,
+                sill_height=self.sill_height,
+            )
+        except Exception:
+            return
+        sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
+        context.area.tag_redraw()
+
+    def _on_opening_width_update(self, context):
+        global _updating_opening_items
+        if _updating_opening_items:
+            return
+        opening_id = self.opening_id
+        if not opening_id:
+            return
+        obj = find_floorplan_obj(context)
+        if obj is None or obj.name not in _graph_store:
+            return
+        sg, rg, mapper = _graph_store[obj.name]
+        op = sg.get_opening(opening_id)
+        if op is None:
+            return
+        w = sg.get_wall(op.wall_id)
+        if w is None:
+            return
+        wl = sg.wall_length(op.wall_id)
+        inset_s = sg.junction_inset(w.junction_start, op.wall_id)
+        inset_e = sg.junction_inset(w.junction_end, op.wall_id)
+        usable = max(MIN_OPENING_WIDTH, wl - inset_s - inset_e)
+        max_w = min(MAX_OPENING_WIDTH, usable * 0.98)
+        clamped = max(MIN_OPENING_WIDTH, min(self.width, max_w))
+        if abs(clamped - self.width) > 1e-7:
+            _updating_opening_items = True
+            self.width = clamped
+            _updating_opening_items = False
+        try:
+            sg.update_opening(opening_id, width=clamped)
+        except Exception:
+            return
+        sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
+        context.area.tag_redraw()
+
+    def _on_opening_height_update(self, context):
+        global _updating_opening_items
+        if _updating_opening_items:
+            return
+        opening_id = self.opening_id
+        if not opening_id:
+            return
+        obj = find_floorplan_obj(context)
+        if obj is None or obj.name not in _graph_store:
+            return
+        sg, rg, mapper = _graph_store[obj.name]
+        op = sg.get_opening(opening_id)
+        if op is None:
+            return
+        w = sg.get_wall(op.wall_id)
+        if w is None:
+            return
+        max_h = max(MIN_OPENING_HEIGHT, w.height - op.sill_height)
+        clamped = max(MIN_OPENING_HEIGHT, min(self.height, max_h))
+        if abs(clamped - self.height) > 1e-7:
+            _updating_opening_items = True
+            self.height = clamped
+            _updating_opening_items = False
+        try:
+            sg.update_opening(opening_id, height=clamped)
+        except Exception:
+            return
+        sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
+        context.area.tag_redraw()
+
+    def _on_opening_sill_update(self, context):
+        global _updating_opening_items
+        if _updating_opening_items:
+            return
+        opening_id = self.opening_id
+        if not opening_id:
+            return
+        obj = find_floorplan_obj(context)
+        if obj is None or obj.name not in _graph_store:
+            return
+        sg, rg, mapper = _graph_store[obj.name]
+        op = sg.get_opening(opening_id)
+        if op is None:
+            return
+        w = sg.get_wall(op.wall_id)
+        if w is None:
+            return
+        max_sill = max(0.0, w.height - op.height)
+        clamped = max(0.0, min(self.sill_height, max_sill))
+        if abs(clamped - self.sill_height) > 1e-7:
+            _updating_opening_items = True
+            self.sill_height = clamped
+            _updating_opening_items = False
+        try:
+            sg.update_opening(opening_id, sill_height=clamped)
+        except Exception:
+            return
+        sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
+        context.area.tag_redraw()
+
+    def _on_opening_position_update(self, context):
+        global _updating_opening_items
+        if _updating_opening_items:
+            return
+        opening_id = self.opening_id
+        if not opening_id:
+            return
+        obj = find_floorplan_obj(context)
+        if obj is None or obj.name not in _graph_store:
+            return
+        sg, rg, mapper = _graph_store[obj.name]
+        op = sg.get_opening(opening_id)
+        if op is None:
+            return
+        w = sg.get_wall(op.wall_id)
+        if w is None:
+            return
+        wl = sg.wall_length(op.wall_id)
+        inset_s = sg.junction_inset(w.junction_start, op.wall_id)
+        inset_e = sg.junction_inset(w.junction_end, op.wall_id)
+        if wl >= MIN_OPENING_WIDTH:
+            half_norm = (op.width / 2.0) / wl
+            inset_s_norm = inset_s / wl
+            inset_e_norm = inset_e / wl
+            min_pos = inset_s_norm + half_norm + 0.005
+            max_pos = 1.0 - inset_e_norm - half_norm - 0.005
+            if min_pos > max_pos:
+                min_pos = max_pos = (inset_s_norm + 1.0 - inset_e_norm) / 2.0
+            clamped = max(min_pos, min(self.position, max_pos))
+        else:
+            clamped = self.position
+        if abs(clamped - self.position) > 1e-7:
+            _updating_opening_items = True
+            self.position = clamped
+            _updating_opening_items = False
+        try:
+            sg.update_opening(opening_id, position=clamped)
+        except Exception:
+            return
+        sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
+        context.area.tag_redraw()
+
+    class OpeningItem(bpy.types.PropertyGroup):
+        # Per-opening editable item in the N-panel opening list.
+        # Mirrors Opening dataclass fields with identical validation via update callbacks.
+        opening_id: StringProperty(options={'HIDDEN'})
+        opening_type: EnumProperty(
+            name="Type",
+            items=[
+                ('DOOR', "Door", "Door opening from the floor"),
+                ('WINDOW', "Window", "Window opening with sill height"),
+            ],
+            default='DOOR',
+            update=_on_opening_type_update,
+        )
+        width: FloatProperty(
+            name="Width",
+            min=MIN_OPENING_WIDTH,
+            max=MAX_OPENING_WIDTH,
+            precision=3,
+            unit='LENGTH',
+            update=_on_opening_width_update,
+        )
+        height: FloatProperty(
+            name="Height",
+            min=MIN_OPENING_HEIGHT,
+            max=MAX_HEIGHT,
+            precision=3,
+            unit='LENGTH',
+            update=_on_opening_height_update,
+        )
+        sill_height: FloatProperty(
+            name="Sill Height",
+            min=0.0,
+            max=MAX_HEIGHT,
+            precision=3,
+            unit='LENGTH',
+            update=_on_opening_sill_update,
+        )
+        position: FloatProperty(
+            name="Position",
+            description="Relative position along wall (0 = start, 1 = end)",
+            min=0.01,
+            max=0.99,
+            precision=3,
+            update=_on_opening_position_update,
+        )
+
     # Scene-level addon settings (PropertyGroup on Scene)
     class FloorPlanSettings(bpy.types.PropertyGroup):
         default_thickness: FloatProperty(
@@ -203,6 +433,27 @@ if _HAS_BPY:
             unit='LENGTH',
             update=_on_wall_height_update,
         )
+        opening_items: CollectionProperty(
+            name="Opening Items",
+            type=OpeningItem,
+        )
+
+    def populate_opening_items(settings, sg, wall_uuid):
+        # Repopulate settings.opening_items from the graph for the given wall.
+        # Called after wall selection, opening add, and opening remove so the
+        # N-panel always shows current values without a manual refresh.
+        global _updating_opening_items
+        _updating_opening_items = True
+        settings.opening_items.clear()
+        for op in sg.get_openings_for_wall(wall_uuid):
+            item = settings.opening_items.add()
+            item.opening_id = op.id
+            item.opening_type = op.opening_type
+            item.width = op.width
+            item.height = op.height
+            item.sill_height = op.sill_height
+            item.position = op.position
+        _updating_opening_items = False
 
     def _draw_wall_selection():
         # Persistent POST_VIEW draw handler — draws a semi-transparent orange
@@ -313,6 +564,7 @@ if _HAS_BPY:
         _rebuild_graph_store()
 
     _addon_classes = [
+        OpeningItem,
         FloorPlanSettings,
     ]
 

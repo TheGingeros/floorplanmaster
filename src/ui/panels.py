@@ -198,17 +198,29 @@ class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
             if openings:
                 layout.separator()
                 layout.label(text="Openings:", icon='OUTLINER_OB_LATTICE')
+                from .. import populate_opening_items
+                # Repopulate if stale (e.g. after undo or addon reload).
+                op_ids = {op.id for op in openings}
+                item_ids = {item.opening_id for item in settings.opening_items}
+                if op_ids != item_ids:
+                    populate_opening_items(settings, sg, wall_uuid)
+                items_by_id = {item.opening_id: item for item in settings.opening_items}
                 for op in openings:
+                    item = items_by_id.get(op.id)
+                    if item is None:
+                        continue
                     box = layout.box()
                     row = box.row()
                     op_num = mapper.get(op.id)
-                    type_icon = 'IMPORT' if op.opening_type == 'DOOR' else 'WINDOW'
-                    row.label(text=f"{op.opening_type.title()} #{op_num}", icon=type_icon)
+                    type_icon = 'IMPORT' if item.opening_type == 'DOOR' else 'WINDOW'
+                    row.label(text=f"#{op_num}", icon=type_icon)
                     remove_op = row.operator("floorplan.remove_opening", text="", icon='X')
                     remove_op.opening_id = op.id
 
                     col = box.column(align=True)
-                    col.label(text=f"Width: {op.width:.3f} m")
-                    col.label(text=f"Height: {op.height:.3f} m")
-                    if op.opening_type == 'WINDOW':
-                        col.label(text=f"Sill: {op.sill_height:.3f} m")
+                    col.prop(item, "opening_type")
+                    col.prop(item, "width")
+                    col.prop(item, "height")
+                    if item.opening_type == 'WINDOW':
+                        col.prop(item, "sill_height")
+                    col.prop(item, "position")

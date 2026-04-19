@@ -265,6 +265,8 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
 
         ensure_gn_modifier(obj)
         sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
+        from .. import populate_opening_items
+        populate_opening_items(context.scene.floorplan, sg, wall_uuid)
         context.area.tag_redraw()
         return {'FINISHED'}
 
@@ -332,11 +334,18 @@ class FLOORPLAN_OT_remove_opening(bpy.types.Operator):
             reset_graphs_for_obj(obj)
         sg, rg, mapper = _graph_store[obj.name]
 
+        op_to_remove = sg.get_opening(self.opening_id)
+        wall_uuid = op_to_remove.wall_id if op_to_remove else None
         if not sg.remove_opening(self.opening_id):
             self.report({'WARNING'}, "Opening not found")
             return {'CANCELLED'}
 
         ensure_gn_modifier(obj)
         sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
+        if wall_uuid:
+            from .. import populate_opening_items
+            populate_opening_items(context.scene.floorplan, sg, wall_uuid)
+        else:
+            context.scene.floorplan.opening_items.clear()
         context.area.tag_redraw()
         return {'FINISHED'}
