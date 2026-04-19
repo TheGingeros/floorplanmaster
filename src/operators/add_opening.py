@@ -82,9 +82,14 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        if not hasattr(context.scene, "floorplan"):
-            return False
-        return context.scene.floorplan.active_wall_id != ""
+        # Keep poll minimal: the "Add Opening" button is gated by
+        # FLOORPLAN_PT_wall_properties.poll() which checks active_wall_id.
+        # Do NOT check active_wall_id here — during redo re-execution Blender
+        # reverts the scene to the pre-op undo snapshot, which may predate the
+        # select_wall call that set active_wall_id.  A False poll() would
+        # silently block execute() and make the type switch appear broken.
+        # execute() validates the wall UUID and returns CANCELLED if missing.
+        return hasattr(context.scene, "floorplan")
 
     def check(self, context):
         changed = False
