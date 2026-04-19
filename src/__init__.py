@@ -37,6 +37,9 @@ from .core.room_graph import RoomGraph
 # Per-object graph storage: obj.name -> (StructuralGraph, RoomGraph, IdMapper)
 _graph_store = {}
 
+# Handle for the persistent wall-selection highlight draw handler (POST_VIEW).
+_selection_draw_handle = None
+
 
 def get_graphs(obj):
     # Return (StructuralGraph, RoomGraph) for a FloorPlanMaster object.
@@ -94,8 +97,12 @@ def find_floorplan_obj(context):
 
 
 if _HAS_BPY:
+    import gpu
+    import math
+    from gpu_extras.batch import batch_for_shader
+    from mathutils import Vector
     from bpy.props import FloatProperty, StringProperty, PointerProperty
-    from .core.sync import sync_graph_to_mesh
+    from .core.sync import sync_graph_to_mesh, _compute_wall_quad
 
     # Update callback guard — prevents recursive sync when the select operator
     # populates the props (which triggers the update callback).
@@ -199,6 +206,53 @@ if _HAS_BPY:
             update=_on_wall_height_update,
         )
 
+    def _draw_wall_selection():
+        # Persistent POST_VIEW draw handler — draws an orange wireframe outline
+        # around the currently selected wall using 3D_POLYLINE_UNIFORM_COLOR.
+        # Registered at addon load; reads active_wall_id from FloorPlanSettings.
+        context = bpy.context
+        if not context or not getattr(context, 'scene', None):
+            return
+        settings = getattr(context.scene, 'floorplan', None)
+        if not settings or not settings.active_wall_id:
+            return
+        region = getattr(context, 'region', None)
+        if region is None:
+            return
+        obj = find_floorplan_obj(context)
+        if obj is None or obj.name not in _graph_store:
+            return
+        sg, _rg, _ = _graph_store[obj.name]
+        wall = sg.get_wall(settings.active_wall_id)
+        if wall is None:
+            return
+        junctions_by_id = {j.id: j for j in sg.get_all_junctions()}
+        quad = _compute_wall_quad(wall, junctions_by_id, sg)
+        if quad is None:
+            return
+        h = wall.height
+        b = [Vector((p[0], p[1], 0.0)) for p in quad]
+        t = [Vector((p[0], p[1], h)) for p in quad]
+        # 12 edges: 4 bottom + 4 top + 4 verticals
+        edges = []
+        for i in range(4):
+            edges += [b[i], b[(i + 1) % 4]]
+        for i in range(4):
+            edges += [t[i], t[(i + 1) % 4]]
+        for i in range(4):
+            edges += [b[i], t[i]]
+        shader = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
+        gpu.state.blend_set('ALPHA')
+        gpu.state.depth_test_set('LESS_EQUAL')
+        batch = batch_for_shader(shader, 'LINES', {"pos": edges})
+        shader.bind()
+        shader.uniform_float("color", (1.0, 0.55, 0.1, 1.0))
+        shader.uniform_float("lineWidth", 2.5)
+        shader.uniform_float("viewportSize", (float(region.width), float(region.height)))
+        batch.draw(shader)
+        gpu.state.depth_test_set('NONE')
+        gpu.state.blend_set('NONE')
+
     from .operators import get_classes as get_operator_classes
     from .operators.pencil_tool import (
         FLOORPLAN_WT_pencil,
@@ -232,7 +286,17 @@ if _HAS_BPY:
         register_select_keymap()
         bpy.types.STATUSBAR_HT_header.prepend(_draw_pencil_status)
 
+        global _selection_draw_handle
+        _selection_draw_handle = bpy.types.SpaceView3D.draw_handler_add(
+            _draw_wall_selection, (), 'WINDOW', 'POST_VIEW'
+        )
+
     def unregister():
+        global _selection_draw_handle
+        if _selection_draw_handle is not None:
+            bpy.types.SpaceView3D.draw_handler_remove(_selection_draw_handle, 'WINDOW')
+            _selection_draw_handle = None
+
         bpy.types.STATUSBAR_HT_header.remove(_draw_pencil_status)
         unregister_pencil_keymap()
         unregister_select_keymap()
