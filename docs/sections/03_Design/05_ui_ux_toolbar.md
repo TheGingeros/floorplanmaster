@@ -19,3 +19,17 @@ Zvažovány byly tři alternativní přístupy:
 Ikona nástroje je umístěna v sekci Toolbaru přiřazené addonům, oddělena vizuálním oddělovačem od nativních Blender nástrojů. Při aktivaci se ikona graficky zvýrazní (Blender standardní zvýraznění aktivního nástroje), čímž uživatel vždy vidí, zda je nástroj aktivní, aniž by sledoval kurzor nebo viewport.
 
 Tooltip zobrazený při přejetí myší uvádí název nástroje, klávesovou zkratku a stručný popis — vzor dodržovaný u všech nativních Blender nástrojů. Vizuální a interakční zpětná vazba po aktivaci nástroje (HUD, snap indikátory, stavový text) je popsána v [sekci Viewport UI](./05_ui_ux_viewport.md).
+
+Dále se v levém horní rohu viewportu zobrazí slidery s možností nastavení tloušťky, šířky a připnutí stěny. Tento vzor je převzat z nativních nástrojů Blenderu, např. nástroje při sculptingu. Stejné možnosti jsou poté také zobrazeny v N panelu v sekci Active Tool - opět vzor převzat z nativního Blenderu.
+
+
+**Umístění nástroje Pencil Tool ve viewportu Blenderu:**
+![Umístění nástroje Pencil Tool ve viewportu Blenderu](../../assets/blender_ui_viewport_penciltool_annotated.png)
+
+
+**Nástroj Pencil Tool aktivován se svoji nabídkou:**
+![Náhled do aktivního nástroje Pencil Tool](../../assets/blender_ui_viewport_penciltool.png)
+
+**Náhled do nabídky nástroje Pencil Tool aktivní jak v horním rohu viewportu, tak v panelu Active Tool:**
+![](../../assets/blender_ui_penciltool_topleft.png)
+![](../../assets/blender_ui_penciltool_activetool.png)
