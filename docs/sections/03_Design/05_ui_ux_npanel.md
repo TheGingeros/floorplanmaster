@@ -2,6 +2,9 @@
 
 N-panel (Sidebar) ve 3D Viewportu je standardní místem, kam Blender addony umísťují trvalé parametrické rozhraní. Addon přidává záložku s názvem **FloorPlanMaster**, která sdružuje všechny ovládací prvky do jednoho přehledného místa dostupného stiskem `N`. Záložka je rozdělena do tří skládacích sekcí odpovídajících odlišným účelům: spouštění akcí (Nástroje), prohlížení a editace existujících prvků (Místnosti) a konfigurace globálních parametrů scény (Nastavení). Toto členění přejímá vzor z Archipack, kde je panel rovněž rozdělen na sekci operátorů a sekci parametrů vybraného objektu — při výběru prvku se jeho parametry automaticky zobrazí v příslušné části panelu bez nutnosti klikání na tlačítko Properties.
 
+![Lokace N panelu ve viewportu](../../assets/blender_ui_viewport_n_panel_annotated.png)
+![](../../assets/blender_ui_n_panel.png)
+
 ## Sekce Nástroje
 
 Sekce Nástroje obsahuje tlačítka operátorů — akce, které vždy pracují s 3D kurzorem nebo spouštějí modální smyčku, nikoli s výběrem stávajících prvků. Toto odlišení je záměrné: Blender konvencí je, že akce modifikující výběr patří do jiných sekcí nebo kontextové nabídky, zatímco akce vkládající nové prvky jsou dostupné nezávisle na výběru.
