@@ -11,7 +11,7 @@ from gpu_extras.batch import batch_for_shader
 from bpy_extras import view3d_utils
 from mathutils import Vector
 
-from ..core.sync import sync_graph_to_mesh
+from ..core.sync import sync_graph_to_mesh, _compute_wall_quad
 from ..geometry.gn_setup import ensure_gn_modifier
 from ..utils.constants import SNAP_JUNCTION_TOLERANCE
 
@@ -79,6 +79,7 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         self._draw_handler = None
         self._placed_walls = []
         self._placed_junctions = []
+        self._committed_quads = []
 
         # Get or create the FloorPlan object and rebuild graphs from the current
         # mesh so that any previous undo restoring the mesh is the source of truth.
@@ -259,17 +260,9 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         except Exception:
             return
 
-        # Sync L2 + L3.
-        # Note: sync_graph_to_mesh -> _phase1_topology already calls
-        # rg.sync_from_structural_graph() internally, so no need to call it here.
-        sync_graph_to_mesh(self._obj, self._sg, self._rg, id_mapper=self._id_mapper)
-
-        # Re-apply modifier inputs after mesh rebuild so GN dimensions are correct.
-        ensure_gn_modifier(self._obj)
-
-        # No undo_push here — the entire session is committed as one undo step
-        # in _finish() when the user presses ESC.  Use Z inside the tool for
-        # per-wall undo during drawing.
+        # Rebuild GPU wall preview from L1 data — no mesh sync during drawing.
+        # Full sync is deferred to _finish() so Phase 1 runs only once per session.
+        self._rebuild_wall_batch()
 
         # Advance: end junction becomes start of next wall.
         self._start_junction_id = end_id
@@ -298,8 +291,8 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
                 self._sg.remove_junction(end_id)
                 self._placed_junctions.remove(end_id)
 
-        # Sync.
-        sync_graph_to_mesh(self._obj, self._sg, self._rg, id_mapper=self._id_mapper)
+        # Rebuild GPU wall preview.
+        self._rebuild_wall_batch()
 
         if self._placed_walls:
             # Revert start junction to end of previous wall.
@@ -333,10 +326,11 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             rv3d.view_location = self._saved_view_location
             rv3d.view_matrix = self._saved_view_matrix
 
-        # Commit the entire session as a single undo step.  Ctrl+Z after the
-        # tool exits will remove everything drawn in this session at once.
-        # Per-wall undo is available via Z while the tool is active.
+        # Sync the final L1 state to mesh once, then commit the undo step.
+        # All per-click syncs were deferred to this single call.
         if self._placed_walls:
+            sync_graph_to_mesh(self._obj, self._sg, self._rg, id_mapper=self._id_mapper)
+            ensure_gn_modifier(self._obj)
             bpy.ops.ed.undo_push(message="Draw Walls")
 
         context.area.tag_redraw()
@@ -347,6 +341,9 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         rv3d = context.region_data
         if not region or not rv3d:
             return
+
+        # Draw committed walls (filled gray quads) as background layer.
+        self._draw_committed_walls(context, region, rv3d)
 
         # Draw status text.
         self._draw_status_text(context)
@@ -416,6 +413,52 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         batch.draw(shader)
         gpu.state.blend_set('NONE')
         gpu.state.line_width_set(1.0)
+
+    def _rebuild_wall_batch(self):
+        # Recompute 2D wall outline quads from L1 data for the GPU overlay.
+        # Called after each wall add/undo — pure Python, no bpy.
+        walls = self._sg.get_all_walls()
+        junctions_by_id = {j.id: j for j in self._sg.get_all_junctions()}
+        quads = []
+        for w in walls:
+            quad = _compute_wall_quad(w, junctions_by_id, self._sg)
+            if quad:
+                quads.append(quad)
+        self._committed_quads = quads
+
+    def _draw_committed_walls(self, context, region, rv3d):
+        # Draw all committed wall quads as filled gray triangles in screen space.
+        # This gives real-time visual feedback without any mesh sync per click.
+        if not self._committed_quads:
+            return
+
+        tris = []
+        for (p0, p1, p2, p3) in self._committed_quads:
+            pts_2d = []
+            for p in (p0, p1, p2, p3):
+                s = view3d_utils.location_3d_to_region_2d(
+                    region, rv3d, Vector((p[0], p[1], 0.0))
+                )
+                if s is None:
+                    pts_2d = None
+                    break
+                pts_2d.append(s)
+            if pts_2d is None:
+                continue
+            # Split quad into two triangles (0,1,2) and (0,2,3).
+            tris.extend([pts_2d[0], pts_2d[1], pts_2d[2]])
+            tris.extend([pts_2d[0], pts_2d[2], pts_2d[3]])
+
+        if not tris:
+            return
+
+        shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+        gpu.state.blend_set('ALPHA')
+        batch = batch_for_shader(shader, 'TRIS', {"pos": tris})
+        shader.bind()
+        shader.uniform_float("color", (0.55, 0.55, 0.55, 0.8))
+        batch.draw(shader)
+        gpu.state.blend_set('NONE')
 
     def _draw_snap_indicator(self, context, region, rv3d):
         # Yellow circle at snapped junction position.
