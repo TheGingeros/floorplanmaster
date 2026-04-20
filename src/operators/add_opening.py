@@ -283,6 +283,20 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
         # the next invocation for "Repeat Last" functionality).
         self.target_opening_id = ''
 
+        # Reset numeric params to type-specific defaults on every fresh invocation.
+        # Blender's REGISTER flag carries the last-used property values into the
+        # next invocation; without this reset the second opening would inherit
+        # whatever the user edited on the first one via the redo panel.
+        if self.opening_type == 'WINDOW':
+            self.width = DEFAULT_WINDOW_WIDTH
+            self.height = DEFAULT_WINDOW_HEIGHT
+            self.sill_height = DEFAULT_WINDOW_SILL
+        else:
+            self.width = DEFAULT_DOOR_WIDTH
+            self.height = DEFAULT_DOOR_HEIGHT
+            self.sill_height = 0.0
+        self.position = 0.5
+
         # Cache wall dimensions and junction insets for check() clamping.
         obj = find_floorplan_obj(context)
         if obj and wall_uuid:
