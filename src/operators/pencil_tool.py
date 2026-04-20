@@ -20,6 +20,10 @@ from ..utils.constants import SNAP_JUNCTION_TOLERANCE
 WAITING = "WAITING"
 DRAWING = "DRAWING"
 
+# Small outward expansion applied to the GPU preview wall geometry (metres).
+# Prevents z-fighting between the preview triangles and the committed mesh faces.
+_GPU_PREVIEW_EXPAND = 0.02
+
 # Module-level state for the status bar draw function.
 # None = operator not active; WAITING or DRAWING = operator active.
 _pencil_state = None
@@ -76,10 +80,13 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         self._mouse_pos = (0, 0)
         self._cursor_world = Vector((0, 0, 0))
         self._snapped_junction = None
-        self._draw_handler = None
+        self._draw_handler_3d = None
+        self._draw_handler_2d = None
         self._placed_walls = []
         self._placed_junctions = []
-        self._committed_quads = []
+        self._wall_lines_existing = []
+        self._wall_tris_new = []
+        self._junction_positions = []
 
         # Get or create the FloorPlan object and rebuild graphs from the current
         # mesh so that any previous undo restoring the mesh is the source of truth.
@@ -95,9 +102,14 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         # Ensure GN modifier is attached with correct dimensions.
         ensure_gn_modifier(self._obj)
 
-        # Register GPU draw handler for visual feedback.
-        self._draw_handler = bpy.types.SpaceView3D.draw_handler_add(
-            self._draw_callback, (context,), 'WINDOW', 'POST_PIXEL'
+        # Register GPU draw handlers:
+        #   POST_VIEW  — 3D world-space geometry (committed walls, preview line)
+        #   POST_PIXEL — 2D screen-space UI (status text, snap circle)
+        self._draw_handler_3d = bpy.types.SpaceView3D.draw_handler_add(
+            self._draw_3d_callback, (context,), 'WINDOW', 'POST_VIEW'
+        )
+        self._draw_handler_2d = bpy.types.SpaceView3D.draw_handler_add(
+            self._draw_2d_callback, (context,), 'WINDOW', 'POST_PIXEL'
         )
 
         # Save current view so it can be restored when the tool exits.
@@ -311,10 +323,13 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
                 self._state = WAITING
 
     def _finish(self, context):
-        # Remove GPU handler and clean up.
-        if self._draw_handler:
-            bpy.types.SpaceView3D.draw_handler_remove(self._draw_handler, 'WINDOW')
-            self._draw_handler = None
+        # Remove both GPU draw handlers.
+        if self._draw_handler_3d:
+            bpy.types.SpaceView3D.draw_handler_remove(self._draw_handler_3d, 'WINDOW')
+            self._draw_handler_3d = None
+        if self._draw_handler_2d:
+            bpy.types.SpaceView3D.draw_handler_remove(self._draw_handler_2d, 'WINDOW')
+            self._draw_handler_2d = None
         global _pencil_state
         _pencil_state = None
 
@@ -335,26 +350,24 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
 
         context.area.tag_redraw()
 
-    # -- GPU overlay draw callback --
-    def _draw_callback(self, context):
+    # -- GPU overlay draw callbacks --
+
+    def _draw_3d_callback(self, context):
+        # POST_VIEW: called with the viewport matrix active — coords are world space.
+        self._draw_committed_walls_3d()
+        if self._state == DRAWING and self._start_junction_id:
+            self._draw_preview_line_3d(context)
+
+    def _draw_2d_callback(self, context):
+        # POST_PIXEL: 2D screen-space UI elements (junction dots, status text, snap circle).
         region = context.region
         rv3d = context.region_data
         if not region or not rv3d:
             return
-
-        # Draw committed walls (filled gray quads) as background layer.
-        self._draw_committed_walls(context, region, rv3d)
-
-        # Draw status text.
+        self._draw_junctions_2d(context, region, rv3d)
         self._draw_status_text(context)
-
-        # Draw snap indicator.
         if self._snapped_junction:
             self._draw_snap_indicator(context, region, rv3d)
-
-        # Draw preview line from start junction to cursor.
-        if self._state == DRAWING and self._start_junction_id:
-            self._draw_preview_line(context, region, rv3d)
 
     def _update_status_bar(self, context):
         # Update module-level state; the draw function registered at addon
@@ -384,30 +397,18 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
                     blf.position(font_id, 20, 40, 0)
                     blf.draw(font_id, f"FloorPlan Pencil — Length: {length:.2f} m   Angle: {angle:.1f}°")
 
-    def _draw_preview_line(self, context, region, rv3d):
+    def _draw_preview_line_3d(self, context):
+        # Draw the in-progress wall preview as a 3D line in world space.
+        # POST_VIEW context: no location_3d_to_region_2d projection needed.
         start_j = self._sg.get_junction(self._start_junction_id)
         if start_j is None:
             return
-
-        # Convert 3D positions to 2D screen coords.
-        start_3d = Vector((start_j.position[0], start_j.position[1], 0.0))
-        end_3d = self._cursor_world.copy()
-        end_3d.z = 0.0
-
-        start_2d = view3d_utils.location_3d_to_region_2d(region, rv3d, start_3d)
-        end_2d = view3d_utils.location_3d_to_region_2d(region, rv3d, end_3d)
-
-        if start_2d is None or end_2d is None:
-            return
-
-        # Draw line in screen space — blue for preview (design spec).
+        start_3d = (start_j.position[0], start_j.position[1], 0.0)
+        end_3d = (self._cursor_world.x, self._cursor_world.y, 0.0)
         shader = gpu.shader.from_builtin('UNIFORM_COLOR')
         gpu.state.line_width_set(2.0)
         gpu.state.blend_set('ALPHA')
-        batch = batch_for_shader(
-            shader, 'LINES',
-            {"pos": [start_2d, end_2d]}
-        )
+        batch = batch_for_shader(shader, 'LINES', {"pos": [start_3d, end_3d]})
         shader.bind()
         shader.uniform_float("color", (0.3, 0.6, 1.0, 0.8))
         batch.draw(shader)
@@ -415,48 +416,108 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         gpu.state.line_width_set(1.0)
 
     def _rebuild_wall_batch(self):
-        # Recompute 2D wall outline quads from L1 data for the GPU overlay.
-        # Called after each wall add/undo — pure Python, no bpy.
+        # Recompute GPU overlay data from L1 — pure Python, no bpy.
+        # Existing walls (already have mesh geometry): black centerlines at Z=0.
+        # New walls (this session, no mesh yet): blue 3D filled tris.
+        # All junctions: yellow dot markers (projected to 2D in POST_PIXEL).
         walls = self._sg.get_all_walls()
         junctions_by_id = {j.id: j for j in self._sg.get_all_junctions()}
-        quads = []
+        new_ids = set(self._placed_walls)
+        lines_existing = []
+        tris_new = []
+        eps = _GPU_PREVIEW_EXPAND
         for w in walls:
-            quad = _compute_wall_quad(w, junctions_by_id, self._sg)
-            if quad:
-                quads.append(quad)
-        self._committed_quads = quads
-
-    def _draw_committed_walls(self, context, region, rv3d):
-        # Draw all committed wall quads as filled gray triangles in screen space.
-        # This gives real-time visual feedback without any mesh sync per click.
-        if not self._committed_quads:
-            return
-
-        tris = []
-        for (p0, p1, p2, p3) in self._committed_quads:
-            pts_2d = []
-            for p in (p0, p1, p2, p3):
-                s = view3d_utils.location_3d_to_region_2d(
-                    region, rv3d, Vector((p[0], p[1], 0.0))
-                )
-                if s is None:
-                    pts_2d = None
-                    break
-                pts_2d.append(s)
-            if pts_2d is None:
+            js = junctions_by_id.get(w.junction_start)
+            je = junctions_by_id.get(w.junction_end)
+            if js is None or je is None:
                 continue
-            # Split quad into two triangles (0,1,2) and (0,2,3).
-            tris.extend([pts_2d[0], pts_2d[1], pts_2d[2]])
-            tris.extend([pts_2d[0], pts_2d[2], pts_2d[3]])
+            if w.id not in new_ids:
+                # Centerline only — two endpoints at Z=0.
+                lines_existing += [
+                    (js.position[0], js.position[1], 0.0),
+                    (je.position[0], je.position[1], 0.0),
+                ]
+            else:
+                # Full 3D box preview for newly drawn walls.
+                quad = _compute_wall_quad(w, junctions_by_id, self._sg)
+                if not quad:
+                    continue
+                p0, p1, p2, p3 = quad
+                h = w.height
+                cx = (p0[0] + p1[0] + p2[0] + p3[0]) * 0.25
+                cy = (p0[1] + p1[1] + p2[1] + p3[1]) * 0.25
+                def _exp(p, _cx=cx, _cy=cy):
+                    dx, dy = p[0] - _cx, p[1] - _cy
+                    dist = (dx * dx + dy * dy) ** 0.5 or 1e-9
+                    return (p[0] + dx / dist * eps, p[1] + dy / dist * eps)
+                corners = [_exp(p) for p in (p0, p1, p2, p3)]
+                b = [(c[0], c[1], -eps) for c in corners]
+                t = [(c[0], c[1], h + eps) for c in corners]
+                tris_new += [t[0], t[1], t[2], t[0], t[2], t[3]]
+                for i in range(4):
+                    j = (i + 1) % 4
+                    tris_new += [b[i], b[j], t[j], b[i], t[j], t[i]]
+        self._wall_lines_existing = lines_existing
+        self._wall_tris_new = tris_new
+        self._junction_positions = [j.position for j in junctions_by_id.values()]
 
+    def _draw_committed_walls_3d(self):
+        # Draw GPU overlay geometry in POST_VIEW (world space).
+        # Existing walls: thin black centerlines, depth_test disabled so they
+        # are always visible through the committed mesh geometry.
+        # New walls: blue semi-transparent 3D boxes (no mesh yet).
+        if not self._wall_lines_existing and not self._wall_tris_new:
+            return
+        shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+        shader.bind()
+        if self._wall_lines_existing:
+            gpu.state.depth_test_set('NONE')
+            gpu.state.line_width_set(1.5)
+            batch = batch_for_shader(shader, 'LINES', {"pos": self._wall_lines_existing})
+            shader.uniform_float("color", (0.0, 0.0, 0.0, 1.0))
+            batch.draw(shader)
+            gpu.state.line_width_set(1.0)
+        if self._wall_tris_new:
+            gpu.state.blend_set('ALPHA')
+            gpu.state.depth_test_set('LESS_EQUAL')
+            gpu.state.face_culling_set('NONE')
+            batch = batch_for_shader(shader, 'TRIS', {"pos": self._wall_tris_new})
+            shader.uniform_float("color", (0.25, 0.50, 0.90, 0.75))
+            batch.draw(shader)
+            gpu.state.face_culling_set('NONE')
+            gpu.state.depth_test_set('NONE')
+            gpu.state.blend_set('NONE')
+
+    def _draw_junctions_2d(self, context, region, rv3d):
+        # Draw all junctions as small filled yellow circles in screen space.
+        if not self._junction_positions:
+            return
+        import math
+        segments = 16
+        radius = 5.0  # pixels
+        tris = []
+        for pos in self._junction_positions:
+            p2d = view3d_utils.location_3d_to_region_2d(
+                region, rv3d, Vector((pos[0], pos[1], 0.0))
+            )
+            if p2d is None:
+                continue
+            cx, cy = p2d
+            for i in range(segments):
+                a1 = 2 * math.pi * i / segments
+                a2 = 2 * math.pi * (i + 1) / segments
+                tris += [
+                    (cx, cy),
+                    (cx + radius * math.cos(a1), cy + radius * math.sin(a1)),
+                    (cx + radius * math.cos(a2), cy + radius * math.sin(a2)),
+                ]
         if not tris:
             return
-
         shader = gpu.shader.from_builtin('UNIFORM_COLOR')
         gpu.state.blend_set('ALPHA')
         batch = batch_for_shader(shader, 'TRIS', {"pos": tris})
         shader.bind()
-        shader.uniform_float("color", (0.55, 0.55, 0.55, 0.8))
+        shader.uniform_float("color", (1.0, 0.85, 0.1, 1.0))
         batch.draw(shader)
         gpu.state.blend_set('NONE')
 
