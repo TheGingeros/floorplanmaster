@@ -99,7 +99,7 @@ if _HAS_BPY:
     import math
     from gpu_extras.batch import batch_for_shader
     from mathutils import Vector
-    from bpy.props import CollectionProperty, EnumProperty, FloatProperty, StringProperty, PointerProperty
+    from bpy.props import BoolProperty, CollectionProperty, EnumProperty, FloatProperty, StringProperty, PointerProperty
     from .core.sync import sync_graph_to_mesh
 
     # Update callback guard — prevents recursive sync when the select operator
@@ -344,6 +344,7 @@ if _HAS_BPY:
         # Per-opening editable item in the N-panel opening list.
         # Mirrors Opening dataclass fields with identical validation via update callbacks.
         opening_id: StringProperty(options={'HIDDEN'})
+        expanded: BoolProperty(default=False)
         opening_type: EnumProperty(
             name="Type",
             items=[
@@ -436,6 +437,10 @@ if _HAS_BPY:
         opening_items: CollectionProperty(
             name="Opening Items",
             type=OpeningItem,
+        )
+        openings_expanded: BoolProperty(
+            name="Openings",
+            default=False,
         )
 
     def populate_opening_items(settings, sg, wall_uuid):

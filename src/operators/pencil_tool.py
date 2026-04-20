@@ -192,8 +192,16 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         # In WAITING: pass through so context menus still work.
         if event.type == 'RIGHTMOUSE' and event.value == 'PRESS':
             if self._state == DRAWING:
+                # Remove isolated start junction if we created it this session
+                # and no wall connects to it (e.g. first click then immediate RMB).
+                if (self._start_junction_id
+                        and self._start_junction_id in self._placed_junctions
+                        and not self._sg.get_walls_for_junction(self._start_junction_id)):
+                    self._sg.remove_junction(self._start_junction_id)
+                    self._placed_junctions.remove(self._start_junction_id)
                 self._state = WAITING
                 self._start_junction_id = None
+                self._rebuild_wall_batch()
                 self._update_status_bar(context)
                 return {'RUNNING_MODAL'}
             return {'PASS_THROUGH'}
