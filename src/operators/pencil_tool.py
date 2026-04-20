@@ -86,6 +86,7 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         self._placed_junctions = []
         self._wall_lines_existing = []
         self._wall_tris_new = []
+        self._floor_tris_new = []
         self._junction_positions = []
 
         # Get or create the FloorPlan object and rebuild graphs from the current
@@ -355,6 +356,8 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
     def _draw_3d_callback(self, context):
         # POST_VIEW: called with the viewport matrix active — coords are world space.
         self._draw_committed_walls_3d()
+        if self._floor_tris_new:
+            self._draw_new_floors_3d()
         if self._state == DRAWING and self._start_junction_id:
             self._draw_preview_line_3d(context)
 
@@ -460,6 +463,97 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         self._wall_lines_existing = lines_existing
         self._wall_tris_new = tris_new
         self._junction_positions = [j.position for j in junctions_by_id.values()]
+        self._floor_tris_new = self._detect_new_floors(junctions_by_id, new_ids)
+
+    def _detect_new_floors(self, junctions_by_id, new_ids):
+        # Build a temporary StructuralGraph from ALL walls (new + existing),
+        # detect minimal cycles, and keep only those that contain at least one
+        # new wall — these are rooms that would not exist without this session.
+        # Runs entirely in pure Python — no bpy calls.
+        if not new_ids:
+            return []
+        from ..core.structural_graph import StructuralGraph
+        tmp = StructuralGraph()
+        all_walls = self._sg.get_all_walls()
+        needed_ids = set()
+        for w in all_walls:
+            needed_ids.add(w.junction_start)
+            needed_ids.add(w.junction_end)
+        for jid in needed_ids:
+            j = junctions_by_id.get(jid)
+            if j is None:
+                continue
+            try:
+                tmp.add_junction(j.position, junction_id=jid)
+            except Exception:
+                pass
+        for w in all_walls:
+            try:
+                tmp.add_wall(w.junction_start, w.junction_end,
+                             thickness=w.thickness, height=w.height)
+            except Exception:
+                pass
+        cycles = tmp.detect_minimal_cycles()
+        if not cycles:
+            return []
+        # Build edge set of new walls for fast membership test.
+        new_wall_edges = set()
+        for wid in new_ids:
+            w = self._sg.get_wall(wid)
+            if w:
+                new_wall_edges.add((w.junction_start, w.junction_end))
+                new_wall_edges.add((w.junction_end, w.junction_start))
+        floor_tris = []
+        z_floor = 0.001
+        for cycle in cycles:
+            # Skip cycles that contain no new wall edge.
+            has_new = any(
+                (cycle[i], cycle[(i + 1) % len(cycle)]) in new_wall_edges
+                for i in range(len(cycle))
+            )
+            if not has_new:
+                continue
+            pts = [junctions_by_id[jid].position
+                   for jid in cycle if jid in junctions_by_id]
+            if len(pts) < 3:
+                continue
+            cx = sum(p[0] for p in pts) / len(pts)
+            cy = sum(p[1] for p in pts) / len(pts)
+            center = (cx, cy, z_floor)
+            for i in range(len(pts)):
+                nxt = (i + 1) % len(pts)
+                floor_tris += [
+                    center,
+                    (pts[i][0], pts[i][1], z_floor),
+                    (pts[nxt][0], pts[nxt][1], z_floor),
+                ]
+        return floor_tris
+        # Draw detected room floors for new walls as semi-transparent blue.
+        shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+        gpu.state.blend_set('ALPHA')
+        gpu.state.depth_test_set('LESS_EQUAL')
+        gpu.state.face_culling_set('NONE')
+        batch = batch_for_shader(shader, 'TRIS', {"pos": self._floor_tris_new})
+        shader.bind()
+        shader.uniform_float("color", (0.20, 0.45, 0.85, 0.30))
+        batch.draw(shader)
+        gpu.state.face_culling_set('NONE')
+        gpu.state.depth_test_set('NONE')
+        gpu.state.blend_set('NONE')
+
+    def _draw_new_floors_3d(self):
+        # Draw detected room floors for new walls as semi-transparent blue.
+        shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+        gpu.state.blend_set('ALPHA')
+        gpu.state.depth_test_set('LESS_EQUAL')
+        gpu.state.face_culling_set('NONE')
+        batch = batch_for_shader(shader, 'TRIS', {"pos": self._floor_tris_new})
+        shader.bind()
+        shader.uniform_float("color", (0.20, 0.45, 0.85, 0.30))
+        batch.draw(shader)
+        gpu.state.face_culling_set('NONE')
+        gpu.state.depth_test_set('NONE')
+        gpu.state.blend_set('NONE')
 
     def _draw_committed_walls_3d(self):
         # Draw GPU overlay geometry in POST_VIEW (world space).
