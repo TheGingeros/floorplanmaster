@@ -86,6 +86,198 @@ def _draw_room_highlight():
     gpu.state.blend_set('NONE')
 
 
+# Dimension overlay ---------------------------------------------------------
+
+_dimension_draw_handle = None
+_gizmo_draw_handle = None
+
+# Static floor plan: list of (start_xyz, end_xyz) wall segments.
+# Layout (metres, Z=0 plane):
+#   Living Room: (0,0)-(6,5)   30 m²
+#   Kitchen:     (6,0)-(10,5)  20 m²
+#   Bedroom:     (0,5)-(6,9)   24 m²
+_DEMO_WALLS = [
+    ((0, 0, 0),  (6, 0, 0)),   # outer bottom-left   6.0 m
+    ((6, 0, 0),  (10, 0, 0)),  # outer bottom-right  4.0 m
+    ((10, 0, 0), (10, 5, 0)),  # outer right          5.0 m
+    ((10, 5, 0), (6, 5, 0)),   # top kitchen          4.0 m
+    ((6, 5, 0),  (6, 9, 0)),   # outer right bedroom  4.0 m
+    ((6, 9, 0),  (0, 9, 0)),   # top bedroom          6.0 m
+    ((0, 9, 0),  (0, 0, 0)),   # outer left           9.0 m
+    ((6, 0, 0),  (6, 5, 0)),   # interior LR/Kitchen  5.0 m
+    ((0, 5, 0),  (6, 5, 0)),   # interior LR/Bedroom  6.0 m
+]
+
+_DEMO_ROOMS = [
+    {"name": "Living Room", "area": 30.0, "cx": 3.0, "cy": 2.5},
+    {"name": "Kitchen",     "area": 20.0, "cx": 8.0, "cy": 2.5},
+    {"name": "Bedroom",     "area": 24.0, "cx": 3.0, "cy": 7.0},
+]
+
+
+def _format_length(meters, unit):
+    if unit == 'CM': return f"{meters * 100:.1f} cm"
+    if unit == 'MM': return f"{meters * 1000:.0f} mm"
+    if unit == 'FT': return f"{meters * 3.28084:.2f} ft"
+    if unit == 'IN': return f"{meters * 39.3701:.1f}\""
+    return f"{meters:.2f} m"
+
+
+def _create_demo_mesh():
+    """Create a static wireframe floor plan mesh in the scene (runs from timer)."""
+    name = "FloorPlan_Demo"
+    if name in bpy.data.objects:
+        return
+
+    verts_dict = {}
+    verts_list = []
+    edges_list = []
+
+    def _vidx(co):
+        key = (round(co[0], 4), round(co[1], 4), round(co[2], 4))
+        if key not in verts_dict:
+            verts_dict[key] = len(verts_list)
+            verts_list.append(co)
+        return verts_dict[key]
+
+    for (a, b) in _DEMO_WALLS:
+        edges_list.append((_vidx(a), _vidx(b)))
+
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata(verts_list, edges_list, [])
+    mesh.update()
+
+    obj = bpy.data.objects.new(name, mesh)
+    obj.display_type = 'WIRE'
+    for scene in bpy.data.scenes:
+        scene.collection.objects.link(obj)
+
+
+def _draw_dimensions():
+    """POST_PIXEL handler: draw wall lengths and room labels on the Z=0 floor plan."""
+    context = bpy.context
+    if not context or not getattr(context, 'scene', None):
+        return
+    settings = getattr(context.scene, 'mockup_fp', None)
+    if settings is None or not settings.show_dimensions:
+        return
+
+    # Only draw inside the 3-D viewport window
+    space = getattr(context, 'space_data', None)
+    if space is None or space.type != 'VIEW_3D':
+        return
+    rv3d = getattr(context, 'region_data', None)
+    region = getattr(context, 'region', None)
+    if rv3d is None or region is None:
+        return
+
+    from bpy_extras.view3d_utils import location_3d_to_region_2d
+    from mathutils import Vector
+
+    unit = settings.display_unit
+    font_id = 0
+
+    # Wall lengths — small blue text at edge midpoint
+    blf.size(font_id, 12)
+    blf.color(font_id, 0.25, 0.65, 1.0, 1.0)
+    for (a, b) in _DEMO_WALLS:
+        va, vb = Vector(a), Vector(b)
+        mid = (va + vb) * 0.5
+        pt2d = location_3d_to_region_2d(region, rv3d, mid)
+        if pt2d is None:
+            continue
+        label = _format_length((vb - va).length, unit)
+        w, _ = blf.dimensions(font_id, label)
+        blf.position(font_id, pt2d.x - w * 0.5, pt2d.y + 6, 0)
+        blf.draw(font_id, label)
+
+    # Room name + area — centred at room centroid
+    blf.size(font_id, 14)
+    for room in _DEMO_ROOMS:
+        pt2d = location_3d_to_region_2d(region, rv3d, Vector((room["cx"], room["cy"], 0.0)))
+        if pt2d is None:
+            continue
+        name_label = room["name"]
+        area_label = f"{room['area']:.1f} m\u00b2"
+
+        blf.color(font_id, 0.95, 0.95, 0.95, 0.95)
+        w, h = blf.dimensions(font_id, name_label)
+        blf.position(font_id, pt2d.x - w * 0.5, pt2d.y + 4, 0)
+        blf.draw(font_id, name_label)
+
+        blf.color(font_id, 0.65, 0.90, 0.65, 0.90)
+        w2, h2 = blf.dimensions(font_id, area_label)
+        blf.position(font_id, pt2d.x - w2 * 0.5, pt2d.y - h2 - 4, 0)
+        blf.draw(font_id, area_label)
+
+
+def _draw_gizmos():
+    """POST_VIEW handler: static gizmo mockup on the bottom wall (0,0)-(6,0)."""
+    context = bpy.context
+    if not context or not getattr(context, 'scene', None):
+        return
+    settings = getattr(context.scene, 'mockup_fp', None)
+    if settings is None or not settings.show_gizmos:
+        return
+    space = getattr(context, 'space_data', None)
+    if space is None or space.type != 'VIEW_3D':
+        return
+
+    import gpu
+    import math as _math
+    from gpu_extras.batch import batch_for_shader
+    from mathutils import Vector
+
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    gpu.state.blend_set('ALPHA')
+    gpu.state.depth_test_set('NONE')
+
+    def _arrow(origin, direction, length, color, lw=2.5):
+        """Draw a line + filled arrowhead triangle."""
+        tip = origin + direction * length
+        neck = origin + direction * (length * 0.72)
+        up = Vector((0, 0, 1))
+        perp = direction.cross(up)
+        if perp.length < 1e-4:
+            perp = Vector((1, 0, 0))
+        else:
+            perp.normalize()
+        hw = length * 0.10
+        shader.bind()
+        shader.uniform_float("color", color)
+        gpu.state.line_width_set(lw)
+        batch_for_shader(shader, 'LINES', {"pos": [origin, neck]}).draw(shader)
+        gpu.state.line_width_set(1.0)
+        batch_for_shader(shader, 'TRIS', {"pos": [
+            tip, neck + perp * hw, neck - perp * hw,
+        ]}).draw(shader)
+
+    mid = Vector((3.0, 0.0, 0.0))
+
+    # Thickness gizmo (cyan, Y-axis perpendicular to wall)
+    _arrow(mid, Vector((0, 1, 0)),  0.70, (0.35, 0.80, 1.0, 1.0))
+    _arrow(mid, Vector((0, -1, 0)), 0.70, (0.35, 0.80, 1.0, 1.0))
+
+    # Height gizmo (green, Z-axis)
+    _arrow(mid, Vector((0, 0, 1)), 0.90, (0.25, 0.95, 0.35, 1.0))
+
+    # Junction move gizmo — circle at junction (6, 0, 0)
+    jct = Vector((6.0, 0.0, 0.0))
+    r, n = 0.28, 32
+    pts = [Vector((jct.x + r * _math.cos(2 * _math.pi * i / n),
+                   jct.y + r * _math.sin(2 * _math.pi * i / n), 0.0))
+           for i in range(n)]
+    lines = [v for i in range(n) for v in (pts[i], pts[(i + 1) % n])]
+    shader.bind()
+    shader.uniform_float("color", (1.0, 0.85, 0.15, 1.0))
+    gpu.state.line_width_set(3.0)
+    batch_for_shader(shader, 'LINES', {"pos": lines}).draw(shader)
+
+    gpu.state.line_width_set(1.0)
+    gpu.state.blend_set('NONE')
+    gpu.state.depth_test_set('LESS_EQUAL')
+
+
 def _cursor_timer():
     # Runs every 50 ms; sets the cursor to a pencil when the pencil tool is active.
     try:
@@ -460,8 +652,8 @@ def _populate_mockup_data():
         if len(settings.rooms) == 0:
             r1 = settings.rooms.add()
             r1.room_name = "Living Room"
-            r1.area = 28.50
-            r1.perimeter = 21.40
+            r1.area = 30.0
+            r1.perimeter = 22.0
             r1.height = 2.8
             r1.wall_count = 4
             r1.mock_cx, r1.mock_cy = 3.0, 2.5
@@ -469,21 +661,21 @@ def _populate_mockup_data():
 
             r2 = settings.rooms.add()
             r2.room_name = "Kitchen"
-            r2.area = 14.20
-            r2.perimeter = 15.60
+            r2.area = 20.0
+            r2.perimeter = 18.0
             r2.height = 2.5
             r2.wall_count = 4
-            r2.mock_cx, r2.mock_cy = 8.5, 2.0
-            r2.mock_hw, r2.mock_hd = 2.0, 1.75
+            r2.mock_cx, r2.mock_cy = 8.0, 2.5
+            r2.mock_hw, r2.mock_hd = 2.0, 2.5
 
             r3 = settings.rooms.add()
             r3.room_name = "Bedroom"
-            r3.area = 18.75
-            r3.perimeter = 17.80
+            r3.area = 24.0
+            r3.perimeter = 20.0
             r3.height = 2.6
-            r3.wall_count = 5
-            r3.mock_cx, r3.mock_cy = 3.0, 7.5
-            r3.mock_hw, r3.mock_hd = 2.5, 2.5
+            r3.wall_count = 4
+            r3.mock_cx, r3.mock_cy = 3.0, 7.0
+            r3.mock_hw, r3.mock_hd = 3.0, 2.0
 
         if len(settings.openings) == 0:
             o1 = settings.openings.add()
@@ -501,8 +693,10 @@ def _populate_mockup_data():
             o2.height = 1.0
             o2.sill_height = 0.9
             o2.position = 0.35
+    _create_demo_mesh()
     return None  # timer: do not reschedule
-    
+
+
 @bpy.app.handlers.persistent
 def _load_post_handler(dummy):
     _populate_mockup_data()
@@ -563,6 +757,18 @@ def register():
         _draw_room_highlight, (), 'WINDOW', 'POST_PIXEL'
     )
 
+    # Register dimension overlay handler
+    global _dimension_draw_handle
+    _dimension_draw_handle = bpy.types.SpaceView3D.draw_handler_add(
+        _draw_dimensions, (), 'WINDOW', 'POST_PIXEL'
+    )
+
+    # Register gizmo mockup handler
+    global _gizmo_draw_handle
+    _gizmo_draw_handle = bpy.types.SpaceView3D.draw_handler_add(
+        _draw_gizmos, (), 'WINDOW', 'POST_VIEW'
+    )
+
     # Register status bar hints
     bpy.types.STATUSBAR_HT_header.prepend(_draw_status_bar)
 
@@ -590,6 +796,16 @@ def unregister():
     if _room_highlight_handle is not None:
         bpy.types.SpaceView3D.draw_handler_remove(_room_highlight_handle, 'WINDOW')
         _room_highlight_handle = None
+
+    global _dimension_draw_handle
+    if _dimension_draw_handle is not None:
+        bpy.types.SpaceView3D.draw_handler_remove(_dimension_draw_handle, 'WINDOW')
+        _dimension_draw_handle = None
+
+    global _gizmo_draw_handle
+    if _gizmo_draw_handle is not None:
+        bpy.types.SpaceView3D.draw_handler_remove(_gizmo_draw_handle, 'WINDOW')
+        _gizmo_draw_handle = None
 
     # Unregister D shortcut
     wm = bpy.context.window_manager
