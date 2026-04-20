@@ -23,6 +23,67 @@ from bpy.props import (
 
 # Persistent HUD draw handler reference
 _hud_draw_handle = None
+_room_highlight_handle = None
+
+
+def _draw_room_highlight():
+    import math as _math
+    context = bpy.context
+    if not context or not getattr(context, 'scene', None):
+        return
+    settings = getattr(context.scene, 'mockup_fp', None)
+    if settings is None or settings.selected_room_index < 0:
+        return
+    idx = settings.selected_room_index
+    if idx >= len(settings.rooms):
+        return
+    room = settings.rooms[idx]
+
+    rv3d = getattr(context, 'region_data', None)
+    region = getattr(context, 'region', None)
+    if rv3d is None or region is None:
+        return
+
+    from bpy_extras.view3d_utils import location_3d_to_region_2d
+    from mathutils import Vector
+
+    cx, cy = room.mock_cx, room.mock_cy
+    hw, hd = room.mock_hw, room.mock_hd
+    corners_3d = [
+        Vector((cx - hw, cy - hd, 0.0)),
+        Vector((cx + hw, cy - hd, 0.0)),
+        Vector((cx + hw, cy + hd, 0.0)),
+        Vector((cx - hw, cy + hd, 0.0)),
+    ]
+    corners_2d = [location_3d_to_region_2d(region, rv3d, v) for v in corners_3d]
+    if any(c is None for c in corners_2d):
+        return
+
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+
+    tris = [
+        corners_2d[0], corners_2d[1], corners_2d[2],
+        corners_2d[0], corners_2d[2], corners_2d[3],
+    ]
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    gpu.state.blend_set('ALPHA')
+    batch = batch_for_shader(shader, 'TRIS', {"pos": [(v.x, v.y) for v in tris]})
+    shader.bind()
+    shader.uniform_float("color", (1.0, 0.55, 0.1, 0.18))
+    batch.draw(shader)
+
+    # Outline
+    loop = corners_2d + [corners_2d[0]]
+    lines = []
+    for i in range(len(loop) - 1):
+        lines += [(loop[i].x, loop[i].y), (loop[i+1].x, loop[i+1].y)]
+    gpu.state.line_width_set(2.0)
+    batch_lines = batch_for_shader(shader, 'LINES', {"pos": lines})
+    shader.uniform_float("color", (1.0, 0.55, 0.1, 0.85))
+    batch_lines.draw(shader)
+    gpu.state.line_width_set(1.0)
+    gpu.state.blend_set('NONE')
 
 
 def _cursor_timer():
@@ -84,6 +145,11 @@ class MockupRoom(bpy.types.PropertyGroup):
         name="Height", default=2.5, min=1.0, max=10.0, precision=2, unit='LENGTH',
     )
     wall_count: IntProperty(name="Walls", default=0)
+    # Mockup viewport rectangle (center + half-extents in world metres, Z=0 plane)
+    mock_cx: FloatProperty(default=0.0)
+    mock_cy: FloatProperty(default=0.0)
+    mock_hw: FloatProperty(default=2.0)  # half-width
+    mock_hd: FloatProperty(default=2.0)  # half-depth
 
 
 # PropertyGroup: single opening item
@@ -128,6 +194,20 @@ class MockupFloorPlanSettings(bpy.types.PropertyGroup):
         default=2.5, min=1.0, max=10.0, precision=2, unit='LENGTH',
     )
 
+    # Display unit for dimensions and labels
+    display_unit: EnumProperty(
+        name="Units",
+        description="Unit system used for displaying dimensions",
+        items=[
+            ('M',  "Meters (m)",      "Display measurements in metres"),
+            ('CM', "Centimeters (cm)", "Display measurements in centimetres"),
+            ('MM', "Millimeters (mm)", "Display measurements in millimetres"),
+            ('FT', "Feet (ft)",        "Display measurements in feet"),
+            ('IN', "Inches (in)",      "Display measurements in inches"),
+        ],
+        default='M',
+    )
+
     # Wall draw mode (tool header)
     wall_draw_mode: EnumProperty(
         name="Alignment",
@@ -154,10 +234,28 @@ class MockupFloorPlanSettings(bpy.types.PropertyGroup):
 
     # Room collection (populated at register time)
     rooms: CollectionProperty(type=MockupRoom)
+    selected_room_index: IntProperty(default=-1)
 
     # Opening collection for the active wall
     openings: CollectionProperty(type=MockupOpening)
     openings_expanded: BoolProperty(name="Openings", default=False)
+
+    # Finalize popover options
+    finalize_organize: BoolProperty(
+        name="Organize Objects in Scene",
+        description="Group generated objects into a collection",
+        default=True,
+    )
+    finalize_materials: BoolProperty(
+        name="Assign Materials",
+        description="Automatically assign basic materials to walls and floors",
+        default=True,
+    )
+    finalize_keep_original: BoolProperty(
+        name="Preserve Original",
+        description="Keep the original floor plan object alongside the finalized mesh",
+        default=False,
+    )
 
     # Overlay settings
     show_dimensions: BoolProperty(
@@ -188,6 +286,25 @@ class MockupFloorPlanSettings(bpy.types.PropertyGroup):
 
 
 # Placebo operators
+
+class MOCKUP_OT_toggle_room(bpy.types.Operator):
+    bl_idname = "mockup_fp.toggle_room"
+    bl_label = ""
+    bl_description = "Select room and toggle detail"
+    bl_options = {'INTERNAL'}
+
+    index: IntProperty(default=0)
+
+    def execute(self, context):
+        settings = context.scene.mockup_fp
+        settings.selected_room_index = self.index
+        room = settings.rooms[self.index]
+        room.expanded = not room.expanded
+        for area in context.screen.areas:
+            if area.type == 'VIEW_3D':
+                area.tag_redraw()
+        return {'FINISHED'}
+
 
 class MOCKUP_OT_pencil_tool(bpy.types.Operator):
     bl_idname = "mockup_fp.pencil_tool_op"
@@ -253,6 +370,40 @@ class MOCKUP_OT_remove_room(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class MOCKUP_OT_finalize(bpy.types.Operator):
+    bl_idname = "mockup_fp.finalize"
+    bl_label = "Bake"
+    bl_description = "Finalize floor plan — bake to mesh (mockup)"
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_popup(self, width=280)
+
+    def draw(self, context):
+        settings = context.scene.mockup_fp
+        layout = self.layout
+        layout.label(text="Output Options", icon='SETTINGS')
+        layout.separator()
+        col = layout.column(align=True)
+        col.prop(settings, "finalize_organize")
+        col.prop(settings, "finalize_materials")
+        col.prop(settings, "finalize_keep_original")
+        layout.separator()
+        layout.operator("mockup_fp.finalize_run", text="Run Bake", icon='RENDER_RESULT')
+
+    def execute(self, context):
+        return {'FINISHED'}
+
+
+class MOCKUP_OT_finalize_run(bpy.types.Operator):
+    bl_idname = "mockup_fp.finalize_run"
+    bl_label = "Run Bake"
+    bl_description = "Run the finalization pipeline (mockup)"
+
+    def execute(self, context):
+        self.report({'INFO'}, "MockUp: Bake (no functionality)")
+        return {'FINISHED'}
+
+
 class MOCKUP_OT_deselect_wall(bpy.types.Operator):
     bl_idname = "mockup_fp.deselect_wall"
     bl_label = "Deselect Wall"
@@ -313,6 +464,8 @@ def _populate_mockup_data():
             r1.perimeter = 21.40
             r1.height = 2.8
             r1.wall_count = 4
+            r1.mock_cx, r1.mock_cy = 3.0, 2.5
+            r1.mock_hw, r1.mock_hd = 3.0, 2.5
 
             r2 = settings.rooms.add()
             r2.room_name = "Kitchen"
@@ -320,6 +473,8 @@ def _populate_mockup_data():
             r2.perimeter = 15.60
             r2.height = 2.5
             r2.wall_count = 4
+            r2.mock_cx, r2.mock_cy = 8.5, 2.0
+            r2.mock_hw, r2.mock_hd = 2.0, 1.75
 
             r3 = settings.rooms.add()
             r3.room_name = "Bedroom"
@@ -327,6 +482,8 @@ def _populate_mockup_data():
             r3.perimeter = 17.80
             r3.height = 2.6
             r3.wall_count = 5
+            r3.mock_cx, r3.mock_cy = 3.0, 7.5
+            r3.mock_hw, r3.mock_hd = 2.5, 2.5
 
         if len(settings.openings) == 0:
             o1 = settings.openings.add()
@@ -360,11 +517,14 @@ _prop_classes = [
 ]
 
 _operator_classes = [
+    MOCKUP_OT_toggle_room,
     MOCKUP_OT_pencil_tool,
     MOCKUP_OT_insert_room,
     MOCKUP_OT_add_opening,
     MOCKUP_OT_remove_opening,
     MOCKUP_OT_remove_room,
+    MOCKUP_OT_finalize,
+    MOCKUP_OT_finalize_run,
     MOCKUP_OT_deselect_wall,
 ]
 
@@ -397,6 +557,12 @@ def register():
         _draw_hud, (), 'WINDOW', 'POST_PIXEL'
     )
 
+    # Register room selection highlight handler
+    global _room_highlight_handle
+    _room_highlight_handle = bpy.types.SpaceView3D.draw_handler_add(
+        _draw_room_highlight, (), 'WINDOW', 'POST_PIXEL'
+    )
+
     # Register status bar hints
     bpy.types.STATUSBAR_HT_header.prepend(_draw_status_bar)
 
@@ -419,6 +585,11 @@ def unregister():
     if _hud_draw_handle is not None:
         bpy.types.SpaceView3D.draw_handler_remove(_hud_draw_handle, 'WINDOW')
         _hud_draw_handle = None
+
+    global _room_highlight_handle
+    if _room_highlight_handle is not None:
+        bpy.types.SpaceView3D.draw_handler_remove(_room_highlight_handle, 'WINDOW')
+        _room_highlight_handle = None
 
     # Unregister D shortcut
     wm = bpy.context.window_manager

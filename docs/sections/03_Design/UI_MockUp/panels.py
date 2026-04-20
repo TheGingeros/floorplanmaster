@@ -112,6 +112,8 @@ class MOCKUP_PT_tools(bpy.types.Panel):
         layout.operator("mockup_fp.pencil_tool_op", text="Draw with Pencil", icon='GREASEPENCIL')
         layout.separator()
         layout.operator("mockup_fp.insert_room", text="Insert Room", icon='MESH_PLANE')
+        layout.separator()
+        layout.operator("mockup_fp.finalize", text="Bake", icon='RENDER_RESULT')
 
 
 # Sub-panel: Rooms
@@ -123,6 +125,9 @@ class MOCKUP_PT_rooms(bpy.types.Panel):
     bl_region_type = 'UI'
     bl_category = "FloorPlanMaster"
     bl_parent_id = "MOCKUP_PT_main"
+
+    def draw_header(self, context):
+        self.layout.label(text="", icon='HOME')
 
     def draw(self, context):
         layout = self.layout
@@ -136,14 +141,15 @@ class MOCKUP_PT_rooms(bpy.types.Panel):
         for idx, room in enumerate(settings.rooms):
             box = layout.box()
 
-            # Header row: expand toggle + editable name + X remove button
+            # Header row: expand+select toggle + editable name + X remove button
             header = box.row(align=True)
-            header.prop(
-                room, "expanded",
+            toggle = header.operator(
+                "mockup_fp.toggle_room",
                 icon='TRIA_DOWN' if room.expanded else 'TRIA_RIGHT',
                 text="", emboss=False,
             )
-            header.prop(room, "room_name", text="", icon='HOME')
+            toggle.index = idx
+            header.prop(room, "room_name", text="")
             op = header.operator("mockup_fp.remove_room", text="", icon='X')
             op.index = idx
 
@@ -177,6 +183,8 @@ class MOCKUP_PT_settings(bpy.types.Panel):
         settings = context.scene.mockup_fp
 
         col = layout.column(align=True)
+        col.prop(settings, "display_unit")
+        col.separator()
         col.prop(settings, "default_thickness")
         col.prop(settings, "default_height")
 
@@ -203,6 +211,8 @@ class MOCKUP_PT_overlay(bpy.types.Panel):
         col.prop(settings, "show_wall_highlight", icon='SHADING_BBOX')
         col.prop(settings, "show_gizmos", icon='GIZMO')
 
+
+# Finalize popover
 
 def get_panel_classes():
     return [

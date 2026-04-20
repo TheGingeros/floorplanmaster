@@ -17,6 +17,8 @@ HUD zobrazuje výhradně **měřicí data a indikátor fáze** — nápověda kl
 
 Typografie HUD: výrazný font pro délku a úhel (klíčové hodnoty při kreslení), menší font pro stavovou zprávu fáze. Stavová zpráva přijímá barvu odpovídající konvenci Blender nativních hlášení — bílá pro informace.
 
+![](../../assets/blender_ui_viewport_text.png)
+
 ## Nápověda kláves v dolní liště
 
 Klávesové zkratky platné pro aktuální stav operátoru jsou zobrazeny v **dolní stavové liště Blenderu** (Header oblasti `STATUSBAR`). Toto umístění je standardem Blender nativních nástrojů — Extrude, Knife Tool, Annotate i Loop Cut používají tentýž mechanismus. Nápověda kláves ve viewportu jako GPU text by narušovala architektonický vzor Blenderu a ztěžovala čitelnost scény.
@@ -29,6 +31,8 @@ Technicky je nápověda implementována registrací draw funkce přes `bpy.types
 | **KRESLENÍ** | `LMB` Place next wall · `Z` Undo last wall · `ESC` Cancel line |
 
 Při ukončení operátoru se draw funkce z hlavičky odregistruje a lišta se vrátí do výchozího stavu Blenderu.
+
+![](../../assets/blender_ui_viewport_keyhints.png)
 
 ## Kótovací overlay (FP7)
 

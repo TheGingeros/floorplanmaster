@@ -8,10 +8,12 @@ Sekce Nástroje obsahuje tlačítka operátorů — akce, které vždy pracují 
 
 Sekce obsahuje:
 
-- **Nakreslit tužkou** — alternativa ke klávesové zkratce `D`; aktivuje Pencil Tool (FP1) a přepne kurzor do aktivního stavu; identická akce jako klik na ikonu v Toolbaru
-- **Vložit místnost** — otevře inline formulář přímo v panelu se vstupními poli: šířka, hloubka (nebo volitelně plocha a poměr stran), výška stěn, tloušťka stěn; po potvrzení vloží pravoúhlou místnost se středem v pozici 3D kurzoru (FP2); výhodou oproti klávesové zkratce je, že uživatel vidí výchozí hodnoty a může je přepsat bez nutnosti pamatovat si přesnou klávesovou sekvenci
-- **Finalizovat** — spustí finalizační pipeline (FP4); zobrazí pop-over dialog s volbami výstupu (organizace objektů ve scéně, přiřazení materiálů, zachování originálu)
-- **Přidat otvor** — aktivuje se pouze pokud je vybraná stěna; vloží parametrický otvor (dveře nebo okno) na danou hranu Vrstvy 1 (FP2 — should-have)
+- **Nástroj tužka(Pencil Tool)** — alternativa ke klávesové zkratce `D`; aktivuje Pencil Tool (FP1) a přepne kurzor do aktivního stavu; identická akce jako klik na ikonu v Toolbaru
+- **Vložit místnost(Insert Room)** — vloží pravoúhlou místnost se středem v pozici 3D kurzoru (FP2); výhodou oproti klávesové zkratce je, že uživatel vidí výchozí hodnoty a může je přepsat bez nutnosti pamatovat si přesnou klávesovou sekvenci; možnost upravit parametry místnosti později v rámci redo panelu v levém dolním rohu - nativní konvence Blenderu
+- **Zapéct(Bake)** — spustí finalizační pipeline (FP4); zobrazí pop-over dialog s volbami výstupu (organizace objektů ve scéně, přiřazení materiálů, zachování originálu)
+
+![Náhled to sekce Tools](../../assets/blender_ui_n_panel_tools.png)
+![Pop over dialog operátoru Bake](../../assets/blender_ui_n_panel_tools_bake.png)
 
 ## Sekce Místnosti
 
@@ -27,12 +29,14 @@ Kliknutím na položku v seznamu dojde k:
 3. rozbalení detailního pohledu přímo pod položkou v panelu
 
 **Detailní pohled vybrané místnosti** zobrazuje pod vybranou položkou:
-- editovatelný název místnosti
+- editovatelný název místnosti a její výška(zobrazená výška je zde maximum ze stěn místnosti)
 - obvod místnosti a počet stěn (pouze pro čtení)
-- vnořený seznam stěn místnosti — pro každou stěnu délku a tloušťku; kliknutím na stěnu v tomto seznamu se vybere příslušná hrana ve viewportu a zobrazí se gizmos výšky a tloušťky dané stěny
 
-Oddělení výpisu stěn do vnořeného pohledu pod místností (namísto globálního seznamu stěn) odráží hierarchii datového modelu: stěny mají smysl pouze v kontextu místnosti, globální seznam stěn by pro větší půdorysy byl nepřehledný a porušoval by hierarchii Vrstva 1 → Vrstva 2.
 
+**Sekce místností:**  
+![Sekce místností](../../assets/blender_ui_n_panel_rooms.png)  
+**Detail rozbalené místnosti:**  
+![Detail místnísti](../../assets/blender_ui_n_panel_room_detail.png)
 ## Sekce Nastavení
 
 Sekce Nastavení obsahuje globální parametry scény uložené v `Scene PropertyGroup` (soulad s pravidlem persistence nastavení z kapitoly 3.1). Tyto parametry se aplikují na nově vytvářené prvky; existující prvky se nemodifikují, aby uživatel nepřišel o záměrně nastavené hodnoty.
@@ -44,3 +48,29 @@ Sekce Nastavení obsahuje globální parametry scény uložené v `Scene Propert
 | Výchozí výška stěny | 2,5 m | Přednabídnuto pro nové stěny |
 
 Záměrně jsou do Nastavení zařazeny pouze parametry ovlivňující chování celého projektu, nikoliv parametry jednotlivých prvků — ty patří do detailního pohledu místnosti nebo jsou dostupné přes gizmos.
+
+![](../../assets/blender_ui_n_panel_settings.png)
+
+## Sekce aktuálně zvolené stěny
+
+Tato sekce je oddělena od zbytku N panelu a nachází se na samotném vršku. Specifikace této sekce je, že se zobrazuje pouze pokud je uživatelem stěna zvolena v rámci scény. Tato sekce je při této akci automaticky otevřena a nabízí uživateli pohled na detail aktuální stěny a jejích otvorů.
+
+Sekce je záměrně na vršku všech sekcí z jednoho prostého důvodu, když je aktivní, je to ta oblast zájmu, která uživatele v tu chvíli zajímá, co nejvíce. Jelikož je tato sekce neviditelná, jestliže stěna zvolená není, nijak nepřekaží. 
+
+**Detail stěny uživateli nabízí:**
+- vidět délku stěny(pouze pro čtění)
+- manipulovat a měnit tloušťku a výšku stěny
+- přidávat otvory pro danou stěnu
+
+**Detail otvoru uživateli nabídí:**
+- přejmenovat otvor na libovolný název
+- změnit typ otvoru(dveře/okno)
+- změnit parametry otvoru jako jsou šířka, výška, pro okna výška parapetu, a pozice v rámci šířky stěny
+
+Otvory lze libovolně odebírat pomocí viditelného tlačítka X v rámci listu otvorů.
+
+**Sekce aktuálně vybrané stěny ve scéně:**  
+![Náhled do lokace sekce právě vybrané stěny](../../assets/blender_ui_n_panel_selectedwall_anotated.png)
+![Náhled detailu vybrané stěny](../../assets/blender_ui_n_panel_selected_wall.png)
+![List otvorů](../../assets/blender_ui_n_panel_openings.png)
+![Detail otvoru](../../assets/blender_ui_n_panel_openings_window.png)
