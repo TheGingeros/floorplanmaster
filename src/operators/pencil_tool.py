@@ -163,6 +163,7 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         # are visible from the first frame (WAITING state included).
         self._rebuild_wall_batch()
         context.window_manager.modal_handler_add(self)
+        self._apply_cursor(context)
         context.area.tag_redraw()
         return {'RUNNING_MODAL'}
 
@@ -201,6 +202,7 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
                     self._placed_junctions.remove(self._start_junction_id)
                 self._state = WAITING
                 self._start_junction_id = None
+                self._apply_cursor(context)
                 self._rebuild_wall_batch()
                 self._update_status_bar(context)
                 return {'RUNNING_MODAL'}
@@ -221,6 +223,7 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             if self._state == WAITING:
                 self._place_start_junction(context)
                 self._state = DRAWING
+                self._apply_cursor(context)
                 self._update_status_bar(context)
                 return {'RUNNING_MODAL'}
 
@@ -337,6 +340,7 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
                     self._placed_junctions.remove(self._start_junction_id)
             self._state = WAITING
             self._start_junction_id = None
+            self._apply_cursor(context)
             self._rebuild_wall_batch()
             return
 
@@ -372,6 +376,16 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             # A second Z press will hit the empty-walls branch above and remove it.
             self._start_junction_id = prev_start
             self._state = DRAWING
+        self._apply_cursor(context)
+
+    def _apply_cursor(self, context):
+        # Set the viewport cursor to reflect the current drawing state.
+        # PAINT_BRUSH = ready to start a new line (WAITING)
+        # CROSSHAIR   = placing the endpoint of an in-progress line (DRAWING)
+        if self._state == DRAWING:
+            context.window.cursor_modal_set('CROSSHAIR')
+        else:
+            context.window.cursor_modal_set('PAINT_BRUSH')
 
     def _is_top_view(self, rv3d, threshold=0.05):
         # Return True if the viewport is currently in a top-down orthographic view.
@@ -432,6 +446,7 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
 
         # Restore native WorkSpaceTool keymap hints.
         context.workspace.status_text_set(None)
+        context.window.cursor_modal_restore()
         context.area.tag_redraw()
 
     # -- GPU overlay draw callbacks --
