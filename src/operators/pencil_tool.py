@@ -365,6 +365,16 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             self._start_junction_id = prev_start
             self._state = DRAWING
 
+    def _is_top_view(self, rv3d, threshold=0.05):
+        # Return True if the viewport is currently in a top-down orthographic view.
+        # Checks that the view matrix row 2 (camera Z-axis) aligns with world +Z.
+        if rv3d.view_perspective != 'ORTHO':
+            return False
+        m = rv3d.view_matrix
+        return (abs(m[2][0]) < threshold
+                and abs(m[2][1]) < threshold
+                and m[2][2] > (1.0 - threshold))
+
     def _finish(self, context, confirm=True):
         # Remove both GPU draw handlers.
         if self._draw_handler_3d:
@@ -376,13 +386,16 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         global _pencil_state
         _pencil_state = None
 
-        # Restore the view that was active before the tool was invoked.
+        # Restore the pre-tool view only when the user is still in the top-down
+        # ortho view that the tool switched to.  If the user orbited away during
+        # the session, keep whatever view they navigated to.
         rv3d = context.region_data
         if rv3d and hasattr(self, '_saved_view_matrix'):
-            rv3d.view_perspective = self._saved_view_perspective
-            rv3d.view_distance = self._saved_view_distance
-            rv3d.view_location = self._saved_view_location
-            rv3d.view_matrix = self._saved_view_matrix
+            if self._is_top_view(rv3d):
+                rv3d.view_perspective = self._saved_view_perspective
+                rv3d.view_distance = self._saved_view_distance
+                rv3d.view_location = self._saved_view_location
+                rv3d.view_matrix = self._saved_view_matrix
 
         # Remember count for the return-value check in modal().
         self._placed_walls_count = len(self._placed_walls)
