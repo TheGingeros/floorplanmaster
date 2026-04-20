@@ -48,18 +48,31 @@ def _draw_pencil_status(self, context):
     layout = self.layout
     if _pencil_state == WAITING:
         layout.label(text="", icon='MOUSE_LMB')
-        layout.label(text="Place first junction")
+        layout.label(text=" Place first junction")
+        layout.separator()
         layout.label(text="", icon='EVENT_Z')
-        layout.label(text="Undo")
+        layout.label(text=" Undo")
+        layout.separator()
+        layout.label(text="", icon='EVENT_RETURN')
+        layout.label(text=" Confirm")
+        layout.separator()
         layout.label(text="", icon='EVENT_ESC')
-        layout.label(text="Exit tool")
+        layout.label(text=" Abort")
     else:  # DRAWING
         layout.label(text="", icon='MOUSE_LMB')
-        layout.label(text="Place junction")
+        layout.label(text=" Place next junction")
+        layout.separator()
+        layout.label(text="", icon='MOUSE_RMB')
+        layout.label(text=" Cancel line")
+        layout.separator()
         layout.label(text="", icon='EVENT_Z')
-        layout.label(text="Undo")
+        layout.label(text=" Undo")
+        layout.separator()
+        layout.label(text="", icon='EVENT_RETURN')
+        layout.label(text=" Confirm")
+        layout.separator()
         layout.label(text="", icon='EVENT_ESC')
-        layout.label(text="Cancel line")
+        layout.label(text=" Abort")
 
 
 def _get_floorplan_obj(context):
@@ -78,7 +91,7 @@ def _get_floorplan_obj(context):
 class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
     bl_idname = "floorplan.pencil_tool"
     bl_label = "FloorPlan Pencil Tool"
-    bl_description = "Draw walls by placing junctions. LMB to place, Z to undo last, ESC to cancel"
+    bl_description = "Draw walls by placing junctions. LMB place, RMB cancel line, Enter confirm, ESC abort"
     bl_options = {'REGISTER'}
 
     def invoke(self, context, event):
@@ -163,32 +176,33 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             self._update_snap()
             return {'RUNNING_MODAL'}
 
-        # ESC: cancel current line or exit tool.
+        # ESC: abort the entire tool — remove all placed walls, no sync.
         if event.type == 'ESC' and event.value == 'PRESS':
+            self._finish(context, confirm=False)
+            return {'CANCELLED'}
+
+        # Enter: confirm — sync placed walls to mesh and commit undo step.
+        if event.type in {'RET', 'NUMPAD_ENTER'} and event.value == 'PRESS':
+            self._finish(context, confirm=True)
+            if self._placed_walls_count > 0:
+                return {'FINISHED'}
+            return {'CANCELLED'}
+
+        # RMB (DRAWING only): cancel the current line, return to WAITING.
+        # In WAITING: pass through so context menus still work.
+        if event.type == 'RIGHTMOUSE' and event.value == 'PRESS':
             if self._state == DRAWING:
                 self._state = WAITING
                 self._start_junction_id = None
                 self._update_status_bar(context)
                 return {'RUNNING_MODAL'}
-            else:
-                self._finish(context)
-                # Return FINISHED (not CANCELLED) when walls were drawn so
-                # Blender commits a proper undo step for the session.
-                # Without this, the undo stack has no "room created" entry and
-                # the Add Opening redo panel cannot revert to the room state.
-                if self._placed_walls:
-                    return {'FINISHED'}
-                return {'CANCELLED'}
-
-        # RMB passthrough for context menu.
-        if event.type == 'RIGHTMOUSE':
             return {'PASS_THROUGH'}
 
         # Z: undo last placed wall.  Always consumed so it never reaches
         # Blender's viewport shading pie menu (which is also bound to Z).
+        # Works in both DRAWING and WAITING (e.g. after ESC mid-sequence).
         if event.type == 'Z' and event.value == 'PRESS':
-            if self._state == DRAWING:
-                self._undo_last_wall(context)
+            self._undo_last_wall(context)
             return {'RUNNING_MODAL'}
 
         # LMB: place junction / confirm wall.
@@ -307,8 +321,15 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
 
     def _undo_last_wall(self, context):
         if not self._placed_walls:
+            # No walls left; remove the dangling start junction if we created it.
+            if (self._start_junction_id
+                    and self._start_junction_id in self._placed_junctions):
+                if not self._sg.get_walls_for_junction(self._start_junction_id):
+                    self._sg.remove_junction(self._start_junction_id)
+                    self._placed_junctions.remove(self._start_junction_id)
             self._state = WAITING
             self._start_junction_id = None
+            self._rebuild_wall_batch()
             return
 
         last_wall_id = self._placed_walls.pop()
@@ -316,16 +337,13 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         if wall is None:
             return
 
-        # The start junction becomes the start of the removed wall.
         prev_start = wall.junction_start
-
         self._sg.remove_wall(last_wall_id)
 
         # Remove orphaned end junction if it was created by us and has no walls.
         end_id = wall.junction_end
         if end_id in self._placed_junctions:
-            walls_for_end = self._sg.get_walls_for_junction(end_id)
-            if not walls_for_end:
+            if not self._sg.get_walls_for_junction(end_id):
                 self._sg.remove_junction(end_id)
                 self._placed_junctions.remove(end_id)
 
@@ -337,18 +355,17 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             prev_wall = self._sg.get_wall(self._placed_walls[-1])
             if prev_wall:
                 self._start_junction_id = prev_wall.junction_end
+                self._state = DRAWING
             else:
                 self._start_junction_id = None
                 self._state = WAITING
         else:
+            # Last wall removed; park cursor at its start junction.
+            # A second Z press will hit the empty-walls branch above and remove it.
             self._start_junction_id = prev_start
-            if self._start_junction_id:
-                # Still have a starting point, stay in DRAWING.
-                pass
-            else:
-                self._state = WAITING
+            self._state = DRAWING
 
-    def _finish(self, context):
+    def _finish(self, context, confirm=True):
         # Remove both GPU draw handlers.
         if self._draw_handler_3d:
             bpy.types.SpaceView3D.draw_handler_remove(self._draw_handler_3d, 'WINDOW')
@@ -367,12 +384,30 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             rv3d.view_location = self._saved_view_location
             rv3d.view_matrix = self._saved_view_matrix
 
-        # Sync the final L1 state to mesh once, then commit the undo step.
-        # All per-click syncs were deferred to this single call.
-        if self._placed_walls:
+        # Remember count for the return-value check in modal().
+        self._placed_walls_count = len(self._placed_walls)
+
+        if confirm and self._placed_walls:
+            # Confirm path: sync L1 → mesh and commit a single undo step.
             sync_graph_to_mesh(self._obj, self._sg, self._rg, id_mapper=self._id_mapper)
             ensure_gn_modifier(self._obj)
             bpy.ops.ed.undo_push(message="Draw Walls")
+        else:
+            # Abort path: strip every wall and junction placed this session
+            # from the graph so the mesh is not modified at all.
+            for wall_id in list(self._placed_walls):
+                try:
+                    self._sg.remove_wall(wall_id)
+                except Exception:
+                    pass
+            for jid in list(self._placed_junctions):
+                try:
+                    if not self._sg.get_walls_for_junction(jid):
+                        self._sg.remove_junction(jid)
+                except Exception:
+                    pass
+            self._placed_walls.clear()
+            self._placed_junctions.clear()
 
         # Restore native WorkSpaceTool keymap hints.
         context.workspace.status_text_set(None)
@@ -402,8 +437,12 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
     def _update_status_bar(self, context):
         # Update module-level state; the draw function registered at addon
         # load reads this variable and draws accordingly.
+        # Calling status_text_set on every state transition forces Blender to
+        # redraw the status bar (it is a window-level region, not a screen
+        # area, so tag_redraw() on screen.areas cannot reach it).
         global _pencil_state
         _pencil_state = self._state
+        context.workspace.status_text_set(" ")
 
     def _draw_status_text(self, context):
         font_id = 0
