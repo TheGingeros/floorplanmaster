@@ -3,7 +3,7 @@ Nástroj Tužka je primární vstupní rozhraní addonu — modální operátor 
 
 ## Stavový automat
 
-Operátor je řízen striktním stavovým automatem, který garantuje, že stěna nikdy nevznikne bez platného počátečního bodu a že nelze skončit v nekonzistentním stavu (např. při vícenásobném stisku ESC).
+Operátor je řízen striktním stavovým automatem, který garantuje, že stěna nikdy nevznikne bez platného počátečního bodu a že nelze skončit v nekonzistentním stavu.
 
 ```mermaid
 stateDiagram-v2
@@ -11,15 +11,20 @@ stateDiagram-v2
     NEAKTIVNÍ --> ČEKÁNÍ : aktivace nástroje
     ČEKÁNÍ --> KRESLENÍ : umístění počátečního junctionu
     KRESLENÍ --> KRESLENÍ : potvrzení stěny,\nkoncový bod = nový počáteční
-    KRESLENÍ --> KRESLENÍ : Z — vrácení posledního bodu
+    KRESLENÍ --> KRESLENÍ : vrácení posledního bodu
+    ČEKÁNÍ --> ČEKÁNÍ : vrácení posledního bodu
     KRESLENÍ --> ČEKÁNÍ : zrušení aktuální čáry
-    ČEKÁNÍ --> NEAKTIVNÍ : deaktivace nástroje
-    NEAKTIVNÍ --> [*]
+    KRESLENÍ --> [*] : potvrzení sezení
+    ČEKÁNÍ --> [*] : potvrzení sezení
+    KRESLENÍ --> [*] : přerušení sezení (bez uložení)
+    ČEKÁNÍ --> [*] : přerušení sezení (bez uložení)
 ```
 
 - **NEAKTIVNÍ** — nástroj je registrován, ale nepřijímá vstupy; jiné nástroje Blenderu fungují normálně
-- **ČEKÁNÍ** — nástroj aktivní, kurzor sleduje myš, žádný počáteční bod není umístěn; GPU overlay zobrazuje mřížku a snap indikátory
+- **ČEKÁNÍ** — nástroj aktivní, kurzor sleduje myš, žádný počáteční bod není umístěn; GPU overlay zobrazuje existující geometrii a snap indikátory; vrácení posledního bodu funguje i v tomto stavu (odstraní naposledy umístěný bod z aktuální sezení)
 - **KRESLENÍ** — první junction umístěn; GPU overlay kreslí náhled stěny od počátečního bodu ke kurzoru v reálném čase; HUD zobrazuje délku a úhel
+
+Z obou stavů lze sezení buď **potvrdit** (všechny stěny se synchronizují do meshe a zapíší do undo stacku) nebo **přerušit** (všechny stěny a junctiony umístěné v aktuální sezení se odstraní z grafu, mesh zůstane nezměněn). Zrušení aktuální čáry (přechod KRESLENÍ → ČEKÁNÍ) neodstraňuje dříve potvrzené stěny téže sezení — pouze ukončí rozpracovanou linii.
 
 ## Snapping *(must-have / should-have)*
 
