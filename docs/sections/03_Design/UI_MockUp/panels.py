@@ -107,6 +107,9 @@ class MOCKUP_PT_tools(bpy.types.Panel):
     bl_category = "FloorPlanMaster"
     bl_parent_id = "MOCKUP_PT_main"
 
+    def draw_header(self, context):
+        self.layout.label(text="", icon='GREASEPENCIL')
+
     def draw(self, context):
         layout = self.layout
         layout.operator("mockup_fp.pencil_tool_op", text="Draw with Pencil", icon='GREASEPENCIL')
@@ -178,6 +181,9 @@ class MOCKUP_PT_settings(bpy.types.Panel):
     bl_parent_id = "MOCKUP_PT_main"
     bl_options = {'DEFAULT_CLOSED'}
 
+    def draw_header(self, context):
+        self.layout.label(text="", icon='PREFERENCES')
+
     def draw(self, context):
         layout = self.layout
         settings = context.scene.mockup_fp
@@ -187,24 +193,7 @@ class MOCKUP_PT_settings(bpy.types.Panel):
         col.separator()
         col.prop(settings, "default_thickness")
         col.prop(settings, "default_height")
-
-
-# Sub-panel: Overlay Settings
-
-class MOCKUP_PT_overlay(bpy.types.Panel):
-    bl_label = "Overlay Settings"
-    bl_idname = "MOCKUP_PT_overlay"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = "FloorPlanMaster"
-    bl_parent_id = "MOCKUP_PT_main"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    def draw(self, context):
-        layout = self.layout
-        settings = context.scene.mockup_fp
-
-        col = layout.column(align=True)
+        col.separator()
         col.prop(settings, "show_dimensions", icon='DRIVER_DISTANCE')
         col.prop(settings, "show_room_colors", icon='COLOR')
         col.prop(settings, "show_room_labels", icon='SORTALPHA')
@@ -221,5 +210,4 @@ def get_panel_classes():
         MOCKUP_PT_tools,
         MOCKUP_PT_rooms,
         MOCKUP_PT_settings,
-        MOCKUP_PT_overlay,
     ]
