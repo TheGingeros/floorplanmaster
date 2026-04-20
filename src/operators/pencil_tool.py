@@ -267,9 +267,9 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         # Re-apply modifier inputs after mesh rebuild so GN dimensions are correct.
         ensure_gn_modifier(self._obj)
 
-        # Commit this wall as a discrete undo step so Ctrl+Z removes one wall
-        # at a time instead of collapsing the whole session into a single step.
-        bpy.ops.ed.undo_push(message="Add Wall")
+        # No undo_push here — the entire session is committed as one undo step
+        # in _finish() when the user presses ESC.  Use Z inside the tool for
+        # per-wall undo during drawing.
 
         # Advance: end junction becomes start of next wall.
         self._start_junction_id = end_id
@@ -332,6 +332,12 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             rv3d.view_distance = self._saved_view_distance
             rv3d.view_location = self._saved_view_location
             rv3d.view_matrix = self._saved_view_matrix
+
+        # Commit the entire session as a single undo step.  Ctrl+Z after the
+        # tool exits will remove everything drawn in this session at once.
+        # Per-wall undo is available via Z while the tool is active.
+        if self._placed_walls:
+            bpy.ops.ed.undo_push(message="Draw Walls")
 
         context.area.tag_redraw()
 
