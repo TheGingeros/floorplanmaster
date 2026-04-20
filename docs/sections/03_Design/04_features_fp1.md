@@ -54,10 +54,14 @@ Veškeré kreslení préview probíhá v GPU draw_handler registrovaném na 3D V
 - snap indikátor: barevný kruh u kurzoru při aktivním snapu
 - nápověda kláves: ikony kláves a myši zobrazené v dolní stavové liště Blenderu (STATUSBAR_HT_header); stav ČEKÁNÍ zobrazuje LMB / Z / ESC; stav KRESLENÍ zobrazuje aktualizovanou sadu; HUD nápovědu kláves nezobrazuje
 
-## Mód preview čáry stěny *(should-have)*
+## Způsob generování stěny podle preview čáry *(should-have)*
 
-Možnost vybírat, zda se stěna generuje na středu preview čáry nebo pod nebo nad. Podobně jako ve vektorových a jiných programech. Možnost tyto módy interaktivně přepínat v rámci UI tohoto operátoru. 
+Preview čára, kterou uživatel táhne myší, reprezentuje osu stěny — avšak fyzická stěna má tloušťku, a tloušťka musí být někam „rozložena". Mód generování určuje, na kterou stranu od preview čáry se tloušťka stěny rozkládá. Tři dostupné módy odpovídají konvenci používané ve vektorových nástrojích (Illustrator, Inkscape) a CAD programech:
 
-- **Generování stěny podle středu čáry**
-- **Generování stěny pod středem čáry**
-- **Generování stěny nad středem čáry**
+- **Střed (Center)** — stěna je symetricky na obou stranách preview čáry; preview čára splývá s osou stěny. Výchozí mód. Vhodný pro schematické kreslení, kde přesná poloha povrchu stěny není prioritou.
+- **Levá strana (Left)** — stěna se generuje zcela nalevo od směru kreslení (tj. celá tloušťka leží na levé straně preview čáry). Preview čára odpovídá pravému líci stěny. Vhodné pro kreslení stěny podél existující hrany (např. vnější obvodová stěna).
+- **Pravá strana (Right)** — symetricky opačně; stěna leží zcela napravo od směru kreslení. Preview čára odpovídá levému líci stěny.
+
+Pojmy „levá" a „pravá" jsou vztaženy k **směru kreslení** (od počátečního junctionu ke kurzoru), nikoli k pohledu kamery ani k ose scény. Při kreslení zleva doprava je „levá strana" stěny horní (vyšší Y), při kreslení shora dolů je „levá strana" stěna napravo (vyšší X) — uživatel to vnímá jako přichycení stěny k té straně čáry, na které drží prst.
+
+Mód lze přepínat klávesou `Tab` kdykoli během aktivního nástroje (ve stavu ČEKÁNÍ i KRESLENÍ) bez přerušení sezení. Aktuální mód je zobrazen v levém horním rohu viewportu nebo v sekci active tool panelu. Přepnutí módu okamžitě překreslí preview, změna se projeví na následujících nově umístěných stěnách — dříve potvrzené stěny téže sezení se nemění.
