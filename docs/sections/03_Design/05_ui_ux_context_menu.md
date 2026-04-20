@@ -8,9 +8,14 @@ Klíčovým mechanismem kontextové nabídky je raycast — addon vrhne paprsek 
 
 Obsah nabídky se dynamicky mění podle výsledku raycastu. Tato kontextová citlivost redukuje vizuální šum — uživatel v každém kontextu vidí pouze akce relevantní pro daný prvek, nikoliv kompletní seznam všech operátorů addonu. Vzor je přejat z Archipack (RMB na objekt zobrazuje akce specifické pro typ architektonického prvku) a AutoCADu (RMB = kontextová nabídka závislá na výběru).
 
+**Kontextová nabídka vyvolána pravým tlačítkem:**  
+![Kontextová nabídka vyvolána pravým tlačítkem](../../assets/blender_ui_context.png)
+
 **Kontext: místnost** (klik na plochu uzavřeného cyklu Vrstvy 2)
 - Přejmenovat místnost — otevře inline textové pole pro editaci `room_name`
 - Smazat místnost — odstraní všechny ohraničující stěny z Vrstvy 1; spustí kaskádový zánik cyklu ve Vrstvě 2 a synchronizaci Vrstvy 3
+
+![Náhled Kontext: místnost](../../assets/blender_ui_context_room.png)
 
 **Kontext: stěna** (klik na hranu Vrstvy 1 promítnutou přes Vrstvu 3)
 - Upravit tloušťku — inline číselné pole pro `wall_thickness`
@@ -19,14 +24,20 @@ Obsah nabídky se dynamicky mění podle výsledku raycastu. Tato kontextová ci
 - Rozdělit stěnu — vloží nový junction na hranu Vrstvy 1 v místě kliknutí
 - Smazat stěnu — odstraní hranu z Vrstvy 1 a spustí L2 + L3 synchronizaci
 
+![Náhled Kontext: stěna](../../assets/blender_ui_context_wall.png)
+
 **Kontext: junction** (klik na vrchol Vrstvy 1)
 - Smazat junction a přilehlé stěny
 - Sloučit s nejbližším junctionem — merge v toleranci (FP1 mechanismus snapu)
+
+![Náhled Kontext: junction](../../assets/blender_ui_context_junction.png)
 
 **Kontext: prázdný prostor** (raycast nenajde žádný element)
 - Zobrazit / skrýt mřížku
 - Zobrazit / skrýt kótování (přepíná FP7 drag_handler)
 - Nakreslit tužkou — alternativa k `D`, pro uživatele preferující RMB menu před klávesovými zkratkami
+
+![Náhled Kontext: prázdný prostor](../../assets/blender_ui_context_floorplan.png)
 
 ## Pop-over dialogy
 
