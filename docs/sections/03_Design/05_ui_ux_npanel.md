@@ -42,15 +42,19 @@ Kliknutím na položku v seznamu dojde k:
 ![Detail místnísti](../../assets/blender_ui_n_panel_room_detail.png)
 ## Sekce Nastavení
 
-Sekce Nastavení obsahuje globální parametry scény uložené v `Scene PropertyGroup` (soulad s pravidlem persistence nastavení z kapitoly 3.1). Tyto parametry se aplikují na nově vytvářené prvky; existující prvky se nemodifikují, aby uživatel nepřišel o záměrně nastavené hodnoty.
+Sekce Nastavení obsahuje globální parametry scény uložené v `Scene PropertyGroup` (soulad s pravidlem persistence nastavení z kapitoly 3.1). Tyto parametry se aplikují na nově vytvářené prvky; existující prvky se nemodifikují, aby uživatel nepřišel o záměrně nastavené hodnoty. Dále je zde nastavení overlaye ve scéně. Uživatel může jednotlivé prvky překrytí zapínat nebo vypínat. Opět vzor převzatý z nativního Blenderu, konkrétně nabídky Viewport Overlays.
 
 | Parametr | Výchozí hodnota | Popis |
 | :--- | :--- | :--- |
 | Systém jednotek | Metrický | Přepíná zobrazení rozměrů v kótování i panelu; hodnoty jsou interně vždy v metrech |
 | Výchozí tloušťka stěny | 0,3 m | Přednabídnuto při každém novém kreslení nebo vkládání místnosti |
-| Výchozí výška stěny | 2,5 m | Přednabídnuto pro nové stěny |
+| Kótovací systém | Vypnuto | Zobrazuje kótovací informace ve scéně |
+| Barevné odlišení místností| Vypnuto | Možnost barevně odlišit místnosti pro přehlednost |
+| Názvy místností | Zapnuto | Zobrazení popisu mísnostní v centru místnosti |
+| Zobrazení aktuálně vybraného prvku | Zapnuto | Označí právě vybraný prvek v rámci viewportu |
+| Manipulátory | Vypnuto | Zobrazí manipulátory u aktuálně vybrané stěny |
 
-Záměrně jsou do Nastavení zařazeny pouze parametry ovlivňující chování celého projektu, nikoliv parametry jednotlivých prvků — ty patří do detailního pohledu místnosti nebo jsou dostupné přes gizmos.
+Záměrně jsou do Nastavení zařazeny pouze parametry ovlivňující chování celého projektu, nikoliv parametry jednotlivých prvků — ty patří do detailního pohledu místnosti nebo jsou dostupné přes gizmos. Některé prvky v rámci překrytí jsou schválně vypnuté, aby nového uživatele addon nepřehltil informacemi hned na začátku. 
 
 ![](../../assets/blender_ui_n_panel_settings.png)
 
