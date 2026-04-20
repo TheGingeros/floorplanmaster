@@ -24,7 +24,7 @@
 
   The result is a functional add-on implemented in Python, encompassing an interactive wall drawing tool based on a modal operator, parametric editing of wall thickness and height, automatic room detection with area computation, and support for openings (doors and windows) with positional validation.
 
-  The contribution of the thesis lies in filling an identified gap in the Blender ecosystem: the add-on provides a workflow comparable to professional architectural tools, with the entire lifecycle from initial floor plan sketch to the final mesh taking place within a single environment.
+  The primary contribution of the thesis is a clear and detailed tool that enables architects and visualizers to carry out the entire workflow — from the initial floor plan sketch through parametric editing to the final mesh — within a single environment, without the need to switch between specialized applications. In doing so, the add-on fills an identified gap in the Blender ecosystem and brings a workflow comparable to professional architectural tools directly into an environment users already know.
 ]
 
 #let abstract-CZE = [
@@ -34,7 +34,7 @@
 
   Výsledkem je funkční add-on implementovaný v Pythonu zahrnující interaktivní nástroj pro kreslení stěn (modální operátor), parametrickou editaci tloušťky a výšky stěn, automatickou detekci místností a jejich ploch a podporu otvorů (dveře, okna) s poziční validací.
 
-  Přínos práce spočívá v zaplnění identifikované mezery v ekosystému Blenderu: add-on poskytuje workflow srovnatelné s profesionálními architektonickými nástroji, přičemž celý životní cyklus od prvního náčrtu dispozice po finální mesh probíhá v jednom prostředí.
+  Hlavním přínosem práce je přehledný a detailní nástroj, který architektům a vizualizátorům umožňuje celý pracovní postup — od prvního náčrtu dispozice přes parametrické úpravy až po finální mesh — realizovat v jednom prostředí bez nutnosti přepínat mezi specializovanými programy. Addon tím zároveň zaplňuje identifikovanou mezeru v ekosystému Blenderu a přináší workflow srovnatelné s profesionálními architektonickými nástroji přímo do prostředí, které uživatelé již dobře znají.
 ]
 
 #show: ctufit-thesis.with(
