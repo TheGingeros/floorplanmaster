@@ -606,6 +606,157 @@ class MOCKUP_OT_deselect_wall(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def _pick_context(context, mx, my):
+    """Return ('room'|'wall'|'junction'|'empty', index) based on 2D screen proximity."""
+    from bpy_extras.view3d_utils import location_3d_to_region_2d
+    from mathutils import Vector
+    rv3d = getattr(context, 'region_data', None)
+    region = getattr(context, 'region', None)
+    if rv3d is None or region is None:
+        return ('empty', None)
+    mouse = Vector((mx, my))
+
+    # Unique junctions (deduplicated)
+    seen = {}
+    junctions = []
+    for wall in _DEMO_WALLS:
+        for pt in (wall[0], wall[1]):
+            key = (round(pt[0], 3), round(pt[1], 3))
+            if key not in seen:
+                seen[key] = len(junctions)
+                junctions.append(Vector(pt))
+    for i, jct in enumerate(junctions):
+        pt2d = location_3d_to_region_2d(region, rv3d, jct)
+        if pt2d and (mouse - pt2d).length < 22:
+            return ('junction', i)
+
+    # Wall midpoints
+    for i, (a, b) in enumerate(_DEMO_WALLS):
+        mid = Vector(((a[0]+b[0])/2, (a[1]+b[1])/2, 0.0))
+        pt2d = location_3d_to_region_2d(region, rv3d, mid)
+        if pt2d and (mouse - pt2d).length < 32:
+            return ('wall', i)
+
+    # Room centroids
+    for i, room in enumerate(_DEMO_ROOMS):
+        pt2d = location_3d_to_region_2d(region, rv3d, Vector((room['cx'], room['cy'], 0.0)))
+        if pt2d and (mouse - pt2d).length < 65:
+            return ('room', i)
+
+    return ('empty', None)
+
+
+class MOCKUP_OT_context_menu(bpy.types.Operator):
+    bl_idname = "mockup_fp.context_menu"
+    bl_label = "FloorPlan Context Menu"
+    bl_description = "Show context-sensitive FloorPlan menu (mockup)"
+
+    # When set, skip pick detection and show this context type directly.
+    force_type: StringProperty(default='')
+
+    def invoke(self, context, event):
+        if self.force_type:
+            ctx_type = self.force_type
+        else:
+            ctx_type, _idx = _pick_context(
+                context, event.mouse_region_x, event.mouse_region_y
+            )
+        bpy.ops.wm.call_menu(name=_CTX_MENU_MAP[ctx_type])
+        return {'FINISHED'}
+
+
+class MOCKUP_OT_ctx_action(bpy.types.Operator):
+    bl_idname = "mockup_fp.ctx_action"
+    bl_label = "FloorPlan Action"
+    bl_description = "Context menu action (mockup \u2014 no functionality)"
+
+    action: StringProperty(default='')
+
+    def execute(self, context):
+        self.report({'INFO'}, f"MockUp: {self.action} (no functionality)")
+        return {'FINISHED'}
+
+
+# Proper Menu classes for each context — open as flyout submenus.
+
+class MOCKUP_MT_ctx_room(bpy.types.Menu):
+    bl_idname = "MOCKUP_MT_ctx_room"
+    bl_label = "Room"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator("mockup_fp.ctx_action", text="Rename Room",
+                        icon='OUTLINER_DATA_FONT').action = 'RENAME_ROOM'
+        layout.operator("mockup_fp.ctx_action", text="Delete Room",
+                        icon='TRASH').action = 'DELETE_ROOM'
+
+
+class MOCKUP_MT_ctx_wall(bpy.types.Menu):
+    bl_idname = "MOCKUP_MT_ctx_wall"
+    bl_label = "Wall"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator("mockup_fp.ctx_action", text="Edit Thickness",
+                        icon='DRIVER_DISTANCE').action = 'EDIT_THICKNESS'
+        layout.operator("mockup_fp.ctx_action", text="Edit Height",
+                        icon='EMPTY_SINGLE_ARROW').action = 'EDIT_HEIGHT'
+        layout.separator()
+        layout.operator("mockup_fp.ctx_action", text="Add Opening\u2026",
+                        icon='MOD_BOOLEAN').action = 'ADD_OPENING'
+        layout.operator("mockup_fp.ctx_action", text="Split Wall",
+                        icon='SNAP_MIDPOINT').action = 'SPLIT_WALL'
+        layout.separator()
+        layout.operator("mockup_fp.ctx_action", text="Delete Wall",
+                        icon='TRASH').action = 'DELETE_WALL'
+
+
+class MOCKUP_MT_ctx_junction(bpy.types.Menu):
+    bl_idname = "MOCKUP_MT_ctx_junction"
+    bl_label = "Junction"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator("mockup_fp.ctx_action", text="Delete Junction & Walls",
+                        icon='TRASH').action = 'DELETE_JUNCTION'
+        layout.operator("mockup_fp.ctx_action", text="Merge with Nearest",
+                        icon='AUTOMERGE_ON').action = 'MERGE_JUNCTION'
+
+
+class MOCKUP_MT_ctx_empty(bpy.types.Menu):
+    bl_idname = "MOCKUP_MT_ctx_empty"
+    bl_label = "Floor Plan"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator("mockup_fp.ctx_action", text="Toggle Grid",
+                        icon='GRID').action = 'TOGGLE_GRID'
+        layout.operator("mockup_fp.ctx_action", text="Toggle Dimensions",
+                        icon='DRIVER_DISTANCE').action = 'TOGGLE_DIMENSIONS'
+        layout.separator()
+        layout.operator("mockup_fp.pencil_tool_op", text="Draw with Pencil",
+                        icon='GREASEPENCIL')
+
+
+_CTX_MENU_MAP = {
+    'room':     'MOCKUP_MT_ctx_room',
+    'wall':     'MOCKUP_MT_ctx_wall',
+    'junction': 'MOCKUP_MT_ctx_junction',
+    'empty':    'MOCKUP_MT_ctx_empty',
+}
+
+
+def _draw_object_context_menu_items(self, context):
+    """Appended to VIEW3D_MT_object_context_menu: 4 FloorPlan submenus."""
+    layout = self.layout
+    layout.separator()
+    layout.label(text="FloorPlanMaster", icon='MESH_PLANE')
+    layout.menu("MOCKUP_MT_ctx_room",     icon='HOME')
+    layout.menu("MOCKUP_MT_ctx_wall",     icon='MESH_PLANE')
+    layout.menu("MOCKUP_MT_ctx_junction", icon='DECORATE_KEYFRAME')
+    layout.menu("MOCKUP_MT_ctx_empty",    icon='MESH_GRID')
+
+
 # WorkSpaceTool for Toolbar
 class MOCKUP_WT_pencil(bpy.types.WorkSpaceTool):
     bl_space_type = 'VIEW_3D'
@@ -710,6 +861,13 @@ _prop_classes = [
     MockupFloorPlanSettings,
 ]
 
+_menu_classes = [
+    MOCKUP_MT_ctx_room,
+    MOCKUP_MT_ctx_wall,
+    MOCKUP_MT_ctx_junction,
+    MOCKUP_MT_ctx_empty,
+]
+
 _operator_classes = [
     MOCKUP_OT_toggle_room,
     MOCKUP_OT_pencil_tool,
@@ -720,11 +878,15 @@ _operator_classes = [
     MOCKUP_OT_finalize,
     MOCKUP_OT_finalize_run,
     MOCKUP_OT_deselect_wall,
+    MOCKUP_OT_context_menu,
+    MOCKUP_OT_ctx_action,
 ]
 
 
 def register():
     for cls in _prop_classes:
+        bpy.utils.register_class(cls)
+    for cls in _menu_classes:
         bpy.utils.register_class(cls)
     for cls in _operator_classes:
         bpy.utils.register_class(cls)
@@ -740,6 +902,7 @@ def register():
     if kc is not None:
         km = kc.keymaps.new(name='3D View', space_type='VIEW_3D')
         km.keymap_items.new("mockup_fp.pencil_tool_op", type='D', value='PRESS')
+        km.keymap_items.new("mockup_fp.context_menu", type='RIGHTMOUSE', value='PRESS')
 
     # Register cursor timer
     if not bpy.app.timers.is_registered(_cursor_timer):
@@ -772,6 +935,9 @@ def register():
     # Register status bar hints
     bpy.types.STATUSBAR_HT_header.prepend(_draw_status_bar)
 
+    # Append FloorPlan items to built-in Object Mode context menu
+    bpy.types.VIEW3D_MT_object_context_menu.append(_draw_object_context_menu_items)
+
     # Register load handler and populate data
     bpy.app.handlers.load_post.append(_load_post_handler)
     _populate_mockup_data()
@@ -786,6 +952,7 @@ def unregister():
         bpy.app.timers.unregister(_cursor_timer)
 
     bpy.types.STATUSBAR_HT_header.remove(_draw_status_bar)
+    bpy.types.VIEW3D_MT_object_context_menu.remove(_draw_object_context_menu_items)
 
     global _hud_draw_handle
     if _hud_draw_handle is not None:
@@ -814,7 +981,7 @@ def unregister():
         km = kc.keymaps.get('3D View')
         if km:
             for kmi in list(km.keymap_items):
-                if kmi.idname == "mockup_fp.pencil_tool_op":
+                if kmi.idname in ("mockup_fp.pencil_tool_op", "mockup_fp.context_menu"):
                     km.keymap_items.remove(kmi)
 
     bpy.utils.unregister_tool(MOCKUP_WT_pencil)
@@ -823,6 +990,8 @@ def unregister():
     for cls in reversed(get_panel_classes()):
         bpy.utils.unregister_class(cls)
     for cls in reversed(_operator_classes):
+        bpy.utils.unregister_class(cls)
+    for cls in reversed(_menu_classes):
         bpy.utils.unregister_class(cls)
     for cls in reversed(_prop_classes):
         bpy.utils.unregister_class(cls)
