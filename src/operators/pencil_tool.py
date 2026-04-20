@@ -28,6 +28,18 @@ _GPU_PREVIEW_EXPAND = 0.02
 # None = operator not active; WAITING or DRAWING = operator active.
 _pencil_state = None
 
+# Viewport navigation events that must pass through while the modal is active.
+# Everything else is consumed so that tool shortcuts (W, E, G, Z, Tab, …)
+# cannot fire and interrupt the drawing session.
+_NAVIGATION_EVENT_TYPES = frozenset({
+    'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE',
+    'MIDDLEMOUSE', 'WHEELUPMOUSE', 'WHEELDOWNMOUSE', 'WHEELINMOUSE', 'WHEELOUTMOUSE',
+    'NUMPAD_0', 'NUMPAD_1', 'NUMPAD_2', 'NUMPAD_3', 'NUMPAD_4',
+    'NUMPAD_5', 'NUMPAD_6', 'NUMPAD_7', 'NUMPAD_8', 'NUMPAD_9',
+    'NUMPAD_PERIOD', 'NUMPAD_PLUS', 'NUMPAD_MINUS', 'NUMPAD_SLASH',
+    'TRACKPADPAN', 'TRACKPADZOOM',
+})
+
 
 def _draw_pencil_status(self, context):
     # Draw keyboard/mouse hints in the bottom status bar using Blender icons.
@@ -130,6 +142,10 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
 
         self._state = WAITING
         self._update_status_bar(context)
+        # Suppress Blender's native WorkSpaceTool keymap hints ("LMB FloorPlan
+        # Pencil Tool") while the modal is running.  Any non-None value hides
+        # the native hints; our STATUSBAR_HT_header.prepend draws instead.
+        context.workspace.status_text_set(" ")
         # Populate overlay geometry immediately so existing walls and junctions
         # are visible from the first frame (WAITING state included).
         self._rebuild_wall_batch()
@@ -168,9 +184,11 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         if event.type == 'RIGHTMOUSE':
             return {'PASS_THROUGH'}
 
-        # Z: undo last placed point (only in DRAWING state).
-        if event.type == 'Z' and event.value == 'PRESS' and self._state == DRAWING:
-            self._undo_last_wall(context)
+        # Z: undo last placed wall.  Always consumed so it never reaches
+        # Blender's viewport shading pie menu (which is also bound to Z).
+        if event.type == 'Z' and event.value == 'PRESS':
+            if self._state == DRAWING:
+                self._undo_last_wall(context)
             return {'RUNNING_MODAL'}
 
         # LMB: place junction / confirm wall.
@@ -188,8 +206,12 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
                 self._place_wall_and_advance(context)
                 return {'RUNNING_MODAL'}
 
-        # Pass through unhandled events so viewport navigation works.
-        return {'PASS_THROUGH'}
+        # Only pass through viewport navigation events.  All other keyboard
+        # shortcuts are consumed so that tools (W, E, G, Tab, …) cannot be
+        # activated while the pencil session is active.
+        if event.type in _NAVIGATION_EVENT_TYPES:
+            return {'PASS_THROUGH'}
+        return {'RUNNING_MODAL'}
 
     def _update_cursor_world(self, context):
         # Convert mouse 2D position to 3D world position on the XY plane (Z=0).
@@ -352,6 +374,8 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             ensure_gn_modifier(self._obj)
             bpy.ops.ed.undo_push(message="Draw Walls")
 
+        # Restore native WorkSpaceTool keymap hints.
+        context.workspace.status_text_set(None)
         context.area.tag_redraw()
 
     # -- GPU overlay draw callbacks --
