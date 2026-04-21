@@ -1,8 +1,7 @@
-# FP2 — Select Wall operator
-# Click anywhere in the viewport to select a wall (or deselect if clicking empty space).
-# Projects wall 3D boxes to 2D screen space and tests mouse against those polygons.
+# FP2 — Select Wall / Room operator
+# Click anywhere in the viewport to select a wall or room (or deselect if clicking empty space).
+# Projects wall 3D boxes and room floor polygons to 2D screen space and tests mouse against them.
 # Works in any view (ortho, perspective, any angle).
-# Future: extend _pick_element() to also return room hits for context menu (FP5).
 # References: 04_features_fp2.md
 
 import bpy
@@ -15,12 +14,13 @@ from ..utils.math_helpers import point_in_polygon
 from ..ui.selection_state import _selection
 
 
-def _pick_element(context, sg, mx, my):
+def _pick_element(context, sg, rg, mx, my):
     # Project wall 3D box faces to 2D screen space, collect all walls whose
     # screen projection contains the mouse, then return the one closest to the
     # camera (highest view-space Z) so occluded walls behind visible ones are
     # never accidentally selected.
-    # Returns ('wall', wall_uuid) or None.
+    # If no wall is hit, test room floor polygons (flat faces at Z=0) the same way.
+    # Returns ('wall', wall_uuid), ('room', room_uuid), or None.
     region = context.region
     rv3d = context.region_data
     if region is None or rv3d is None:
@@ -77,12 +77,37 @@ def _pick_element(context, sg, mx, my):
             view_z = (rv3d.view_matrix @ center_3d).z
             hits.append((view_z, wall.id))
 
-    if not hits:
-        return None
+    if hits:
+        # Highest view_z = closest to camera.
+        hits.sort(key=lambda item: -item[0])
+        return ('wall', hits[0][1])
 
-    # Highest view_z = closest to camera.
-    hits.sort(key=lambda item: -item[0])
-    return ('wall', hits[0][1])
+    # No wall hit — test room floor polygons (flat face at Z=0).
+    room_hits = []  # (view_z, room_id)
+    for room in rg.get_all_rooms():
+        verts_2d = sg.get_cycle_vertices(room.cycle)
+        if len(verts_2d) < 3:
+            continue
+        pts_2d = []
+        skip = False
+        for x, y in verts_2d:
+            p2d = view3d_utils.location_3d_to_region_2d(region, rv3d, Vector((x, y, 0.0)))
+            if p2d is None:
+                skip = True
+                break
+            pts_2d.append((p2d.x, p2d.y))
+        if skip:
+            continue
+        if point_in_polygon(mouse, pts_2d):
+            cx, cy = room.centroid
+            view_z = (rv3d.view_matrix @ Vector((cx, cy, 0.0))).z
+            room_hits.append((view_z, room.id))
+
+    if room_hits:
+        room_hits.sort(key=lambda item: -item[0])
+        return ('room', room_hits[0][1])
+
+    return None
 
 
 class FLOORPLAN_OT_select_wall(bpy.types.Operator):
@@ -105,7 +130,7 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
                 return {'PASS_THROUGH'}
 
         sg, rg, mapper = _graph_store[obj.name]
-        result = _pick_element(context, sg, event.mouse_region_x, event.mouse_region_y)
+        result = _pick_element(context, sg, rg, event.mouse_region_x, event.mouse_region_y)
 
         settings = context.scene.floorplan
 
@@ -113,7 +138,7 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
             wall_uuid = result[1]
             wall = sg.get_wall(wall_uuid)
             if wall is None:
-                _selection.deselect_all()
+                _selection.deselect_all(context)
                 return {'FINISHED'}
 
             _selection.select_wall(wall_uuid)
@@ -129,8 +154,20 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
             context.area.tag_redraw()
             return {'FINISHED'}
 
+        if result is not None and result[0] == 'room':
+            room_uuid = result[1]
+            _selection.select_room(room_uuid, context)
+            # Expand this room's entry in the N-panel.
+            if obj is not None:
+                obj[f"room_expanded_{room_uuid}"] = 1
+            settings.active_wall_thickness = 0.0
+            settings.active_wall_height = 0.0
+            settings.opening_items.clear()
+            context.area.tag_redraw()
+            return {'FINISHED'}
+
         # Missed — clear selection and let Blender handle the click.
-        _selection.deselect_all()
+        _selection.deselect_all(context)
         settings.opening_items.clear()
         context.area.tag_redraw()
         return {'PASS_THROUGH'}

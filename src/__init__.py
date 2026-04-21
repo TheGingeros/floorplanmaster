@@ -96,6 +96,7 @@ if _HAS_BPY:
     from .ui.properties import OpeningItem, FloorPlanSettings, populate_opening_items
 
     from .ui.overlays.wall_selection import draw_wall_selection
+    from .ui.overlays.room_selection import draw_room_selection
 
     from .operators import get_classes as get_operator_classes
     from .operators.pencil_tool import (
@@ -154,6 +155,7 @@ if _HAS_BPY:
 
         overlay_manager.register()
         overlay_manager.register_layer(draw_wall_selection, '3D')
+        overlay_manager.register_layer(draw_room_selection, '3D')
 
         bpy.app.handlers.load_post.append(_load_post_handler)
         _rebuild_graph_store()

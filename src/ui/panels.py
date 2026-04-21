@@ -51,11 +51,23 @@ class FLOORPLAN_OT_toggle_room(bpy.types.Operator):
 
     def execute(self, context):
         from .. import find_floorplan_obj
+        from .selection_state import _selection
+
         obj = find_floorplan_obj(context)
         if obj is None:
             return {'CANCELLED'}
         key = f"room_expanded_{self.room_id}"
-        obj[key] = 0 if obj.get(key, 0) else 1
+        currently_expanded = bool(obj.get(key, 0))
+        obj[key] = 0 if currently_expanded else 1
+
+        if not currently_expanded:
+            # Expanding the entry → select this room in the viewport.
+            _selection.select_room(self.room_id, context)
+        else:
+            # Collapsing → deselect only if this room was the selected one.
+            if _selection.room_id == self.room_id:
+                _selection.deselect_all(context)
+
         context.area.tag_redraw()
         return {'FINISHED'}
 
