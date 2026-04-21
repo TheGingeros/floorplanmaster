@@ -105,8 +105,6 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         self._mouse_pos = (0, 0)
         self._cursor_world = Vector((0, 0, 0))
         self._snapped_junction = None
-        self._draw_handler_3d = None
-        self._draw_handler_2d = None
         self._placed_walls = []
         self._placed_junctions = []
         self._wall_lines_existing = []
@@ -128,15 +126,12 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         # Ensure GN modifier is attached with correct dimensions.
         ensure_gn_modifier(self._obj)
 
-        # Register GPU draw handlers:
+        # Register GPU draw layers via the overlay manager:
         #   POST_VIEW  — 3D world-space geometry (committed walls, preview line)
         #   POST_PIXEL — 2D screen-space UI (status text, snap circle)
-        self._draw_handler_3d = bpy.types.SpaceView3D.draw_handler_add(
-            self._draw_3d_callback, (context,), 'WINDOW', 'POST_VIEW'
-        )
-        self._draw_handler_2d = bpy.types.SpaceView3D.draw_handler_add(
-            self._draw_2d_callback, (context,), 'WINDOW', 'POST_PIXEL'
-        )
+        from ..ui import overlay_manager
+        overlay_manager.register_layer(self._draw_3d_callback, '3D')
+        overlay_manager.register_layer(self._draw_2d_callback, '2D')
 
         # Save current view so it can be restored when the tool exits.
         rv3d = context.region_data
@@ -398,13 +393,10 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
                 and m[2][2] > (1.0 - threshold))
 
     def _finish(self, context, confirm=True):
-        # Remove both GPU draw handlers.
-        if self._draw_handler_3d:
-            bpy.types.SpaceView3D.draw_handler_remove(self._draw_handler_3d, 'WINDOW')
-            self._draw_handler_3d = None
-        if self._draw_handler_2d:
-            bpy.types.SpaceView3D.draw_handler_remove(self._draw_handler_2d, 'WINDOW')
-            self._draw_handler_2d = None
+        # Unregister this operator's GPU draw layers from the overlay manager.
+        from ..ui import overlay_manager
+        overlay_manager.unregister_layer(self._draw_3d_callback, '3D')
+        overlay_manager.unregister_layer(self._draw_2d_callback, '2D')
         global _pencil_state
         _pencil_state = None
 

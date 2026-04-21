@@ -72,18 +72,18 @@ class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        if not hasattr(context.scene, "floorplan"):
-            return False
-        return context.scene.floorplan.active_wall_id != ""
+        from .selection_state import _selection
+        return bool(_selection.wall_id)
 
     def draw(self, context):
         layout = self.layout
         settings = context.scene.floorplan
 
         from .. import _graph_store, find_floorplan_obj
+        from .selection_state import _selection
         obj = find_floorplan_obj(context)
 
-        wall_uuid = settings.active_wall_id
+        wall_uuid = _selection.wall_id
         wall_label = "Wall"
         if obj is not None and obj.name in _graph_store:
             sg, _, mapper = _graph_store[obj.name]

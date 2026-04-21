@@ -13,6 +13,7 @@ from ..utils.constants import (
     MIN_OPENING_WIDTH, MAX_OPENING_WIDTH,
     MIN_OPENING_HEIGHT, MAX_HEIGHT,
 )
+from ..ui.selection_state import _selection
 
 
 class FLOORPLAN_OT_add_opening(bpy.types.Operator):
@@ -184,7 +185,7 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
         wall_uuid = self.target_wall_id
         if not wall_uuid:
             # Fallback for direct execute() calls without invoke().
-            wall_uuid = context.scene.floorplan.active_wall_id
+            wall_uuid = _selection.wall_id
         if not wall_uuid:
             self.report({'WARNING'}, "No wall selected")
             return {'CANCELLED'}
@@ -276,7 +277,7 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
         # Snapshot the target wall so redo always targets the same wall,
         # even if the user selects a different wall in between.
         settings = context.scene.floorplan
-        wall_uuid = settings.active_wall_id
+        wall_uuid = _selection.wall_id
         self.target_wall_id = wall_uuid
         # Reset so a fresh invocation never inherits the UUID from a previous
         # one (Blender's REGISTER flag carries last-used property values into

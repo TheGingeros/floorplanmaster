@@ -12,6 +12,7 @@ from mathutils import Vector
 
 from ..core.sync import _compute_wall_quad
 from ..utils.math_helpers import point_in_polygon
+from ..ui.selection_state import _selection
 
 
 def _pick_element(context, sg, mx, my):
@@ -113,13 +114,13 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
             wall_uuid = result[1]
             wall = sg.get_wall(wall_uuid)
             if wall is None:
-                settings.active_wall_id = ""
+                _selection.deselect_all()
                 return {'FINISHED'}
 
-            # Populate active wall props without triggering the sync callback.
+            _selection.select_wall(wall_uuid)
+            # Populate editable props without triggering the sync callback.
             _addon._updating_wall_props = True
             try:
-                settings.active_wall_id = wall_uuid
                 settings.active_wall_thickness = wall.thickness
                 settings.active_wall_height = wall.height
             finally:
@@ -130,7 +131,7 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
             return {'FINISHED'}
 
         # Missed — clear selection and let Blender handle the click.
-        settings.active_wall_id = ""
+        _selection.deselect_all()
         settings.opening_items.clear()
         context.area.tag_redraw()
         return {'PASS_THROUGH'}
