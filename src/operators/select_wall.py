@@ -92,8 +92,7 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
 
     def invoke(self, context, event):
         from .. import find_floorplan_obj, _graph_store, reset_graphs_for_obj
-        import sys
-        _addon = sys.modules[__package__.rsplit('.', 1)[0]]
+        from ..ui.properties import set_wall_props_updating, populate_opening_items
 
         obj = find_floorplan_obj(context)
         if obj is None:
@@ -119,14 +118,14 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
 
             _selection.select_wall(wall_uuid)
             # Populate editable props without triggering the sync callback.
-            _addon._updating_wall_props = True
+            set_wall_props_updating(True)
             try:
                 settings.active_wall_thickness = wall.thickness
                 settings.active_wall_height = wall.height
             finally:
-                _addon._updating_wall_props = False
+                set_wall_props_updating(False)
 
-            _addon.populate_opening_items(settings, sg, wall_uuid)
+            populate_opening_items(settings, sg, wall_uuid)
             context.area.tag_redraw()
             return {'FINISHED'}
 
