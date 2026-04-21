@@ -69,6 +69,7 @@ class FLOORPLAN_OT_toggle_room(bpy.types.Operator):
 
     def execute(self, context):
         from .. import find_floorplan_obj
+        from .selection_state import _selection
 
         obj = find_floorplan_obj(context)
         if obj is None:
@@ -76,6 +77,14 @@ class FLOORPLAN_OT_toggle_room(bpy.types.Operator):
         key = f"room_expanded_{self.room_id}"
         currently_expanded = bool(obj.get(key, 0))
         obj[key] = 0 if currently_expanded else 1
+
+        if currently_expanded:
+            # Collapsing: remove viewport highlight if this room was highlighted.
+            if _selection.room_id == self.room_id and not _selection.room_viewport_selected:
+                _selection.deselect_all(context)
+        else:
+            # Expanding: highlight the room in the viewport (no top panel).
+            _selection.select_room(self.room_id, context, from_viewport=False)
 
         context.area.tag_redraw()
         return {'FINISHED'}
@@ -94,7 +103,9 @@ class FLOORPLAN_PT_room_properties(bpy.types.Panel):
     @classmethod
     def poll(cls, context):
         from .selection_state import _selection
-        return bool(_selection.room_id)
+        # Show only when the room was selected by clicking in the viewport,
+        # not when the room detail dropdown is open in the N-panel.
+        return bool(_selection.room_id) and _selection.room_viewport_selected
 
     def draw(self, context):
         layout = self.layout

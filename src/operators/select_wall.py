@@ -160,7 +160,7 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
             if room is None:
                 _selection.deselect_all(context)
                 return {'FINISHED'}
-            _selection.select_room(room_uuid, context)
+            _selection.select_room(room_uuid, context, from_viewport=True)
             # Populate active_room_name without triggering the sync callback.
             from ..ui.properties import set_room_props_updating
             set_room_props_updating(True)
