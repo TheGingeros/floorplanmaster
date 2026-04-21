@@ -22,11 +22,37 @@ from ..utils.constants import (
 
 _updating_wall_props = False
 _updating_opening_items = False
+_updating_room_props = False
 
 
 def set_wall_props_updating(val: bool) -> None:
     global _updating_wall_props
     _updating_wall_props = val
+
+
+def set_room_props_updating(val: bool) -> None:
+    global _updating_room_props
+    _updating_room_props = val
+
+
+def _on_room_name_update(self, context):
+    global _updating_room_props
+    if _updating_room_props:
+        return
+    from .selection_state import _selection
+    room_uuid = _selection.room_id
+    if not room_uuid:
+        return
+    from .. import find_floorplan_obj, _graph_store
+    from ..core.sync import persist_room_names
+    obj = find_floorplan_obj(context)
+    if obj is None or obj.name not in _graph_store:
+        return
+    sg, rg, mapper = _graph_store[obj.name]
+    rg.set_room_name(room_uuid, self.active_room_name)
+    # Keep the inline rooms-list custom property in sync.
+    obj[f"room_name_{room_uuid}"] = self.active_room_name
+    persist_room_names(obj, rg)
 
 
 def _on_wall_thickness_update(self, context):
@@ -354,6 +380,13 @@ class FloorPlanSettings(bpy.types.PropertyGroup):
         precision=2,
         unit='LENGTH',
         update=_on_wall_height_update,
+    )
+    # Active room selection — name editable via the Selected Room panel.
+    active_room_name: StringProperty(
+        name="Name",
+        description="Name of the selected room",
+        default="",
+        update=_on_room_name_update,
     )
     opening_items: CollectionProperty(
         name="Opening Items",

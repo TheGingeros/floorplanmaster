@@ -29,14 +29,32 @@ def _sync_room_names_to_object(obj, rg):
         del obj[k]
 
 
-def _push_room_names_from_object(obj, rg):
+def _push_room_names_from_object(obj, rg, context=None):
     # Push any user edits from object custom properties back into the RoomGraph.
+    # If context is provided, also persists changes and refreshes active_room_name.
+    changed = False
     for room in rg.get_all_rooms():
         key = f"room_name_{room.id}"
         if key in obj:
             stored = obj[key]
             if stored != room.name:
                 rg.set_room_name(room.id, stored)
+                changed = True
+    if changed:
+        from ..core.sync import persist_room_names
+        persist_room_names(obj, rg)
+        if context is not None:
+            from .selection_state import _selection
+            from .properties import set_room_props_updating
+            room_uuid = _selection.room_id
+            if room_uuid:
+                updated_room = rg.get_room(room_uuid)
+                if updated_room is not None:
+                    set_room_props_updating(True)
+                    try:
+                        context.scene.floorplan.active_room_name = updated_room.name
+                    finally:
+                        set_room_props_updating(False)
 
 
 # -- UI-only operator: toggle room expand/collapse in the N-panel --
@@ -51,7 +69,6 @@ class FLOORPLAN_OT_toggle_room(bpy.types.Operator):
 
     def execute(self, context):
         from .. import find_floorplan_obj
-        from .selection_state import _selection
 
         obj = find_floorplan_obj(context)
         if obj is None:
@@ -60,16 +77,52 @@ class FLOORPLAN_OT_toggle_room(bpy.types.Operator):
         currently_expanded = bool(obj.get(key, 0))
         obj[key] = 0 if currently_expanded else 1
 
-        if not currently_expanded:
-            # Expanding the entry → select this room in the viewport.
-            _selection.select_room(self.room_id, context)
-        else:
-            # Collapsing → deselect only if this room was the selected one.
-            if _selection.room_id == self.room_id:
-                _selection.deselect_all(context)
-
         context.area.tag_redraw()
         return {'FINISHED'}
+
+
+# -- Room Properties — separate top-level panel (appears when a room is selected) --
+
+class FLOORPLAN_PT_room_properties(bpy.types.Panel):
+    bl_label = "Selected Room"
+    bl_idname = "FLOORPLAN_PT_room_properties"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "FloorPlanMaster"
+    bl_order = 0
+
+    @classmethod
+    def poll(cls, context):
+        from .selection_state import _selection
+        return bool(_selection.room_id)
+
+    def draw(self, context):
+        layout = self.layout
+        settings = context.scene.floorplan
+
+        from .. import _graph_store, find_floorplan_obj
+        from .selection_state import _selection
+        obj = find_floorplan_obj(context)
+        room_uuid = _selection.room_id
+        if obj is None or obj.name not in _graph_store:
+            return
+        sg, rg, _ = _graph_store[obj.name]
+        room = rg.get_room(room_uuid)
+        if room is None:
+            return
+
+        layout.prop(settings, "active_room_name")
+        layout.separator()
+        col = layout.column(align=True)
+        for label_text in (
+            f"Area: {room.area:.2f} m²",
+            f"Perimeter: {room.perimeter:.2f} m",
+            f"Walls: {len(room.cycle)}",
+            f"Height: {room.height:.1f} m",
+        ):
+            row = col.row()
+            row.scale_y = 1.4
+            row.label(text=label_text)
 
 
 # -- Wall Properties — separate top-level panel (above main) --

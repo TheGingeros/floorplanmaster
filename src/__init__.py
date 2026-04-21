@@ -70,6 +70,8 @@ def reset_graphs_for_obj(obj):
         rg = RoomGraph(sg)
     if sg.get_all_walls():
         rg.sync_from_structural_graph()
+        from .core.sync import restore_room_names
+        restore_room_names(obj, rg)
     _graph_store[obj.name] = (sg, rg, mapper)
     return sg, rg, mapper
 
@@ -129,6 +131,24 @@ if _HAS_BPY:
                     reset_graphs_for_obj(obj)
 
     @bpy.app.handlers.persistent
+    def _depsgraph_update_handler(scene, depsgraph):
+        # Push room name edits from the rooms-list custom properties to the graph.
+        for obj in scene.objects:
+            if obj.get("_floorplan_graphs") is not None and obj.name in _graph_store:
+                sg_local, rg_local, _ = _graph_store[obj.name]
+                changed = False
+                for room in rg_local.get_all_rooms():
+                    key = f"room_name_{room.id}"
+                    if key in obj:
+                        stored = str(obj[key])
+                        if stored != room.name:
+                            rg_local.set_room_name(room.id, stored)
+                            changed = True
+                if changed:
+                    from .core.sync import persist_room_names
+                    persist_room_names(obj, rg_local)
+
+    @bpy.app.handlers.persistent
     def _load_post_handler(dummy):
         _rebuild_graph_store()
 
@@ -158,11 +178,14 @@ if _HAS_BPY:
         overlay_manager.register_layer(draw_room_selection, '3D')
 
         bpy.app.handlers.load_post.append(_load_post_handler)
+        bpy.app.handlers.depsgraph_update_post.append(_depsgraph_update_handler)
         _rebuild_graph_store()
 
     def unregister():
         if _load_post_handler in bpy.app.handlers.load_post:
             bpy.app.handlers.load_post.remove(_load_post_handler)
+        if _depsgraph_update_handler in bpy.app.handlers.depsgraph_update_post:
+            bpy.app.handlers.depsgraph_update_post.remove(_depsgraph_update_handler)
 
         overlay_manager.unregister()
 

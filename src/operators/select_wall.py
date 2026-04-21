@@ -156,10 +156,18 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
 
         if result is not None and result[0] == 'room':
             room_uuid = result[1]
+            room = rg.get_room(room_uuid)
+            if room is None:
+                _selection.deselect_all(context)
+                return {'FINISHED'}
             _selection.select_room(room_uuid, context)
-            # Expand this room's entry in the N-panel.
-            if obj is not None:
-                obj[f"room_expanded_{room_uuid}"] = 1
+            # Populate active_room_name without triggering the sync callback.
+            from ..ui.properties import set_room_props_updating
+            set_room_props_updating(True)
+            try:
+                settings.active_room_name = room.name
+            finally:
+                set_room_props_updating(False)
             settings.active_wall_thickness = 0.0
             settings.active_wall_height = 0.0
             settings.opening_items.clear()

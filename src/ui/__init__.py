@@ -10,6 +10,7 @@ if _HAS_BPY:
     from .panels import (
         FLOORPLAN_OT_toggle_room,
         FLOORPLAN_PT_wall_properties,
+        FLOORPLAN_PT_room_properties,
         FLOORPLAN_PT_main,
         FLOORPLAN_PT_tools,
         FLOORPLAN_PT_rooms,
@@ -20,6 +21,7 @@ if _HAS_BPY:
         return [
             FLOORPLAN_OT_toggle_room,
             FLOORPLAN_PT_wall_properties,
+            FLOORPLAN_PT_room_properties,
             FLOORPLAN_PT_main,
             FLOORPLAN_PT_tools,
             FLOORPLAN_PT_rooms,

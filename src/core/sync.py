@@ -416,11 +416,25 @@ class AttributeSync:
 
 # Convenience function called from operators after any L1/L2 change.
 def sync_graph_to_mesh(obj, sg, rg, id_mapper=None):
+    # Push any room name edits from object custom properties before sync.
+    for room in rg.get_all_rooms():
+        key = f"room_name_{room.id}"
+        if key in obj:
+            stored = str(obj[key])
+            if stored != room.name:
+                rg.set_room_name(room.id, stored)
+
     if id_mapper is None:
         id_mapper = IdMapper()
     syncer = AttributeSync(obj, sg, rg, id_mapper=id_mapper)
     syncer.full_sync()
     _persist_graphs(obj, sg, rg, id_mapper)
+
+    # Initialize room name custom properties for newly detected rooms.
+    for room in rg.get_all_rooms():
+        key = f"room_name_{room.id}"
+        if key not in obj:
+            obj[key] = room.name
 
 
 # Persistence: store graph data as JSON on the Blender object so that
@@ -499,3 +513,34 @@ def reconstruct_graphs_from_mesh(obj):
     id_mapper._next = max(id_mapper._reverse.keys(), default=0) + 1
 
     return sg, rg, id_mapper
+
+
+def persist_room_names(obj, rg):
+    # Persist room names keyed by canonical cycle key (tuple of junction IDs).
+    # Cycle keys are stable across undo/reload because junction IDs are
+    # preserved in the _floorplan_graphs JSON property.
+    names = {}
+    for room in rg.get_all_rooms():
+        key = RoomGraph._cycle_key(room.cycle)
+        names[json.dumps(list(key))] = room.name
+    obj["_floorplan_room_names"] = json.dumps(names)
+
+
+def restore_room_names(obj, rg):
+    # Apply persisted room names after rg.sync_from_structural_graph() has run.
+    # Matches rooms by stable cycle key so names survive undo and addon reload.
+    raw = obj.get("_floorplan_room_names")
+    if not raw:
+        return
+    try:
+        names = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        return
+    for key_json, name in names.items():
+        try:
+            cycle_key = tuple(json.loads(key_json))
+        except Exception:
+            continue
+        room_id = rg._cycle_room_map.get(cycle_key)
+        if room_id:
+            rg.set_room_name(room_id, name)
