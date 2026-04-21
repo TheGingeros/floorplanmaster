@@ -560,49 +560,20 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         self._floor_tris_new = self._detect_new_floors(junctions_by_id, new_ids)
 
     def _detect_new_floors(self, junctions_by_id, new_ids):
-        # Compare cycles that existed BEFORE this session (old walls only) with
-        # cycles that exist AFTER (all walls).  Only cycles absent from the
-        # "before" set are genuinely new rooms — existing rooms that happen to
-        # share a boundary wall with a new wall must NOT receive a preview floor
-        # (they already have a synced floor mesh at Z=0 and the semi-transparent
-        # overlay would tint them).  Runs entirely in pure Python — no bpy.
+        # Determine which room floor polygons are genuinely new this session.
+        # "Before" set: rooms already committed in the room graph (populated at
+        # invoke() time from the mesh — reliable and avoids a second cycle
+        # detection pass over a temp graph with the same embedding bug).
+        # "After" set: all cycles in the current structural graph (including
+        # new walls), detected with minimum_cycle_basis — no outer-face issue.
         if not new_ids:
             return []
-        from ..core.structural_graph import StructuralGraph
 
-        all_walls = self._sg.get_all_walls()
-        old_walls = [w for w in all_walls if w.id not in new_ids]
+        # Rooms that existed before this drawing session.
+        before_cycles = {frozenset(r.cycle) for r in self._rg.get_all_rooms()}
 
-        def _build_tmp(walls):
-            tmp = StructuralGraph()
-            needed = set()
-            for w in walls:
-                needed.add(w.junction_start)
-                needed.add(w.junction_end)
-            for jid in needed:
-                j = junctions_by_id.get(jid)
-                if j is None:
-                    continue
-                try:
-                    tmp.add_junction(j.position, junction_id=jid)
-                except Exception:
-                    pass
-            for w in walls:
-                try:
-                    tmp.add_wall(w.junction_start, w.junction_end,
-                                 thickness=w.thickness, height=w.height)
-                except Exception:
-                    pass
-            return tmp
-
-        # Cycles that existed before this drawing session.
-        before_cycles = set()
-        if old_walls:
-            for cycle in _build_tmp(old_walls).detect_minimal_cycles():
-                before_cycles.add(frozenset(cycle))
-
-        # Cycles that exist now (all walls).
-        after_cycles = _build_tmp(all_walls).detect_minimal_cycles()
+        # All cycles in the current graph (old + new walls).
+        after_cycles = self._sg.detect_minimal_cycles()
         if not after_cycles:
             return []
 

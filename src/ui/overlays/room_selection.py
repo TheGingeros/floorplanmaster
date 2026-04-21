@@ -12,7 +12,7 @@ from ..selection_state import _selection
 from ... import _graph_store, find_floorplan_obj
 
 # Small Z lift to avoid z-fighting with the mesh floor face at Z=0.
-_FLOOR_Z = 0.002
+_FLOOR_Z = 0.005
 # Expand for wall OBB wireframe — matches wall_selection.py constant.
 _EXPAND = 0.03
 

@@ -384,31 +384,22 @@ class StructuralGraph:
 
     def detect_minimal_cycles(self):
         # Detect all minimal (face) cycles in the planar graph.
-        # Uses NetworkX planar embedding for face traversal when possible,
-        # falls back to minimum_cycle_basis for non-planar or disconnected graphs.
-        # Returns list of cycles, each cycle is a list of junction IDs in order.
+        # Uses minimum_cycle_basis (MCB) — an algebraic approach that returns
+        # exactly the inner face cycles without any outer-boundary face.
+        # This avoids the combinatorial planar embedding path which can
+        # mis-order neighbors geometrically and produce a self-intersecting
+        # "outer face" whose shoelace area is smaller than an inner room,
+        # causing the wrong face to be dropped and adjacent rooms to be merged.
         #
-        # Leaf pruning is applied before dispatch: dangling wall segments
-        # (degree-1 nodes) are stripped so the planar embedding only sees
-        # nodes that belong to closed cycles.  Without pruning, drawing a
-        # single open wall from a junction of an existing room would make
-        # NetworkX route the dangling node inside the existing face, causing
-        # traverse_face() to return a cycle with a repeated junction (the
-        # shared endpoint appears twice).  That invalid cycle is then used
-        # as the room's floor polygon, which: (a) overwrites the old room in
-        # the room graph, and (b) makes bm.faces.new() raise ValueError
-        # (duplicate vertex), silently swallowed — leaving no floor face in
-        # the mesh until the new room is fully closed.
+        # Leaf pruning is applied first: dangling wall segments (degree-1 nodes)
+        # are stripped so MCB only sees nodes belonging to closed cycles.
         if self._graph.number_of_edges() < 3:
             return []
         pruned = self._prune_leaves(self._graph)
         if pruned.number_of_edges() < 3:
             return []
 
-        try:
-            return self._detect_cycles_planar(pruned)
-        except nx.NetworkXException:
-            return self._detect_cycles_fallback(pruned)
+        return self._detect_cycles_fallback(pruned)
 
     def _detect_cycles_planar(self, graph):
         # Use the planar embedding traverse_face() to enumerate all faces.
