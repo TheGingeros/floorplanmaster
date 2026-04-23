@@ -340,6 +340,8 @@ class AttributeSync:
 
         bm.faces.ensure_lookup_table()
 
+        print(f"[FPM] rooms detected: {len(rooms)}, floor faces created: {len(rid_fidx)}")
+
         self._wid_fidx = wid_fidx
         self._rid_fidx = rid_fidx
         self._oid_fidx = oid_fidx
