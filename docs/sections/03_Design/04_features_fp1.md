@@ -52,7 +52,7 @@ Veškeré kreslení préview probíhá v GPU draw_handler registrovaném na 3D V
 - náhled stěny: čára od posledního junctionu ke kurzoru; odlišná barva od potvrzených stěn
 - HUD: délka navrhované stěny a úhel k poslednímu úseku (aktualizováno při každém pohybu myši); ve stavu ČEKÁNÍ zobrazuje zprávu „Waiting for input"
 - snap indikátor: barevný kruh u kurzoru při aktivním snapu
-- nápověda kláves: ikony kláves a myši zobrazené v dolní stavové liště Blenderu (STATUSBAR_HT_header); stav ČEKÁNÍ zobrazuje LMB / Z / ESC; stav KRESLENÍ zobrazuje aktualizovanou sadu; HUD nápovědu kláves nezobrazuje
+- nápověda kláves: ikony kláves a myši zobrazené v dolní stavové liště Blenderu (STATUSBAR_HT_header); stav ČEKÁNÍ zobrazuje LMB / Z / Enter / ESC; stav KRESLENÍ zobrazuje LMB / RMB / Z / Enter / ESC; HUD nápovědu kláves nezobrazuje
 
 ## Způsob generování stěny podle preview čáry *(should-have)*
 

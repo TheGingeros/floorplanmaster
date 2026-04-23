@@ -19,8 +19,6 @@ classDiagram
         +float height
         +int material_id
         +list openings
-        +bool is_external
-        +bool is_bearing
     }
     class StructuralGraph {
         +add_junction(position) Junction

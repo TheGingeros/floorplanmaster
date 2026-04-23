@@ -27,8 +27,8 @@ Technicky je nápověda implementována registrací draw funkce přes `bpy.types
 
 | Stav automatu | Nápověda v liště |
 | :--- | :--- |
-| **ČEKÁNÍ** | `LMB` Place first junction · `Z` Undo · `ESC` Exit tool |
-| **KRESLENÍ** | `LMB` Place next wall · `Z` Undo last wall · `ESC` Cancel line |
+| **ČEKÁNÍ** | `LMB` Place first junction · `Z` Undo · `Enter` Confirm · `ESC` Abort |
+| **KRESLENÍ** | `LMB` Place next junction · `RMB` Cancel line · `Z` Undo · `Enter` Confirm · `ESC` Abort |
 
 Při ukončení operátoru se draw funkce z hlavičky odregistruje a lišta se vrátí do výchozího stavu Blenderu.
 
