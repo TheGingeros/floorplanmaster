@@ -332,6 +332,18 @@ class AttributeSync:
                     face_verts.append(bm.verts[vidx])
             if len(face_verts) >= 3:
                 try:
+                    # Ensure CCW winding so the face normal points +Z.
+                    # nx.find_cycle() traversal order is non-deterministic across
+                    # platforms/versions; compute signed shoelace area and reverse
+                    # if clockwise (signed < 0) before creating the face.
+                    pts = [v.co for v in face_verts]
+                    n = len(pts)
+                    signed = sum(
+                        pts[i].x * pts[(i + 1) % n].y - pts[(i + 1) % n].x * pts[i].y
+                        for i in range(n)
+                    )
+                    if signed < 0:
+                        face_verts.reverse()
                     bm.faces.new(face_verts)
                     rid_fidx[room.id] = face_count
                     face_count += 1
@@ -339,8 +351,6 @@ class AttributeSync:
                     pass
 
         bm.faces.ensure_lookup_table()
-
-        print(f"[FPM] rooms detected: {len(rooms)}, floor faces created: {len(rid_fidx)}")
 
         self._wid_fidx = wid_fidx
         self._rid_fidx = rid_fidx
