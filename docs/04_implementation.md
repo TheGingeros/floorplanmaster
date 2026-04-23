@@ -1,26 +1,8 @@
 # 4. Implementace
-úvod todo
+todo úvod
 
-## Vývoj addonu do Blenderu
-- jak se píše addon do blenderu obecně
-- blender api
-- python
-## Organizace modulů
-- struktura souborů projektu
-
-## Jednotlivé vrstvy
-- popis implementace vrstvy 1
-- popis implementace vrstvy 2
-- popis implementace vrstvy 3
-- popis implementace propojení jednotlivých vrstev
-
-## Pencil Tool Modal Operator
-- popis implementace modalního operátoru a integrace do vrstev
-
-## Insert Room Operator
-- popis operátoru přidání místností
-
-## Výběr stěn/místností ve viewportu a úprava jejich parametrů
-- popis implementace raycastu výběru stěn a napojení na zbytek implementace
-
-## todo
+## [4.1 Addon pro Blender](./sections/04_Implementation/01_addon.md)
+## [4.2 Organizace modulů](./sections/04_Implementation/02_structure.md)
+## [4.3 Vrstvy](./sections/04_Implementation/03_layers.md)
+## [4.4 Funkce](./sections/04_Implementation/04_features.md)
+## [4.5 Uživatelské rozhraní](./sections/04_Implementation/05_ui.md)
