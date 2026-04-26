@@ -116,6 +116,25 @@ def _compute_wall_quad(wall, junctions_by_id, sg):
         if not neighbors:
             return raw  # free end — perpendicular cap
 
+        # Two-wall straight-through junction (degree 2): avoid mitering.
+        # After topology edits (e.g. deleting a room), nearly collinear walls
+        # can leave tiny numerical angle error that creates a visible bevel.
+        # Keep a square cap in this case.
+        if len(neighbors) == 1:
+            nb = neighbors[0]
+            other_jid = nb.junction_end if nb.junction_start == junction.id else nb.junction_start
+            other_j = junctions_by_id.get(other_jid)
+            if other_j is not None:
+                nbdx = other_j.position[0] - jx
+                nbdy = other_j.position[1] - jy
+                nb_L = math.sqrt(nbdx * nbdx + nbdy * nbdy)
+                if nb_L >= 1e-8:
+                    nb_ux, nb_uy = nbdx / nb_L, nbdy / nb_L
+                    dot = wall_dir[0] * nb_ux + wall_dir[1] * nb_uy
+                    cross = wall_dir[0] * nb_uy - wall_dir[1] * nb_ux
+                    if dot < -0.95 and abs(cross) < 0.05:
+                        return raw
+
         best = raw
         best_t = 0.0  # signed distance from raw along wall_dir; closest wins
 
@@ -161,6 +180,14 @@ def _compute_wall_quad(wall, junctions_by_id, sg):
 
             # t = signed distance from raw point along wall direction.
             t = (pt[0] - raw[0]) * wall_dir[0] + (pt[1] - raw[1]) * wall_dir[1]
+
+            # Guard against extreme miters on near-collinear configurations.
+            # After topology edits (e.g. room deletion), tiny angle differences
+            # can produce far-away intersections that look like stray bevels.
+            # If the corner shift is too large, keep the perpendicular cap.
+            miter_limit = 2.0 * max(ht, nb_ht)
+            if abs(t) > miter_limit:
+                continue
 
             if best is raw or abs(t) < abs(best_t):
                 best = pt
