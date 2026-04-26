@@ -3,6 +3,7 @@
 # References: 05_ui_ux_npanel.md
 
 import bpy
+import json
 
 
 def _sync_room_names_to_object(obj, rg):
@@ -301,7 +302,7 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
         for room in rooms:
             box = layout.box()
 
-            # Header row: expand toggle + editable name
+            # Header row: expand toggle + editable name + remove button
             header = box.row(align=True)
             expanded = bool(obj.get(f"room_expanded_{room.id}", 0))
             toggle = header.operator(
@@ -316,6 +317,10 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
                 header.prop(obj, f'["{key}"]', text="")
             else:
                 header.label(text=room.name)
+
+            remove_op = header.operator("floorplan.remove_room", text="", icon='X')
+            remove_op.room_id = room.id
+            remove_op.room_cycle_key = json.dumps(list(rg._cycle_key(room.cycle)))
 
             if expanded:
                 col = box.column(align=True)

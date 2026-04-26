@@ -45,6 +45,38 @@ def make_two_rooms():
     return sg, rg, [j1, j2, j3, j4, j5, j6]
 
 
+def make_l_shape_three_rooms():
+    # Three 3x3 rooms in an L shape where the middle-lower room shares
+    # one wall with the left room and one wall with the upper room.
+    sg = StructuralGraph()
+    j1 = sg.add_junction((0, 0))
+    j2 = sg.add_junction((3, 0))
+    j3 = sg.add_junction((6, 0))
+    j4 = sg.add_junction((6, 3))
+    j5 = sg.add_junction((6, 6))
+    j6 = sg.add_junction((3, 6))
+    j7 = sg.add_junction((3, 3))
+    j8 = sg.add_junction((0, 3))
+
+    # Outer shell.
+    sg.add_wall(j1.id, j2.id)
+    sg.add_wall(j2.id, j3.id)
+    sg.add_wall(j3.id, j4.id)
+    sg.add_wall(j4.id, j5.id)
+    sg.add_wall(j5.id, j6.id)
+    sg.add_wall(j6.id, j7.id)
+    sg.add_wall(j7.id, j8.id)
+    sg.add_wall(j8.id, j1.id)
+
+    # Shared walls around the middle room.
+    sg.add_wall(j2.id, j7.id)  # shared with left room
+    sg.add_wall(j7.id, j4.id)  # shared with upper room
+
+    rg = RoomGraph(sg)
+    rg.sync_from_structural_graph()
+    return sg, rg
+
+
 # Room creation via sync
 
 class TestRoomCreation:
@@ -215,3 +247,62 @@ class TestRoomMetadata:
         room = rg.get_all_rooms()[0]
         rg.set_room_name(room.id, "Kitchen")
         assert room.name == "Kitchen"
+
+
+class TestRoomDeletion:
+    def test_delete_single_room_removes_all_walls(self):
+        sg, rg, _ = make_single_room()
+        room = rg.get_all_rooms()[0]
+
+        removed = rg.delete_room(room.id)
+
+        assert len(removed) == 4
+        assert rg.get_all_rooms() == []
+        assert sg.wall_count() == 0
+        assert sg.junction_count() == 0
+
+    def test_delete_middle_room_keeps_shared_walls(self):
+        sg, rg = make_l_shape_three_rooms()
+        rooms = rg.get_all_rooms()
+        assert len(rooms) == 3
+
+        # The middle-lower room has centroid around (4.5, 1.5).
+        room_b = min(rooms, key=lambda r: (r.centroid[0] - 4.5) ** 2 + (r.centroid[1] - 1.5) ** 2)
+
+        j_a = min(sg.get_all_junctions(), key=lambda j: (j.position[0] - 3.0) ** 2 + (j.position[1] - 0.0) ** 2)
+        j_b = min(sg.get_all_junctions(), key=lambda j: (j.position[0] - 3.0) ** 2 + (j.position[1] - 3.0) ** 2)
+        j_c = min(sg.get_all_junctions(), key=lambda j: (j.position[0] - 6.0) ** 2 + (j.position[1] - 3.0) ** 2)
+
+        shared_ab = sg.get_wall_between(j_a.id, j_b.id)
+        shared_bc = sg.get_wall_between(j_b.id, j_c.id)
+        assert shared_ab is not None
+        assert shared_bc is not None
+
+        rg.delete_room(room_b.id)
+
+        # Shared walls with neighboring rooms must remain.
+        assert sg.get_wall(shared_ab.id) is not None
+        assert sg.get_wall(shared_bc.id) is not None
+
+        # Two rooms should remain after deleting the middle one.
+        assert len(rg.get_all_rooms()) == 2
+
+    def test_delete_room_removes_non_shared_boundary_walls(self):
+        sg, rg = make_l_shape_three_rooms()
+        rooms = rg.get_all_rooms()
+        room_b = min(rooms, key=lambda r: (r.centroid[0] - 4.5) ** 2 + (r.centroid[1] - 1.5) ** 2)
+
+        # Non-shared walls of middle room: bottom and right.
+        j_bottom_l = min(sg.get_all_junctions(), key=lambda j: (j.position[0] - 3.0) ** 2 + (j.position[1] - 0.0) ** 2)
+        j_bottom_r = min(sg.get_all_junctions(), key=lambda j: (j.position[0] - 6.0) ** 2 + (j.position[1] - 0.0) ** 2)
+        j_right_t = min(sg.get_all_junctions(), key=lambda j: (j.position[0] - 6.0) ** 2 + (j.position[1] - 3.0) ** 2)
+
+        bottom = sg.get_wall_between(j_bottom_l.id, j_bottom_r.id)
+        right = sg.get_wall_between(j_bottom_r.id, j_right_t.id)
+        assert bottom is not None
+        assert right is not None
+
+        rg.delete_room(room_b.id)
+
+        assert sg.get_wall(bottom.id) is None
+        assert sg.get_wall(right.id) is None

@@ -133,6 +133,44 @@ class RoomGraph:
         if room:
             room.name = name
 
+    def delete_room(self, room_id):
+        # Delete one room by removing only its non-shared boundary walls.
+        # Shared walls (between two rooms) are kept intact.
+        room = self._rooms.get(room_id)
+        if room is None:
+            return []
+
+        edge_usage = self._build_edge_usage()
+        removed_wall_ids = []
+        touched_junctions = set()
+
+        n = len(room.cycle)
+        for i in range(n):
+            jid_a = room.cycle[i]
+            jid_b = room.cycle[(i + 1) % n]
+            edge_key = tuple(sorted((jid_a, jid_b)))
+
+            # Preserve boundary edges shared with another room.
+            if edge_usage.get(edge_key, 0) > 1:
+                continue
+
+            wall = self._sg.get_wall_between(jid_a, jid_b)
+            if wall is None:
+                continue
+
+            touched_junctions.add(wall.junction_start)
+            touched_junctions.add(wall.junction_end)
+            self._sg.remove_wall(wall.id)
+            removed_wall_ids.append(wall.id)
+
+        # Remove newly isolated junctions to keep Layer 1 clean.
+        for jid in touched_junctions:
+            if len(self._sg.get_walls_for_junction(jid)) == 0:
+                self._sg.remove_junction(jid)
+
+        self.sync_from_structural_graph()
+        return removed_wall_ids
+
     # Adjacency queries
     def get_adjacencies(self):
         return list(self._adjacencies)
@@ -185,6 +223,15 @@ class RoomGraph:
             if wall and wall.height > max_h:
                 max_h = wall.height
         return max_h
+
+    def _build_edge_usage(self):
+        edge_usage = {}
+        for room in self._rooms.values():
+            n = len(room.cycle)
+            for i in range(n):
+                ek = tuple(sorted((room.cycle[i], room.cycle[(i + 1) % n])))
+                edge_usage[ek] = edge_usage.get(ek, 0) + 1
+        return edge_usage
 
     def _rebuild_adjacencies(self):
         # Two rooms are adjacent if they share at least one wall (edge).

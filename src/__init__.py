@@ -152,6 +152,17 @@ if _HAS_BPY:
     def _load_post_handler(dummy):
         _rebuild_graph_store()
 
+    @bpy.app.handlers.persistent
+    def _undo_post_handler(dummy):
+        # Blender undo restores mesh/custom properties but not Python globals.
+        # Rebuild in-memory graphs so RoomGraph matches the undo-restored mesh.
+        _rebuild_graph_store()
+
+    @bpy.app.handlers.persistent
+    def _redo_post_handler(dummy):
+        # Same reasoning as undo: Python cache must follow restored Blender data.
+        _rebuild_graph_store()
+
     _addon_classes = [
         OpeningItem,
         FloorPlanSettings,
@@ -178,12 +189,18 @@ if _HAS_BPY:
         overlay_manager.register_layer(draw_room_selection, '3D')
 
         bpy.app.handlers.load_post.append(_load_post_handler)
+        bpy.app.handlers.undo_post.append(_undo_post_handler)
+        bpy.app.handlers.redo_post.append(_redo_post_handler)
         bpy.app.handlers.depsgraph_update_post.append(_depsgraph_update_handler)
         _rebuild_graph_store()
 
     def unregister():
         if _load_post_handler in bpy.app.handlers.load_post:
             bpy.app.handlers.load_post.remove(_load_post_handler)
+        if _undo_post_handler in bpy.app.handlers.undo_post:
+            bpy.app.handlers.undo_post.remove(_undo_post_handler)
+        if _redo_post_handler in bpy.app.handlers.redo_post:
+            bpy.app.handlers.redo_post.remove(_redo_post_handler)
         if _depsgraph_update_handler in bpy.app.handlers.depsgraph_update_post:
             bpy.app.handlers.depsgraph_update_post.remove(_depsgraph_update_handler)
 
