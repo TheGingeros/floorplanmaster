@@ -95,6 +95,48 @@ def _junction_entries(junction, junctions_by_id, sg):
     return entries
 
 
+def _junction_polygon_corners(junction, junctions_by_id, sg):
+    # Compute the N-gon that fills the gap at a junction with N>=3 walls.
+    # Returns a list of (x, y) in CCW order, or [] when no fill is needed.
+    #
+    # Each corner is the intersection of two angularly-adjacent walls' inner
+    # side-lines: corner[i] = wall[i].left ∩ wall[i+1].right (CCW order).
+    # This matches exactly what _corner_at_junction produces for wall endpoints,
+    # so the polygon tiles seamlessly with the surrounding wall quads.
+    jx, jy = junction.position
+    entries = _junction_entries(junction, junctions_by_id, sg)
+
+    if len(entries) < 3:
+        return []
+
+    N = len(entries)
+    corners = []
+    for i in range(N):
+        cur = entries[i]
+        nxt = entries[(i + 1) % N]
+
+        cur_left_off  = ( cur[4] * cur[6],  cur[5] * cur[6])
+        nxt_right_off = (-nxt[4] * nxt[6], -nxt[5] * nxt[6])
+
+        p1 = (jx + cur_left_off[0],  jy + cur_left_off[1])
+        p2 = (jx + nxt_right_off[0], jy + nxt_right_off[1])
+
+        pt = _line_intersect(p1, (cur[2], cur[3]), p2, (nxt[2], nxt[3]))
+        if pt is None:
+            pt = p1   # parallel / collinear — boundary is a shared edge
+
+        corners.append(pt)
+
+    # Remove consecutive duplicates (collinear wall pair collapses a corner).
+    unique = []
+    for c in corners:
+        if unique and abs(c[0] - unique[-1][0]) < 1e-6 and abs(c[1] - unique[-1][1]) < 1e-6:
+            continue
+        unique.append(c)
+
+    return unique if len(unique) >= 3 else []
+
+
 def _corner_at_junction(junction, target_wall, is_start, ux, uy, nx, ny, ht,
                          side_off, junctions_by_id, sg):
     # Compute one corner of target_wall at the given junction using angular sort.
@@ -368,11 +410,32 @@ class AttributeSync:
             except ValueError:
                 pass
 
+        # Junction fill faces — one polygon per T/X joint (N>=3 walls).
+        # GN extrudes these exactly like wall quads, sealing the top gap.
+        jid_fidx = {}
+        for junction in junctions:
+            corners = _junction_polygon_corners(junction, junctions_by_id, self.sg)
+            if not corners:
+                continue
+            verts = [bm.verts.new((cx, cy, 0.0)) for cx, cy in corners]
+            bm.verts.ensure_lookup_table()
+            # Ensure CCW winding so the normal points +Z.
+            n = len(verts)
+            pts = [v.co for v in verts]
+            signed = sum(
+                pts[i].x * pts[(i + 1) % n].y - pts[(i + 1) % n].x * pts[i].y
+                for i in range(n)
+            )
+            if signed < 0:
+                verts.reverse()
+            try:
+                bm.faces.new(verts)
+                jid_fidx[junction.id] = face_count
+                face_count += 1
+            except ValueError:
+                pass
+
         # Opening cutter boxes — 6-face watertight box per opening.
-        # Creating a proper closed manifold with consistent outward normals
-        # is critical for the EXACT boolean solver to produce clean results.
-        # ExtrudeMesh leaves the bottom face normal pointing inward, which
-        # breaks boolean; building boxes in Python avoids this entirely.
         oid_fidx = {}
         for w in walls:
             for op in w.openings:
@@ -449,6 +512,7 @@ class AttributeSync:
         self._wid_fidx = wid_fidx
         self._rid_fidx = rid_fidx
         self._oid_fidx = oid_fidx
+        self._jid_fidx = jid_fidx
         self._bm = bm
 
     # Phase 2: write named attributes on face domain.
@@ -490,6 +554,16 @@ class AttributeSync:
             for fidx in fidx_list:
                 is_wall_attr.data[fidx].value = 0
                 is_opening_attr.data[fidx].value = 1
+
+        # Junction fill faces — extruded the same way as wall quads.
+        for jid, fidx in self._jid_fidx.items():
+            walls_here = self.sg.get_walls_for_junction(jid)
+            h = min(w.height for w in walls_here) if walls_here else 0.0
+            is_wall_attr.data[fidx].value = 1
+            is_opening_attr.data[fidx].value = 0
+            wid_attr.data[fidx].value = 0
+            wheight_attr.data[fidx].value = h
+            wthick_attr.data[fidx].value = 0
 
         for room in rooms:
             fidx = self._rid_fidx.get(room.id)
