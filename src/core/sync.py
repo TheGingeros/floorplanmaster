@@ -260,6 +260,73 @@ def _compute_opening_cutter_quad(opening, wall, junctions_by_id):
     return (p0, p1, p2, p3, z, effective_height)
 
 
+def _compute_room_inner_polygon(room, sg, junctions_by_id):
+    # Build a room floor polygon on the interior wall boundary.
+    # Each edge is offset from its centerline toward the room centroid by
+    # half wall thickness; corner points are intersections of neighboring
+    # interior-side lines.
+    cycle = room.cycle
+    n = len(cycle)
+    if n < 3:
+        return None
+
+    cx, cy = room.centroid
+    edge_lines = []
+
+    for i in range(n):
+        jid_a = cycle[i]
+        jid_b = cycle[(i + 1) % n]
+
+        wall = sg.get_wall_between(jid_a, jid_b)
+        j_a = junctions_by_id.get(jid_a)
+        j_b = junctions_by_id.get(jid_b)
+        if wall is None or j_a is None or j_b is None:
+            return None
+
+        sx, sy = j_a.position
+        ex, ey = j_b.position
+        dx = ex - sx
+        dy = ey - sy
+        L = math.sqrt(dx * dx + dy * dy)
+        if L < 1e-8:
+            return None
+
+        ux, uy = dx / L, dy / L
+        nx, ny = _perp(dx, dy)
+
+        # Decide which side is interior by testing the room centroid against
+        # the oriented centerline normal.
+        signed = (cx - sx) * nx + (cy - sy) * ny
+        side = 1.0 if signed >= 0.0 else -1.0
+        ht = wall.thickness / 2.0
+        offx, offy = nx * ht * side, ny * ht * side
+
+        edge_lines.append(((sx + offx, sy + offy), (ux, uy), (offx, offy)))
+
+    inner_pts = []
+    for i in range(n):
+        prev_line = edge_lines[(i - 1) % n]
+        next_line = edge_lines[i]
+
+        p1, d1, prev_off = prev_line
+        p2, d2, next_off = next_line
+        pt = _line_intersect(p1, d1, p2, d2)
+
+        if pt is None:
+            # Near-parallel neighbors (or numerical issues): fallback to a
+            # stable shifted junction point using mean offset.
+            j = junctions_by_id.get(cycle[i])
+            if j is None:
+                return None
+            ox = (prev_off[0] + next_off[0]) * 0.5
+            oy = (prev_off[1] + next_off[1]) * 0.5
+            pt = (j.position[0] + ox, j.position[1] + oy)
+
+        inner_pts.append(pt)
+
+    return inner_pts
+
+
 # Main sync class operating on one Blender object.
 class AttributeSync:
 
@@ -339,24 +406,28 @@ class AttributeSync:
                         pass
                 oid_fidx[op.id] = list(range(first_fidx, face_count))
 
-        # Room centerline faces (floor polygons) — use junction positions.
+        # Room floor faces (interior boundary polygons).
         # These are separate faces tagged is_wall=0 so GN can filter them.
         # Note: door cutters now start at z=+0.01 (above Z=0), so the wall
         # solid's bottom face is preserved at door positions — no threshold
         # face is needed to fill the gap at floor level.
-        jid_vidx = {}
-        for i, j in enumerate(junctions):
-            bm.verts.new((j.position[0], j.position[1], 0.0))
-            jid_vidx[j.id] = wall_vert_count + i
-        bm.verts.ensure_lookup_table()
-
         rid_fidx = {}
         for room in rooms:
+            inner_poly = _compute_room_inner_polygon(room, self.sg, junctions_by_id)
             face_verts = []
-            for jid in room.cycle:
-                vidx = jid_vidx.get(jid)
-                if vidx is not None:
-                    face_verts.append(bm.verts[vidx])
+
+            if inner_poly is not None:
+                for x, y in inner_poly:
+                    face_verts.append(bm.verts.new((x, y, 0.0)))
+            else:
+                # Fallback to centerline cycle if interior polygon cannot be
+                # computed for a degenerate topology corner case.
+                for jid in room.cycle:
+                    j = junctions_by_id.get(jid)
+                    if j is not None:
+                        face_verts.append(bm.verts.new((j.position[0], j.position[1], 0.0)))
+
+            bm.verts.ensure_lookup_table()
             if len(face_verts) >= 3:
                 try:
                     # Ensure CCW winding so the face normal points +Z.

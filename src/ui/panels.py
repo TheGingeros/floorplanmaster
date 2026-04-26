@@ -262,6 +262,8 @@ class FLOORPLAN_PT_tools(bpy.types.Panel):
         layout.operator("floorplan.pencil_tool", text="Draw with Pencil", icon='GREASEPENCIL')
         layout.separator()
         layout.operator("floorplan.insert_room", text="Insert Room", icon='MESH_PLANE')
+        layout.separator()
+        layout.operator("floorplan.finalize", text="Bake", icon='RENDER_RESULT')
 
 
 # -- Section: Rooms --
