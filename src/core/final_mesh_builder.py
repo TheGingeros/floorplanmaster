@@ -6,7 +6,7 @@ import math
 import bpy
 import bmesh
 
-from .sync import _compute_wall_quad, _compute_room_inner_polygon
+from .sync import _compute_wall_quad, _compute_room_inner_polygon, _junction_entries, _line_intersect
 
 
 _EPS = 1e-6
@@ -98,6 +98,75 @@ def _inside_any_opening(t, z, openings):
         if t > t1 + _EPS and t < t2 - _EPS and z > z1 + _EPS and z < z2 - _EPS:
             return True
     return False
+
+
+def _junction_polygon_corners(junction, sg, junctions_by_id):
+    # Compute the N-gon that fills the gap at a junction with N>=3 walls.
+    # Returns a list of (x, y) in CCW order, or [] when no fill is needed.
+    #
+    # Each corner is the intersection of two angularly-adjacent walls' inner
+    # side-lines: corner[i] = wall[i].left ∩ wall[i+1].right (CCW order).
+    # This is the same geometry that _corner_at_junction produces for each
+    # wall endpoint — so the corners tile perfectly with the wall quads.
+    jx, jy = junction.position
+    entries = _junction_entries(junction, junctions_by_id, sg)
+
+    if len(entries) < 3:
+        return []
+
+    N = len(entries)
+    corners = []
+    for i in range(N):
+        cur = entries[i]
+        nxt = entries[(i + 1) % N]
+
+        cur_left_off  = ( cur[4] * cur[6],  cur[5] * cur[6])
+        nxt_right_off = (-nxt[4] * nxt[6], -nxt[5] * nxt[6])
+
+        p1 = (jx + cur_left_off[0],  jy + cur_left_off[1])
+        p2 = (jx + nxt_right_off[0], jy + nxt_right_off[1])
+
+        pt = _line_intersect(p1, (cur[2], cur[3]), p2, (nxt[2], nxt[3]))
+        if pt is None:
+            pt = p1   # parallel / collinear — boundary is a shared edge
+
+        corners.append(pt)
+
+    # Remove consecutive duplicates (collinear wall pair collapses a corner).
+    unique = []
+    for c in corners:
+        if unique and abs(c[0] - unique[-1][0]) < 1e-6 and abs(c[1] - unique[-1][1]) < 1e-6:
+            continue
+        unique.append(c)
+
+    return unique if len(unique) >= 3 else []
+
+
+def _build_junction_fill(bm, vcache, junction, sg, junctions_by_id):
+    # Emit a prism that fills the junction gap for T and X joints.
+    # Bottom face is omitted (floor mesh covers Z=0); top cap seals the ceiling.
+    corners = _junction_polygon_corners(junction, sg, junctions_by_id)
+    if not corners:
+        return
+
+    walls = sg.get_walls_for_junction(junction.id)
+    if not walls:
+        return
+    h = min(w.height for w in walls)
+    if h <= _EPS:
+        return
+
+    N = len(corners)
+    bot = [_get_or_add_vert(bm, vcache, cx, cy, 0.0) for cx, cy in corners]
+    top = [_get_or_add_vert(bm, vcache, cx, cy, h)   for cx, cy in corners]
+
+    # Vertical side faces (outward normals computed per face by recalc later).
+    for i in range(N):
+        j = (i + 1) % N
+        _add_face_safe(bm, [bot[i], bot[j], top[j], top[i]])
+
+    # Top cap — angular sort guarantees CCW winding viewed from above.
+    _add_face_safe(bm, top)
 
 
 def _build_wall_geometry(bm, vcache, wall, sg, junctions_by_id):
@@ -260,6 +329,9 @@ def build_final_mesh_from_graph(sg, rg, mesh_name="FloorPlan_Baked"):
 
     for wall in sg.get_all_walls():
         _build_wall_geometry(bm, vcache, wall, sg, junctions_by_id)
+
+    for junction in sg.get_all_junctions():
+        _build_junction_fill(bm, vcache, junction, sg, junctions_by_id)
 
     for room in rg.get_all_rooms():
         _build_room_surfaces(bm, vcache, room, sg, junctions_by_id)

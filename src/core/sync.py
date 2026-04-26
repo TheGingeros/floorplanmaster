@@ -71,17 +71,106 @@ def _wall_side_line(jx, jy, dx, dy, offset_x, offset_y):
     return p, (dx, dy)
 
 
+def _junction_entries(junction, junctions_by_id, sg):
+    # Build an angularly-sorted list of all walls at a junction.
+    # Each entry: (angle, wall, out_ux, out_uy, out_nx, out_ny, half_thickness)
+    # Angle is measured CCW from +X of the outgoing direction from junction.
+    jx, jy = junction.position
+    entries = []
+    for w in sg.get_walls_for_junction(junction.id):
+        other_jid = w.junction_end if w.junction_start == junction.id else w.junction_start
+        other_j = junctions_by_id.get(other_jid)
+        if other_j is None:
+            continue
+        odx = other_j.position[0] - jx
+        ody = other_j.position[1] - jy
+        L = math.sqrt(odx * odx + ody * ody)
+        if L < 1e-8:
+            continue
+        out_ux, out_uy = odx / L, ody / L
+        out_nx, out_ny = _perp(odx, ody)     # CCW (left) normal for outgoing direction
+        angle = math.atan2(out_uy, out_ux)
+        entries.append((angle, w, out_ux, out_uy, out_nx, out_ny, w.thickness / 2.0))
+    entries.sort(key=lambda e: e[0])
+    return entries
+
+
+def _corner_at_junction(junction, target_wall, is_start, ux, uy, nx, ny, ht,
+                         side_off, junctions_by_id, sg):
+    # Compute one corner of target_wall at the given junction using angular sort.
+    #
+    # The junction polygon is defined by intersecting adjacent walls' inner
+    # side-lines in CCW angular order.  For the target wall at index i:
+    #   left corner  = target's left side-line  ∩  CCW-next wall's right side-line
+    #   right corner = target's right side-line ∩  CCW-prev wall's left side-line
+    #
+    # This guarantees each corner is the meeting point of exactly the two walls
+    # that are angularly adjacent — works correctly for L, T, and X joints.
+    jx, jy = junction.position
+    raw = (jx + side_off[0], jy + side_off[1])
+    wall_dir = (ux, uy) if is_start else (-ux, -uy)
+
+    entries = _junction_entries(junction, junctions_by_id, sg)
+    N = len(entries)
+
+    if N < 2:
+        return raw  # free end — perpendicular cap
+
+    target_idx = next((i for i, e in enumerate(entries) if e[1].id == target_wall.id), None)
+    if target_idx is None:
+        return raw
+
+    # For a straight-through (degree 2, nearly anti-parallel) junction: avoid
+    # mitering.  Tiny angular errors after topology edits would create a visible
+    # bevel on what should be a straight wall segment.
+    if N == 2:
+        adj_e = entries[(target_idx + 1) % N]
+        dot = wall_dir[0] * adj_e[2] + wall_dir[1] * adj_e[3]
+        cross = wall_dir[0] * adj_e[3] - wall_dir[1] * adj_e[2]
+        if dot < -0.95 and abs(cross) < 0.05:
+            return raw
+
+    # is_left_side must be relative to the *outgoing* direction from the junction,
+    # not the wall's start→end direction.  When the junction is the wall's END,
+    # the outgoing direction is reversed, so left and right swap.
+    _on_own_left = (side_off[0] * nx + side_off[1] * ny) > 0
+    is_left_side = _on_own_left if is_start else not _on_own_left
+
+    if is_left_side:
+        # Left corner: intersect this wall's left side with the CCW-next wall's right side.
+        adj_e = entries[(target_idx + 1) % N]
+        adj_side_off = (-adj_e[4] * adj_e[6], -adj_e[5] * adj_e[6])  # right side of adj
+    else:
+        # Right corner: intersect this wall's right side with the CCW-prev wall's left side.
+        adj_e = entries[(target_idx - 1) % N]
+        adj_side_off = (adj_e[4] * adj_e[6], adj_e[5] * adj_e[6])    # left side of adj
+
+    p_this = raw
+    d_this = wall_dir
+    p_adj = (jx + adj_side_off[0], jy + adj_side_off[1])
+    d_adj = (adj_e[2], adj_e[3])
+
+    pt = _line_intersect(p_this, d_this, p_adj, d_adj)
+    if pt is None:
+        return raw  # parallel / collinear — perpendicular cap
+
+    t = (pt[0] - raw[0]) * wall_dir[0] + (pt[1] - raw[1]) * wall_dir[1]
+    miter_limit = 2.0 * max(ht, adj_e[6])
+    if abs(t) > miter_limit:
+        return raw
+
+    return pt
+
+
 def _compute_wall_quad(wall, junctions_by_id, sg):
     # Returns (p0, p1, p2, p3) — the 4 2D corners of the wall outline, ordered
     # as a quad going around the wall:
     #   p0, p1 = left side (start -> end)
-    #   p3, p2 = right side (start -> end)   (so the quad winds CCW when viewed from above)
+    #   p3, p2 = right side (start -> end)   (quad winds CCW when viewed from above)
     #
-    # At each junction end:
-    #   - If the junction has other walls: compute the intersection of this
-    #     wall's side line with each neighbour's side line and pick the one
-    #     that extends the wall the least (avoids over-extension).
-    #   - If the junction is a free endpoint: cap perpendicularly.
+    # Corners at junctions are computed by angular sort: each corner is the
+    # intersection of this wall's side-line with the angularly-adjacent
+    # neighbour's opposing side-line.  Free endpoints get a perpendicular cap.
     j_start = junctions_by_id.get(wall.junction_start)
     j_end = junctions_by_id.get(wall.junction_end)
     if not (j_start and j_end):
@@ -95,110 +184,17 @@ def _compute_wall_quad(wall, junctions_by_id, sg):
     if L < 1e-8:
         return None
 
-    ux, uy = dx / L, dy / L          # unit along wall
-    nx, ny = _perp(dx, dy)           # unit left-normal
+    ux, uy = dx / L, dy / L
+    nx, ny = _perp(dx, dy)
     ht = wall.thickness / 2.0
 
-    # The two raw side offsets for this wall.
-    left_off = (nx * ht, ny * ht)
+    left_off  = ( nx * ht,  ny * ht)
     right_off = (-nx * ht, -ny * ht)
 
-    def _corner(junction, is_start, side_off):
-        # Compute the corner for one end and one side of the wall.
-        jx, jy = junction.position
-        # Raw endpoint on this side.
-        raw = (jx + side_off[0], jy + side_off[1])
-
-        # Wall direction (away from junction toward the other end).
-        wall_dir = (ux, uy) if is_start else (-ux, -uy)
-
-        neighbors = [w for w in sg.get_walls_for_junction(junction.id) if w.id != wall.id]
-        if not neighbors:
-            return raw  # free end — perpendicular cap
-
-        # Two-wall straight-through junction (degree 2): avoid mitering.
-        # After topology edits (e.g. deleting a room), nearly collinear walls
-        # can leave tiny numerical angle error that creates a visible bevel.
-        # Keep a square cap in this case.
-        if len(neighbors) == 1:
-            nb = neighbors[0]
-            other_jid = nb.junction_end if nb.junction_start == junction.id else nb.junction_start
-            other_j = junctions_by_id.get(other_jid)
-            if other_j is not None:
-                nbdx = other_j.position[0] - jx
-                nbdy = other_j.position[1] - jy
-                nb_L = math.sqrt(nbdx * nbdx + nbdy * nbdy)
-                if nb_L >= 1e-8:
-                    nb_ux, nb_uy = nbdx / nb_L, nbdy / nb_L
-                    dot = wall_dir[0] * nb_ux + wall_dir[1] * nb_uy
-                    cross = wall_dir[0] * nb_uy - wall_dir[1] * nb_ux
-                    if dot < -0.95 and abs(cross) < 0.05:
-                        return raw
-
-        best = raw
-        best_t = 0.0  # signed distance from raw along wall_dir; closest wins
-
-        for nb in neighbors:
-            other_jid = nb.junction_end if nb.junction_start == junction.id else nb.junction_start
-            other_j = junctions_by_id.get(other_jid)
-            if other_j is None:
-                continue
-            nbdx = other_j.position[0] - jx
-            nbdy = other_j.position[1] - jy
-            nb_L = math.sqrt(nbdx * nbdx + nbdy * nbdy)
-            if nb_L < 1e-8:
-                continue
-            nb_ux, nb_uy = nbdx / nb_L, nbdy / nb_L
-            nb_nx, nb_ny = _perp(nbdx, nbdy)
-            nb_ht = nb.thickness / 2.0
-
-            # Determine which side of the neighbour wall to intersect with.
-            # nb direction is outgoing from junction.  If junction is the
-            # neighbour's START, outgoing = forward, so _perp gives the true
-            # forward-left normal.  If junction is the neighbour's END,
-            # outgoing = -forward, so _perp gives the forward-RIGHT normal
-            # (labels are flipped).  We always want same-side pairing
-            # (our left ↔ nb forward-left, our right ↔ nb forward-right),
-            # so flip when the neighbour connects at its end.
-            is_local_left = (side_off[0] * nx + side_off[1] * ny) > 0
-            nb_at_start = (junction.id == nb.junction_start)
-            use_nb_left = is_local_left if nb_at_start else not is_local_left
-            if use_nb_left:
-                nb_side_off = (nb_nx * nb_ht, nb_ny * nb_ht)
-            else:
-                nb_side_off = (-nb_nx * nb_ht, -nb_ny * nb_ht)
-
-            p_this, d_this = _wall_side_line(jx, jy, ux if is_start else -ux,
-                                              uy if is_start else -uy,
-                                              side_off[0], side_off[1])
-            p_nb, d_nb = _wall_side_line(jx, jy, nb_ux, nb_uy,
-                                          nb_side_off[0], nb_side_off[1])
-
-            pt = _line_intersect(p_this, d_this, p_nb, d_nb)
-            if pt is None:
-                continue
-
-            # t = signed distance from raw point along wall direction.
-            t = (pt[0] - raw[0]) * wall_dir[0] + (pt[1] - raw[1]) * wall_dir[1]
-
-            # Guard against extreme miters on near-collinear configurations.
-            # After topology edits (e.g. room deletion), tiny angle differences
-            # can produce far-away intersections that look like stray bevels.
-            # If the corner shift is too large, keep the perpendicular cap.
-            miter_limit = 2.0 * max(ht, nb_ht)
-            if abs(t) > miter_limit:
-                continue
-
-            if best is raw or abs(t) < abs(best_t):
-                best = pt
-                best_t = t
-
-        return best
-
-    p0 = _corner(j_start, True,  left_off)
-    p1 = _corner(j_end,   False, left_off)
-    p2 = _corner(j_end,   False, right_off)
-    p3 = _corner(j_start, True,  right_off)
+    p0 = _corner_at_junction(j_start, wall, True,  ux, uy, nx, ny, ht, left_off,  junctions_by_id, sg)
+    p1 = _corner_at_junction(j_end,   wall, False, ux, uy, nx, ny, ht, left_off,  junctions_by_id, sg)
+    p2 = _corner_at_junction(j_end,   wall, False, ux, uy, nx, ny, ht, right_off, junctions_by_id, sg)
+    p3 = _corner_at_junction(j_start, wall, True,  ux, uy, nx, ny, ht, right_off, junctions_by_id, sg)
     return (p0, p1, p2, p3)
 
 
