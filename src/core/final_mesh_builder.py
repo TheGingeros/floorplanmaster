@@ -46,6 +46,29 @@ def _add_face_safe(bm, verts):
         pass
 
 
+def _face_normal_from_verts(verts):
+    if len(verts) < 3:
+        return (0.0, 0.0, 0.0)
+    a = verts[0].co
+    b = verts[1].co
+    c = verts[2].co
+    abx, aby, abz = b.x - a.x, b.y - a.y, b.z - a.z
+    acx, acy, acz = c.x - a.x, c.y - a.y, c.z - a.z
+    return (
+        aby * acz - abz * acy,
+        abz * acx - abx * acz,
+        abx * acy - aby * acx,
+    )
+
+
+def _add_face_oriented(bm, verts, expected_normal):
+    nx, ny, nz = _face_normal_from_verts(verts)
+    ex, ey, ez = expected_normal
+    if nx * ex + ny * ey + nz * ez < 0.0:
+        verts = list(reversed(verts))
+    _add_face_safe(bm, verts)
+
+
 def _segment_breaks(start, end, openings):
     a = min(start, end)
     b = max(start, end)
@@ -95,6 +118,8 @@ def _build_wall_geometry(bm, vcache, wall, sg, junctions_by_id):
     if L < _EPS:
         return
     ux, uy = dx / L, dy / L
+    out_left = (-uy, ux, 0.0)
+    out_right = (uy, -ux, 0.0)
 
     def t_of(p):
         return (p[0] - sx) * ux + (p[1] - sy) * uy
@@ -153,16 +178,16 @@ def _build_wall_geometry(bm, vcache, wall, sg, junctions_by_id):
                 v01 = _get_or_add_vert(bm, vcache, ax, ay, zb)
 
                 if side == "L":
-                    _add_face_safe(bm, [v00, v10, v11, v01])
+                    _add_face_oriented(bm, [v00, v10, v11, v01], out_left)
                 else:
-                    _add_face_safe(bm, [v10, v00, v01, v11])
+                    _add_face_oriented(bm, [v10, v00, v01, v11], out_right)
 
     # Top face (bottom omitted intentionally; floor mesh covers ground plane).
     v0t = _get_or_add_vert(bm, vcache, p0[0], p0[1], h)
     v1t = _get_or_add_vert(bm, vcache, p1[0], p1[1], h)
     v2t = _get_or_add_vert(bm, vcache, p2[0], p2[1], h)
     v3t = _get_or_add_vert(bm, vcache, p3[0], p3[1], h)
-    _add_face_safe(bm, [v0t, v1t, v2t, v3t])
+    _add_face_oriented(bm, [v0t, v1t, v2t, v3t], (0.0, 0.0, 1.0))
 
     # End caps only on free endpoints. Connected junctions would create
     # interior polygons at joints if capped per-wall.
@@ -174,9 +199,9 @@ def _build_wall_geometry(bm, vcache, wall, sg, junctions_by_id):
     v2b = _get_or_add_vert(bm, vcache, p2[0], p2[1], 0.0)
     v3b = _get_or_add_vert(bm, vcache, p3[0], p3[1], 0.0)
     if not start_neighbors:
-        _add_face_safe(bm, [v0b, v3b, v3t, v0t])
+        _add_face_oriented(bm, [v0b, v3b, v3t, v0t], (-ux, -uy, 0.0))
     if not end_neighbors:
-        _add_face_safe(bm, [v2b, v1b, v1t, v2t])
+        _add_face_oriented(bm, [v2b, v1b, v1t, v2t], (ux, uy, 0.0))
 
     # Opening reveal faces (jambs/head/sill).
     for t1, t2, z1, z2 in openings:
@@ -196,13 +221,13 @@ def _build_wall_geometry(bm, vcache, wall, sg, junctions_by_id):
         r2t = _get_or_add_vert(bm, vcache, rx2, ry2, z2)
 
         # Jamb at opening start/end and head.
-        _add_face_safe(bm, [l1b, r1b, r1t, l1t])
-        _add_face_safe(bm, [r2b, l2b, l2t, r2t])
-        _add_face_safe(bm, [l1t, l2t, r2t, r1t])
+        _add_face_oriented(bm, [l1b, r1b, r1t, l1t], (-ux, -uy, 0.0))
+        _add_face_oriented(bm, [r2b, l2b, l2t, r2t], (ux, uy, 0.0))
+        _add_face_oriented(bm, [l1t, l2t, r2t, r1t], (0.0, 0.0, -1.0))
 
         # Window sill only (doors stay open to floor).
         if z1 > _EPS:
-            _add_face_safe(bm, [r1b, r2b, l2b, l1b])
+            _add_face_oriented(bm, [r1b, r2b, l2b, l1b], (0.0, 0.0, 1.0))
 
 
 def _build_room_surfaces(bm, vcache, room, sg, junctions_by_id):
@@ -221,14 +246,8 @@ def _build_room_surfaces(bm, vcache, room, sg, junctions_by_id):
     if _signed_area(poly) < 0.0:
         poly = list(reversed(poly))
 
-    z_top = max(0.0, room.height)
-
     floor = [_get_or_add_vert(bm, vcache, x, y, 0.0) for x, y in poly]
-    _add_face_safe(bm, floor)
-
-    if z_top > _EPS:
-        ceil = [_get_or_add_vert(bm, vcache, x, y, z_top) for x, y in poly]
-        _add_face_safe(bm, list(reversed(ceil)))
+    _add_face_oriented(bm, floor, (0.0, 0.0, 1.0))
 
 
 def build_final_mesh_from_graph(sg, rg, mesh_name="FloorPlan_Baked"):
@@ -252,6 +271,9 @@ def build_final_mesh_from_graph(sg, rg, mesh_name="FloorPlan_Baked"):
         bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
     if bm.edges:
         bmesh.ops.dissolve_degenerate(bm, edges=bm.edges, dist=1e-7)
+
+    if bm.faces:
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
 
     bm.normal_update()
 

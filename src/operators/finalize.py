@@ -49,9 +49,24 @@ def _assign_default_material(mesh):
         poly.material_index = 0
 
 
-def _set_shade_flat(mesh):
-    for poly in mesh.polygons:
-        poly.use_smooth = False
+def _set_faces_shade_flat(context, obj):
+    # Keep this as the literal last step of finalization. Do not restore the
+    # previous selection/mode afterwards — the user-verified manual workflow
+    # operates on the baked object left active in Object Mode.
+    view_layer = context.view_layer
+    for selected in context.selected_objects:
+        if selected != obj:
+            selected.select_set(False)
+    view_layer.objects.active = obj
+    obj.select_set(True)
+
+    if obj.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+    bpy.ops.object.editmode_toggle()
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.faces_shade_flat()
+    bpy.ops.object.editmode_toggle()
 
 
 def _cleanup_named_attributes(mesh):
@@ -165,11 +180,17 @@ class FLOORPLAN_OT_finalize(bpy.types.Operator):
         target_obj.data = baked_mesh
 
         _strip_modifiers(target_obj)
+
+        # Establish operator context for post-bake operators.
+        context.view_layer.objects.active = target_obj
+        target_obj.select_set(True)
+        if target_obj is not source_obj:
+            source_obj.select_set(False)
+
         _convert_all_corner_float2_attrs_to_uv(target_obj.data)
 
         # Current scope: always fallback to one default material.
         _assign_default_material(target_obj.data)
-        _set_shade_flat(target_obj.data)
 
         if self.cleanup_attributes:
             _cleanup_named_attributes(target_obj.data)
@@ -190,12 +211,11 @@ class FLOORPLAN_OT_finalize(bpy.types.Operator):
         if old_mesh is not None and old_mesh.users == 0:
             bpy.data.meshes.remove(old_mesh)
 
-        context.view_layer.objects.active = target_obj
-        target_obj.select_set(True)
-        if target_obj is not source_obj:
-            source_obj.select_set(False)
-
         target_obj.data.update()
+
+        # Apply flat shading as the final post-process step.
+        _set_faces_shade_flat(context, target_obj)
+
         context.area.tag_redraw()
 
         if self.keep_original:
