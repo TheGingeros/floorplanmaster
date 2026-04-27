@@ -15,7 +15,7 @@ from ...core.sync import _compute_wall_quad
 _WALL_COLOR = (0.0, 0.0, 0.0, 0.95)
 _DOOR_COLOR = (0.0, 0.85, 1.0, 0.95)
 _WINDOW_COLOR = (0.62, 0.22, 0.95, 0.95)
-_LINE_WIDTH = 3.0
+_LINE_WIDTH = 2.25
 
 
 def _append_box_edges(lines, p0, p1, p2, p3, z_min, z_max):
@@ -118,9 +118,12 @@ def draw_wall_opening_highlight(context):
 
         sg, _rg, _mapper = _graph_store[obj.name]
         wall_lines, door_lines, window_lines = _collect_lines_for_object(sg)
-        _draw_lines(shader, wall_lines, _WALL_COLOR, viewport_size)
-        _draw_lines(shader, door_lines, _DOOR_COLOR, viewport_size)
-        _draw_lines(shader, window_lines, _WINDOW_COLOR, viewport_size)
+        if settings.show_wall_edge_highlights:
+            _draw_lines(shader, wall_lines, _WALL_COLOR, viewport_size)
+        if settings.show_door_edge_highlights:
+            _draw_lines(shader, door_lines, _DOOR_COLOR, viewport_size)
+        if settings.show_window_edge_highlights:
+            _draw_lines(shader, window_lines, _WINDOW_COLOR, viewport_size)
 
     gpu.state.depth_test_set('NONE')
     gpu.state.blend_set('NONE')

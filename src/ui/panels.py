@@ -386,4 +386,10 @@ class FLOORPLAN_PT_settings(bpy.types.Panel):
         col.prop(settings, "default_thickness")
         col.prop(settings, "default_height")
         col.separator()
-        col.prop(settings, "show_wall_highlight", icon='SHADING_BBOX')
+        row = col.row(align=True)
+        toggles = row.row(align=True)
+        toggles.enabled = settings.show_wall_highlight
+        toggles.prop(settings, "show_wall_edge_highlights", text="", toggle=True, icon='MOD_BUILD')
+        toggles.prop(settings, "show_door_edge_highlights", text="", toggle=True, icon='MESH_PLANE')
+        toggles.prop(settings, "show_window_edge_highlights", text="", toggle=True, icon='WINDOW')
+        row.prop(settings, "show_wall_highlight", text="All Highlights", toggle=True, icon='SHADING_BBOX')
