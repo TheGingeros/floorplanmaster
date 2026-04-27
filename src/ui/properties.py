@@ -385,6 +385,11 @@ class FloorPlanSettings(bpy.types.PropertyGroup):
         precision=2,
         unit='LENGTH',
     )
+    show_wall_highlight: BoolProperty(
+        name="Highlights",
+        description="Show wall edges plus door/window edge highlights in viewport",
+        default=True,
+    )
 
     # Active wall selection — editable props populated by FLOORPLAN_OT_select_wall.
     # The selected element UUID lives in _selection (selection_state.py), not here.

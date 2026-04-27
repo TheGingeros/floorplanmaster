@@ -130,6 +130,7 @@ if _HAS_BPY:
     from .ui.properties import OpeningItem, FloorPlanSettings, populate_opening_items
 
     from .ui.overlays.wall_selection import draw_wall_selection
+    from .ui.overlays.wall_opening_highlight import draw_wall_opening_highlight
     from .ui.overlays.room_selection import draw_room_selection
     from .ui.overlays.active_floorplan_hint import draw_active_floorplan_hint
 
@@ -224,6 +225,7 @@ if _HAS_BPY:
 
         overlay_manager.register()
         overlay_manager.register_layer(draw_active_floorplan_hint, '2D')
+        overlay_manager.register_layer(draw_wall_opening_highlight, '3D')
         overlay_manager.register_layer(draw_wall_selection, '3D')
         overlay_manager.register_layer(draw_room_selection, '3D')
 

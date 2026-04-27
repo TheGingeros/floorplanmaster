@@ -385,3 +385,5 @@ class FLOORPLAN_PT_settings(bpy.types.Panel):
         col = layout.column(align=True)
         col.prop(settings, "default_thickness")
         col.prop(settings, "default_height")
+        col.separator()
+        col.prop(settings, "show_wall_highlight", icon='SHADING_BBOX')
