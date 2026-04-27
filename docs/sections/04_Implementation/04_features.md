@@ -1,47 +1,33 @@
 # 4.4 Funkce
 
-Funkce addonu jsou implementovány jako Blender operátory — Python třídy registrované u Blenderu, které uživatel spouští z panelu, klávesové zkratky nebo kontextového menu. Každý operátor odpovídá jednomu funkčnímu požadavku (FP1–FP7) a pracuje výhradně přes rozhraní Vrstvy 1 a 2, nikoliv přímo s Blender mesh daty.
+Funkce addonu jsou implementovány jako Blender operátory — spustitelné příkazy registrované u Blenderu a přiřazené klávesovým zkratkám nebo tlačítkům panelu. Každý operátor pracuje výhradně přes rozhraní datových vrstev a tvoří tak řídicí vrstvu (Controller) MVC architektury popsané v návrhu. Operátory nestojí na sobě navzájem — každý je samostatnou jednotkou, přistupující ke sdílené cache grafů a sdílenému stavu výběru přes definovaná rozhraní.
 
 ## FP1 — Tužkový nástroj
 
-Tužkový nástroj je primární způsob kreslení stěn. Je implementován jako modální operátor — typ Blender operátoru, který po spuštění nezanikne okamžitě, ale drží kontrolu nad událostmi viewportu (kliknutí, pohyb myši, klávesy) až dokud ho uživatel explicitně neukončí. Toto chování je pro interaktivní kreslení nezbytné a Blender jej pro tyto účely nativně podporuje.
+Tužkový nástroj je primárním způsobem kreslení stěn a je implementován jako modální operátor — druh Blender operátoru, který po spuštění nepředá řízení zpět okamžitě, ale drží kontrolu nad událostmi viewportu až do explicitního ukončení. Toto chování je pro interaktivní kreslení nezbytné; Blender je nativně podporuje pro právě tento typ scénáře.
 
-Operátor funguje jako stavový automat se dvěma stavy. V prvním stavu čeká na umístění prvního vrcholu; ve druhém táhne linku od posledního umístěného vrcholu ke kurzoru. Kliknutím levým tlačítkem myši se potvrdí nový vrchol a propojující stěna se zapíše do Vrstvy 1; pravé tlačítko přeruší aktuální linku a vrátí operátor do stavu čekání; klávesa Enter uzavře sekvenci a stěny se synchronizují do Blenderu; Escape celou operaci zruší bez potvrzení.
+Operátor funguje jako stavový automat se dvěma stavy. V prvním čeká na určení výchozího bodu nové stěny; ve druhém táhne náhledovou linku od posledního potvrzeného vrcholu ke kurzoru a čeká na potvrzení dalšího bodu. Každé potvrzení vrcholu zapíše novou entitu do Vrstvy 1; stiskem klávesy pro zrušení posledního kroku je tato entita odstraněna a operátor se vrátí o jeden krok zpět. Ukončení sekvence — klávesou nebo uzavřením smyčky — spustí finální synchronizaci: Vrstva 3 zapíše výsledný mesh a Geometry Nodes generují 3D geometrii.
 
-Při každém pohybu myši operátor prohledá okolí kurzoru a hledá existující vrcholy v dosahu snapping tolerance (15 pixelů). Pokud takový vrchol najde, nabídne přichycení — linka se zachytí přesně na vybraný vrchol a případné kliknutí ho využije místo vytvoření nového. Tímto způsobem uživatel přirozeně napojuje stěny na existující síť bez nutnosti přesného kliknutí na pixel.
+Tento návrh odhalil výkonnostní problém: pokud by se po každém potvrzeném vrcholu spustila plná synchronizace Vrstvy 3 (přepočet všech stěnových obrysů, zápis atributů, reevaluace GN modifikátoru), rostla by cena každého kliknutí lineárně s počtem stěn v grafu — celková cena za nakreslenou sekvenci W stěn by dosahovala O(W²). FloorPlanMaster tento problém řeší odsunutím synchronizace na konec celé kreslicí sekvence. Během kresby udržuje operátor pouze čistě Python výpočet aktuálních stěnových obrysů — bez jakékoliv závislosti na Blenderu — a zobrazuje je jako okamžitou vizuální odezvu ve viewportu. Celková cena klesla na O(W) za celou sezení, přičemž vizuální odezva zůstala okamžitá.
 
-Operátor při spuštění uloží aktuální pohled kamery a přepne viewport do horní ortografické projekce — standardního pohledu pro 2D kreslení půdorysu. Po ukončení operátoru je pohled obnoven do původní polohy. Veškeré GPU vykreslování probíhá přes centralizovaný overlay manager (viz 4.5): operátor při spuštění zaregistruje své kreslicí funkce a při ukončení je odstraní. Vizuálně operátor zobrazuje náhledovou linku probíhající stěny, zvýraznění potvrzených stěn aktuální sekvence a indikátor aktivního snap cíle. Ve stavovém řádku Blenderu se zobrazují nápovědy dostupných ovládacích prvků.
+Při spuštění operátor zaregistruje své kreslicí funkce v centrálním overlay manageru (viz 4.5), uloží aktuální pohled kamery a přepne viewport do horní ortografické projekce. Po ukončení jsou kreslicí funkce odregistrovány a pohled je obnoven.
 
 ## FP2 — Výběr a parametrické úpravy
 
-Výběr stěn a místností probíhá kliknutím levým tlačítkem myši v 3D viewportu. Operátor projikuje všechny stěny a místnosti do prostoru 2D souřadnic okna a testuje, zda kliknutá pozice leží uvnitř jejich průmětného polygonu. Protože stěny jsou trojrozměrná tělesa (obdélníkový průřez extrudovaný do výšky), testuje se průmět všech šesti ploch — čelní, zadní a čtyři boky — aby výběr fungoval i při šikmém pohledu a ne jen z pohledu shora. Pokud kliknutí zasáhne více stěn (jejich průměty se na obrazovce překrývají), vybrána bude ta nejblíže kameře.
+Výběr stěn probíhá kliknutím myší ve viewportu. Správná identifikace zasažené stěny vyžaduje řešení, které funguje nezávisle na aktuálním pohledu kamery — tedy nejen z pohledu shora, ale i z libovolné šikmé perspektivy. Prostá projekce kliknuté pozice do roviny Z=0 a test vůči 2D obrysům stěn by pro šikmý perspektivní pohled selhala. Implementace proto projikuje všech šest ploch trojrozměrného tělesa každé stěny — spodní, horní a čtyři boky — do 2D souřadnic okna a testuje kliknutou pozici vůči těmto promítnutým polygonům. Výsledkem je přesný výběr bez ohledu na nastavení pohledu.
 
-Výsledek výběru je uložen do sdíleného stavu výběru (viz 4.5) a N-panel se okamžitě aktualizuje, aby zobrazil parametry vybraného prvku. Parametrické úpravy stěny — tloušťka a výška — probíhají přes live update mechanismus vlastností: kdykoli uživatel změní hodnotu v N-panelu, odpovídající změna se okamžitě promítne do Vrstvy 1 a spustí synchronizaci Vrstvy 3. Změna je viditelná ve viewportu v reálném čase bez nutnosti potvrzovat.
+Výsledek výběru je zapsán do sdíleného stavu výběru a N-panel se okamžitě aktualizuje, aby zobrazil parametry vybrané stěny. Parametrické úpravy — tloušťka a výška — fungují přes mechanismus live update vlastností: Blender při každé změně hodnoty automaticky zavolá zaregistrovanou callback funkci, která provede validaci, zapíše změnu do Vrstvy 1 a spustí synchronizaci Vrstvy 3. Změna se projeví ve viewportu okamžitě, bez nutnosti potvrzovat. Aby programatické naplnění polí panelu hodnotami při výběru stěny nespustilo nechtěnou synchronizaci, chrání tento mechanismus příznak, jehož přítomnost callback funkce detekuje a přeskočí.
 
-Otvory (dveře a okna) se přidávají operátorem dostupným z N-panelu při vybrané stěně. Po spuštění se zobrazí panel pro nastavení parametrů: typ otvoru, šířka, výška, výška parapetu a pozice podél stěny. Parametry jsou průběžně korigovány tak, aby výsledný otvor nepřesahoval délku stěny a nepřekrýval jiný existující otvor — dialogové okno nikdy neukazuje geometricky neplatný stav.
+Přidávání otvorů pracuje s dalšími omezujícími podmínkami: otvor nesmí přesáhnout délku stěny, nesmí zasahovat do oblasti překryvu spojů sousedních stěn a nesmí se překrývat s jiným existujícím otvorem. Dialogové okno průběžně koriguje zadávané hodnoty tak, aby geometricky neplatný stav nikdy nenastal — výška otvoru se nemění automaticky při zvyšování parapetu a poloha otvoru neovlivňuje jeho šířku. Každá hodnota je korigována nezávisle v rámci svého platného rozsahu.
 
-Vložení místnosti umístí pravoúhlou místnost se středem v aktuální poloze 3D kurzoru. Uživatel zadá rozměry a parametry stěn; k dispozici je funkce Redo pro zpětnou úpravu parametrů.
+Vložení místnosti umístí pravoúhlý půdorys místnosti na aktuální polohu 3D kurzoru se zadanými rozměry jako plnohodnotnou transakci Vrstvy 1.
 
 ## FP3 — Metadata místností
 
-V současné implementaci je realizována základní část práce s metadaty místností. Jakmile Vrstva 2 detekuje novou místnost, vytvoří pro ni objekt nesoucí jméno, plochu, obvod, centroid a výšku. Tato data se následně zobrazují v uživatelském rozhraní a tvoří základ pro další práci s místnostmi.
+Jakmile Vrstva 2 detekuje novou uzavřenou smyčku stěn, vytvoří odpovídající objekt místnosti s automaticky vypočítanou plochou, obvodem a polohou centroidu. Uživatel může místnosti procházet v N-panelu, kde je zobrazen jejich seznam s klíčovými metrikami, a každou místnost přejmenovat. Přejmenování probíhá obousměrně: změna provedená v panelu se zapíše do grafu místností a zároveň se persistuje do Blender objektu tak, aby přežila rekonstrukci grafů po reloadu nebo Undo.
 
-Uživatel může místnosti procházet v sekci **Místnosti** v N-panelu, kde se zobrazuje jejich seznam, aktuální jméno a plocha. Každou položku lze rozbalit, zvýraznit ve viewportu a přejmenovat. Přejmenování probíhá obousměrně: změna provedená v panelu se zapíše do grafu místností a zároveň se perzistuje do Blender objektu tak, aby zůstala zachována i po opětovném načtení nebo rekonstrukci datového modelu.
+Implementace pokrývá základní identifikaci, přejmenování a zobrazení klíčových metrik. Plná správa sémantických atributů místností ve smyslu celého návrhu — materiály, typy povrchů, hierarchie prostorů — tato verze addonu neimplementuje.
 
-Při výběru místnosti přímo ve viewportu se zobrazí samostatný panel **Selected Room**, který zpřístupní aktuální jméno a základní souhrnné údaje o místnosti — plochu, obvod, počet stěn a výšku. Implementace tedy v této fázi nepokrývá plnou správu sémantických atributů místností v rozsahu celého návrhu, ale základní identifikace, přejmenování a zobrazení klíčových metrik již funkční jsou.
+## Neimplementované funkce
 
-## FP4 — Finalizace
-
-*(todo — není implementováno)*
-
-## FP5 — Kontextové menu
-
-*(todo — není implementováno)*
-
-## FP6 — Gizma
-
-*(todo — není implementováno)*
-
-## FP7 — Kótování
-
-*(todo — není implementováno)*
+Operátory pro finalizaci a export (FP4), kontextové menu (FP5), 3D manipulátory (FP6) a automatické kótování (FP7) nebyly v rámci implementace realizovány. Architektura je navržena tak, aby je bylo možné doplnit jako samostatné operátory bez zásahu do datového jádra — jednosměrný závislostní tok tuto rozšiřitelnost přímo garantuje.

@@ -1,6 +1,8 @@
 # 4.2 Organizace modulů
 
-Složková struktura projektu přímo reflektuje třívrstvou hybridní architekturu popsanou v návrhu (3.2) a zároveň prosazuje klíčové omezení: žádná vrstva nesmí záviset na vrstvách nad sebou a vrstvy 1 a 2 nesmí mít přímou vazbu na Blender API.
+Složková struktura projektu není pouhým organizačním rozhodnutím — fyzicky vymáhá klíčovou architektonickou podmínku, na níž celý systém stojí: žádný modul nesmí záviset na modulech stojících nad ním v hierarchii a datové jádro systému nesmí mít přímou vazbu na Blender API. Porušení tohoto pravidla by nejen znemožnilo jednotkové testování, ale vedlo by k cyklickým závislostem, které jsou v Python interpretaci obtížně odhalitelné a způsobují nepředvídatelné chyby při načítání.
+
+Jádro systému — topologické grafy, validátory a matematické utility — tvoří základ, na němž vše ostatní stojí. Synchronizační vrstva přidává první závislost na Blender API: překládá výstupy grafů do formátu, kterému Blender rozumí. Operátory, panely a GN strom stojí na samém vrcholu — závisejí na všech nižších vrstvách, ale žádná nižší vrstva se na ně neodkazuje. Závislostní tok je striktně jednosměrný a cyklické závislosti jsou strukturálně vyloučeny.
 
 ```
 src/
@@ -20,12 +22,13 @@ src/
 └── wheels/                  # bundlované .whl závislosti (networkx)
 ```
 
-## Závislostní pravidla
+## Závislosní pravidla
 
-Jasná pravidla závislostí jsou přímým důsledkem rozhodnutí popsaného v návrhu. Moduly ve složkách `core/structural_graph.py`, `core/room_graph.py` a celé `utils/` neimportují Blender API nikde — tato část kódové základny je testovatelná standardním pytestem mimo Blender. Synchronizační modul `core/sync.py` a vše ve složkách `operators/`, `ui/` a `geometry/` na Blender API závisí a je spustitelné výhradně uvnitř Blenderu.
+Závislosní pravidlo má přímý praktický důsledek: složka s jednotkovými testy importuje výhradně z čistého Python jádra a může být spuštěna standardním pytestem bez přítomnosti Blenderu. Testovatelnost tedy není vedlejším efektem dobrého návrhu, ale přímým důsledkem vymáhaného závislosního pravidla — porušení pravidla se projeví okamžitě jako selhání testů.
 
-Závislostní tok je jednosměrný: operátory volají metody ze `core/`; UI čte data ze `core/` přes sdílenou cache; `geometry/` se stará výhradně o strukturu Geometry Nodes modifikátoru. Zpětný tok neexistuje — žádný modul ve `core/` neimportuje nic z `operators/`, `ui/` ani `geometry/`. Toto pravidlo zabraňuje vzniku cyklických závislostí a udržuje jádro systému testovatelné a přenositelné.
+Přenositelnost jádra do jiného kontextu — například do exportního skriptu nebo serverového výpočtu bez Blenderu — je pak přímým důsledkem téhož omezení. Oba moduly grafů ani matematické utility neobsahují nic, co by je vázalo na konkrétní hostitelské prostředí.
 
 ## Testování
 
-Složka `tests/` obsahuje jednotkové testy pro Vrstvu 1, Vrstvu 2, validátory a matematické utility. Testy jsou spustitelné příkazem `pytest` z adresáře `src/` bez jakékoliv závislosti na Blenderu. Každý testovací soubor pokrývá jak standardní scénáře, tak hraniční podmínky — minimální a maximální hodnoty parametrů, duplicitní entity, neplatné topologie. Celkem je k dispozici 124 testovacích případů, přičemž všechny procházejí.
+Složka s testy pokrývá celé čisté Python jádro: Vrstvu 1, Vrstvu 2, validátory a matematické utility. Každý testovací soubor ověřuje jak standardní scénáře, tak hraniční podmínky — minimální a maximální hodnoty parametrů, duplicitní entity, topologicky neplatné grafy a výpočetně degenerované situace. Celkem je k dispozici přes 190 testovacích případů, přičemž všechny procházejí. Synchronizační vrstva a operátory nejsou pokryty automatickými testy, neboť vyžadují přítomnost Blenderu — jejich správnost je ověřována manuálně přímo v prostředí Blenderu.
+

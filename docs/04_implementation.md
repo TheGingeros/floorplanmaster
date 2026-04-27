@@ -1,6 +1,5 @@
 # 4. Implementace
-todo úvod
-
+úvod todo
 ## [4.1 Addon pro Blender](./sections/04_Implementation/01_addon.md)
 ## [4.2 Organizace modulů](./sections/04_Implementation/02_structure.md)
 ## [4.3 Vrstvy](./sections/04_Implementation/03_layers.md)
