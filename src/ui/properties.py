@@ -59,7 +59,7 @@ def _on_room_name_update(self, context):
     from .. import find_floorplan_obj, _graph_store
     from ..core.sync import persist_room_names
     obj = find_floorplan_obj(context)
-    if obj is None or obj.name not in _graph_store:
+    if obj is None or not _selection.belongs_to_object(obj) or obj.name not in _graph_store:
         return
     sg, rg, mapper = _graph_store[obj.name]
     rg.set_room_name(room_uuid, self.active_room_name)
@@ -77,7 +77,7 @@ def _on_wall_thickness_update(self, context):
     if not wall_uuid:
         return
     obj = find_floorplan_obj(context)
-    if obj is None:
+    if obj is None or not _selection.belongs_to_object(obj):
         return
     if obj.name not in _graph_store:
         reset_graphs_for_obj(obj)
@@ -104,7 +104,7 @@ def _on_wall_height_update(self, context):
     if not wall_uuid:
         return
     obj = find_floorplan_obj(context)
-    if obj is None:
+    if obj is None or not _selection.belongs_to_object(obj):
         return
     if obj.name not in _graph_store:
         reset_graphs_for_obj(obj)
@@ -143,7 +143,7 @@ def _on_opening_type_update(self, context):
         return
     from .. import find_floorplan_obj, _graph_store
     obj = find_floorplan_obj(context)
-    if obj is None or obj.name not in _graph_store:
+    if obj is None or not _selection.belongs_to_object(obj) or obj.name not in _graph_store:
         return
     sg, rg, mapper = _graph_store[obj.name]
     op = sg.get_opening(opening_id)
@@ -187,7 +187,7 @@ def _on_opening_width_update(self, context):
         return
     from .. import find_floorplan_obj, _graph_store
     obj = find_floorplan_obj(context)
-    if obj is None or obj.name not in _graph_store:
+    if obj is None or not _selection.belongs_to_object(obj) or obj.name not in _graph_store:
         return
     sg, rg, mapper = _graph_store[obj.name]
     op = sg.get_opening(opening_id)
@@ -224,7 +224,7 @@ def _on_opening_height_update(self, context):
         return
     from .. import find_floorplan_obj, _graph_store
     obj = find_floorplan_obj(context)
-    if obj is None or obj.name not in _graph_store:
+    if obj is None or not _selection.belongs_to_object(obj) or obj.name not in _graph_store:
         return
     sg, rg, mapper = _graph_store[obj.name]
     op = sg.get_opening(opening_id)
@@ -257,7 +257,7 @@ def _on_opening_sill_update(self, context):
         return
     from .. import find_floorplan_obj, _graph_store
     obj = find_floorplan_obj(context)
-    if obj is None or obj.name not in _graph_store:
+    if obj is None or not _selection.belongs_to_object(obj) or obj.name not in _graph_store:
         return
     sg, rg, mapper = _graph_store[obj.name]
     op = sg.get_opening(opening_id)
@@ -290,7 +290,7 @@ def _on_opening_position_update(self, context):
         return
     from .. import find_floorplan_obj, _graph_store
     obj = find_floorplan_obj(context)
-    if obj is None or obj.name not in _graph_store:
+    if obj is None or not _selection.belongs_to_object(obj) or obj.name not in _graph_store:
         return
     sg, rg, mapper = _graph_store[obj.name]
     op = sg.get_opening(opening_id)

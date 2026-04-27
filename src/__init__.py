@@ -84,12 +84,44 @@ def clear_graph_store():
     _graph_store.clear()
 
 
+def is_floorplan_obj(obj):
+    return obj is not None and bool(obj.get("is_floorplan"))
+
+
+def has_floorplan_obj(context):
+    if context is None or getattr(context, 'scene', None) is None:
+        return False
+    return any(is_floorplan_obj(obj) for obj in context.scene.objects)
+
+
+def get_floorplan_obj_by_name(context, object_name):
+    if context is None or getattr(context, 'scene', None) is None or not object_name:
+        return None
+    obj = context.scene.objects.get(object_name)
+    if is_floorplan_obj(obj):
+        return obj
+    return None
+
+
+def is_floorplan_obj_visible(context, obj):
+    if not is_floorplan_obj(obj):
+        return False
+    try:
+        return bool(obj.visible_get(view_layer=context.view_layer))
+    except Exception:
+        try:
+            return not obj.hide_get()
+        except Exception:
+            return not getattr(obj, "hide_viewport", False)
+
+
 def find_floorplan_obj(context):
-    # Find the existing FloorPlanMaster object in the scene.
-    # Returns None if no floorplan object exists (does NOT create one).
-    for obj in context.scene.objects:
-        if obj.get("is_floorplan"):
-            return obj
+    # Return the active FloorPlan object only.
+    # Semantic interactions are scoped to the active object, matching Blender's
+    # object-mode editing model when multiple floorplans are visible.
+    obj = getattr(context, 'active_object', None)
+    if is_floorplan_obj(obj):
+        return obj
     return None
 
 
@@ -99,6 +131,7 @@ if _HAS_BPY:
 
     from .ui.overlays.wall_selection import draw_wall_selection
     from .ui.overlays.room_selection import draw_room_selection
+    from .ui.overlays.active_floorplan_hint import draw_active_floorplan_hint
 
     from .operators import get_classes as get_operator_classes
     from .operators.pencil_tool import (
@@ -190,6 +223,7 @@ if _HAS_BPY:
         bpy.types.STATUSBAR_HT_header.prepend(_draw_pencil_status)
 
         overlay_manager.register()
+        overlay_manager.register_layer(draw_active_floorplan_hint, '2D')
         overlay_manager.register_layer(draw_wall_selection, '3D')
         overlay_manager.register_layer(draw_room_selection, '3D')
 

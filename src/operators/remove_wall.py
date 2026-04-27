@@ -16,8 +16,11 @@ class FLOORPLAN_OT_remove_selected_wall(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def invoke(self, context, event):
+        from .. import find_floorplan_obj
+
         # No selected wall: allow Blender's native X behavior to continue.
-        if not _selection.wall_id:
+        obj = find_floorplan_obj(context)
+        if obj is None or not _selection.has_wall_for_object(obj):
             return {'PASS_THROUGH'}
         return context.window_manager.invoke_confirm(self, event)
 

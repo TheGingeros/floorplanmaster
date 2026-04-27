@@ -87,7 +87,7 @@ class FLOORPLAN_OT_toggle_room(bpy.types.Operator):
                 _selection.deselect_all(context)
         else:
             # Expanding: highlight the room in the viewport (no top panel).
-            _selection.select_room(self.room_id, context, from_viewport=False)
+            _selection.select_room(self.room_id, context, from_viewport=False, object_name=obj.name)
 
         context.area.tag_redraw()
         return {'FINISHED'}
@@ -105,10 +105,12 @@ class FLOORPLAN_PT_room_properties(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
+        from .. import find_floorplan_obj
         from .selection_state import _selection
+        obj = find_floorplan_obj(context)
         # Show only when the room was selected by clicking in the viewport,
         # not when the room detail dropdown is open in the N-panel.
-        return bool(_selection.room_id) and _selection.room_viewport_selected
+        return _selection.has_room_for_object(obj) and _selection.room_viewport_selected
 
     def draw(self, context):
         layout = self.layout
@@ -152,8 +154,10 @@ class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
+        from .. import find_floorplan_obj
         from .selection_state import _selection
-        return bool(_selection.wall_id)
+        obj = find_floorplan_obj(context)
+        return _selection.has_wall_for_object(obj)
 
     def draw(self, context):
         layout = self.layout
@@ -301,12 +305,15 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        from .. import _graph_store, reset_graphs_for_obj, find_floorplan_obj
+        from .. import _graph_store, reset_graphs_for_obj, find_floorplan_obj, has_floorplan_obj
 
         obj = find_floorplan_obj(context)
 
         if obj is None:
-            layout.label(text="No floor plan in scene.", icon='INFO')
+            if has_floorplan_obj(context):
+                layout.label(text="Activate a floor plan object.", icon='INFO')
+            else:
+                layout.label(text="No floor plan in scene.", icon='INFO')
             return
 
         if obj.name not in _graph_store:

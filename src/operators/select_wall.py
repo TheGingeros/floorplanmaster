@@ -14,6 +14,53 @@ from ..utils.math_helpers import point_in_polygon
 from ..ui.selection_state import _selection
 
 
+def _raycast_floorplan_object(context, mx, my):
+    region = context.region
+    rv3d = context.region_data
+    if region is None or rv3d is None:
+        return None
+
+    coord = (float(mx), float(my))
+    origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, coord)
+    direction = view3d_utils.region_2d_to_vector_3d(region, rv3d, coord)
+    depsgraph = context.evaluated_depsgraph_get()
+    hit, _location, _normal, _index, obj, _matrix = context.scene.ray_cast(
+        depsgraph,
+        origin,
+        direction,
+    )
+    if hit and obj is not None and obj.get("is_floorplan"):
+        return obj
+    return None
+
+
+def _clear_semantic_selection_ui(context, settings):
+    from ..ui.properties import set_room_props_updating, set_wall_props_updating
+
+    _selection.deselect_all(context)
+
+    set_wall_props_updating(True)
+    try:
+        settings.active_wall_thickness = 0.0
+        settings.active_wall_height = 0.0
+    finally:
+        set_wall_props_updating(False)
+
+    set_room_props_updating(True)
+    try:
+        settings.active_room_name = ""
+    finally:
+        set_room_props_updating(False)
+
+    settings.opening_items.clear()
+
+
+def _activate_floorplan_object(context, obj):
+    bpy.ops.object.select_all(action='DESELECT')
+    obj.select_set(True)
+    context.view_layer.objects.active = obj
+
+
 def _pick_element(context, sg, rg, mx, my):
     # Project wall 3D box faces to 2D screen space, collect all walls whose
     # screen projection contains the mouse, then return the one closest to the
@@ -112,14 +159,28 @@ def _pick_element(context, sg, rg, mx, my):
 
 class FLOORPLAN_OT_select_wall(bpy.types.Operator):
     bl_idname = "floorplan.select_wall"
-    bl_label = "Select Wall"
-    bl_description = "Click a wall to select it and show its properties"
+    bl_label = "Select Wall / Room"
+    bl_description = "Click a wall or room on the active floor plan object"
+
+    @classmethod
+    def poll(cls, context):
+        from .. import find_floorplan_obj
+        return find_floorplan_obj(context) is not None
 
     def invoke(self, context, event):
         from .. import find_floorplan_obj, _graph_store, reset_graphs_for_obj
         from ..ui.properties import set_wall_props_updating, populate_opening_items
 
-        obj = find_floorplan_obj(context)
+        settings = context.scene.floorplan
+        active_obj = find_floorplan_obj(context)
+        hit_obj = _raycast_floorplan_object(context, event.mouse_region_x, event.mouse_region_y)
+
+        if hit_obj is not None and (active_obj is None or hit_obj.name != active_obj.name):
+            _activate_floorplan_object(context, hit_obj)
+            _clear_semantic_selection_ui(context, settings)
+            return {'FINISHED'}
+
+        obj = active_obj
         if obj is None:
             return {'PASS_THROUGH'}
 
@@ -132,16 +193,14 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
         sg, rg, mapper = _graph_store[obj.name]
         result = _pick_element(context, sg, rg, event.mouse_region_x, event.mouse_region_y)
 
-        settings = context.scene.floorplan
-
         if result is not None and result[0] == 'wall':
             wall_uuid = result[1]
             wall = sg.get_wall(wall_uuid)
             if wall is None:
-                _selection.deselect_all(context)
+                _clear_semantic_selection_ui(context, settings)
                 return {'FINISHED'}
 
-            _selection.select_wall(wall_uuid)
+            _selection.select_wall(wall_uuid, context, object_name=obj.name)
             # Populate editable props without triggering the sync callback.
             set_wall_props_updating(True)
             try:
@@ -158,9 +217,9 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
             room_uuid = result[1]
             room = rg.get_room(room_uuid)
             if room is None:
-                _selection.deselect_all(context)
+                _clear_semantic_selection_ui(context, settings)
                 return {'FINISHED'}
-            _selection.select_room(room_uuid, context, from_viewport=True)
+            _selection.select_room(room_uuid, context, from_viewport=True, object_name=obj.name)
             # Populate active_room_name without triggering the sync callback.
             from ..ui.properties import set_room_props_updating
             set_room_props_updating(True)
@@ -175,9 +234,7 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
             return {'FINISHED'}
 
         # Missed — clear selection and let Blender handle the click.
-        _selection.deselect_all(context)
-        settings.opening_items.clear()
-        context.area.tag_redraw()
+        _clear_semantic_selection_ui(context, settings)
         return {'PASS_THROUGH'}
 
 

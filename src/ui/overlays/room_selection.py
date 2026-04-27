@@ -9,7 +9,7 @@ from gpu_extras.batch import batch_for_shader
 from mathutils import Vector
 
 from ..selection_state import _selection
-from ... import _graph_store, find_floorplan_obj
+from ... import _graph_store, get_floorplan_obj_by_name, is_floorplan_obj_visible
 
 # Small Z lift to avoid z-fighting with the mesh floor face at Z=0.
 _FLOOR_Z = 0.005
@@ -64,8 +64,11 @@ def draw_room_selection(context):
         return
     if not context or not getattr(context, 'scene', None):
         return
-    obj = find_floorplan_obj(context)
-    if obj is None or obj.name not in _graph_store:
+    obj = get_floorplan_obj_by_name(context, _selection.object_name)
+    if obj is None or not is_floorplan_obj_visible(context, obj) or obj.name not in _graph_store:
+        return
+    active_obj = getattr(context, 'active_object', None)
+    if active_obj is None or active_obj.name != obj.name:
         return
     sg, rg, _ = _graph_store[obj.name]
     room = rg.get_room(room_uuid)
