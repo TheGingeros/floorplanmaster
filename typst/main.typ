@@ -26,7 +26,7 @@
 #let abstract-CZE = [
   Práce se zabývá návrhem a implementací rozšiřovacího modulu FloorPlanMaster pro Blender umožňujícího parametrické a nedestruktivní modelování architektonických půdorysů. Na základě analýzy tří cílových skupin uživatelů — architektů, 3D vizualizátorů a game designérů — a komparativní analýzy existujících nástrojů byly stanoveny funkční a nefunkční požadavky. Pro jejich splnění byla navržena třívrstvá hybridní architektura kombinující strukturální graf pro topologii stěn a styků, sémantický graf místností pro automatickou detekci uzavřených cyklů a synchronizační vrstvu přenášející data do Blender meshe s pojmenovanými atributy čtenými modulem Geometry Nodes.
 
-  Výsledkem je funkční add-on implementovaný v Pythonu, zahrnující interaktivní nástroj pro kreslení stěn na základě modálního operátoru, parametrickou editaci tloušťky a výšky stěn, automatickou detekci místností s výpočtem jejich ploch a podporu otvorů (dveře, okna) s poziční validací. Addon zaplňuje identifikovanou mezeru v ekosystému Blenderu a umožňuje celý pracovní postup — od prvního náčrtu dispozice přes parametrické úpravy až po finální mesh — realizovat v jednom prostředí bez nutnosti přepínat mezi specializovanými programy.
+  Výsledkem je funkční add-on implementovaný v Pythonu, zahrnující interaktivní nástroj pro kreslení stěn na základě modálního operátoru, parametrickou editaci tloušťky a výšky stěn, automatickou detekci místností s výpočtem jejich ploch a podporu otvorů (dveře, okna) s poziční validací. Addon zaplňuje identifikovanou mezeru v ekosystému programu Blender a umožňuje celý pracovní postup — od prvního náčrtu dispozice přes parametrické úpravy až po finální mesh — realizovat v jednom prostředí bez nutnosti přepínat mezi specializovanými programy.
 ]
 
 #show: ctufit-thesis.with(
@@ -90,13 +90,15 @@
 //   }
 // }
 
+#show figure.where(kind: table): set figure.caption(position: top)
+
 = Analýza
 
 Blender je všestranný, ale pro architektonické skicování nevhodně vybavený nástroj — každá změna půdorysu se mění v destruktivní opravu vrcholů a přepočítávání otvorů, což narušuje plynulost návrhového procesu. Aby bylo možné FloorPlanMaster navrhnout správně, je nutné nejprve porozumět tomu, proč stávající řešení nestačí, kdo addon skutečně bude používat a co od něj v konkrétních situacích čeká. Tato analýza tedy postupně buduje obraz od problémové domény přes uživatele a jejich scénáře až ke strukturovaným požadavkům a výběru technologií, na nichž addon stojí.
 
 == Doménová analýza
 
-Architektonická dispozice vzniká iterativně: místnosti se posouvají, chodby se zužují, stěny mění tloušťku --- a každá z těchto změn by měla být otázkou sekund, ne minut ručního přepočítávání geometrie. Cílem doménové analýzy je pochopit, proč Blender jako obecný nástroj tento požadavek nativně nenaplňuje a jaký typ řešení by mezeru zaplnil. Nejprve je proto potřeba vymezit, čím se parametrické modelování liší od klasické polygonální práce, a poté zmapovat, jak se s tímto problémem vypořádala stávající řešení --- jak uvnitř prostředí Blenderu, tak mimo něj.
+Architektonická dispozice vzniká iterativně: místnosti se posouvají, chodby se zužují, stěny mění tloušťku --- a každá z těchto změn by měla být otázkou sekund, ne minut ručního přepočítávání geometrie. Cílem doménové analýzy je pochopit, proč Blender jako obecný nástroj tento požadavek nativně nenaplňuje a jaký typ řešení by mezeru zaplnil. Nejprve je proto potřeba vymezit, čím se parametrické modelování liší od klasické polygonální práce, a poté zmapovat, jak se s tímto problémem vypořádala stávající řešení --- jak uvnitř programu Blender, tak mimo něj.
 
 Blender @blender je primárně 3D polygonální modelovací nástroj, nikoliv specializovaný #gls("cad", long: false) nebo #gls("bim", long: false) software. Nabízí obrovskou flexibilitu, pro specifické potřeby architektonického navrhování však postrádá nativní nástroje, což vede k neefektivním a zdlouhavým pracovním postupům. Tvorba půdorysů a 3D dispozic budov je v čistém Blenderu zdlouhavá a destruktivní --- každá změna vyžaduje manuální opravu okolní geometrie, posouvání vrcholů a přepočítávání otvorů.
 
@@ -118,21 +120,40 @@ _Prostorová dispozice_ je logické a funkční uspořádání trojrozměrného 
 
 Před návrhem nového nástroje je nutné pochopit, co již existuje a kde existující řešení selhávají --- jinak hrozí, že FloorPlanMaster jen zopakuje jejich slabiny. Tato sekce proto hodnotí nejvýraznější architektonické addony přímo pro Blender a porovnává je s nástroji mimo jeho ekosystém, aby bylo jasné, jaká mezera zůstala nezaplněna.
 
+Všechny nástroje jsou hodnoceny podle pěti shodných kritérií: (1) _interaktivní kreslení půdorysu_ — přímé klikání bodů do viewportu způsobem tužky; (2) _parametrická editace stěn_ — možnost kdykoli změnit tloušťku, výšku nebo polohu stěny bez narušení sousední geometrie; (3) _automatická detekce místností_ — samostatné rozpoznávání uzavřených cyklů stěn jako místností s výpočtem ploch; (4) _správa otvorů_ — okna a dveře svázané s parametry stěny, pohybující se spolu s ní; a (5) _nedestruktivní workflow_ — parametrická úprava geometrii okamžitě přepočítá bez ručního zásahu do okolní topologie.
+
 ==== Architektonické rozšiřující moduly pro Blender
 
 Blender za posledních deset let prošel dramatickou evolucí. Původně vnímaný jako nástroj pro organické modelování, animace a vizuální efekty byl díky open-source modelu a robustnímu Python #gls("api", long: false) transformován v platformu schopnou realizovat komplexní architektonické projekty. Vzniklo tak několik specializovaných addonů.
 
 *Archimesh* @archimesh je základním kamenem architektonických nástrojů pro Blender. Vytvořil ho Antonio Vazquez s cílem automatizovat tvorbu interiérových a exteriérových prvků, která by jinak zabrala hodně času manuálním modelováním. Díky stabilitě a užitečnosti byl dlouhodobě integrován přímo do oficiální distribuce Blenderu jako komunitní doplněk a je primárně určen pro rychlé skicování prostor a interiérový design.
 
-Pro tvorbu místností nabízí Archimesh dva přístupy: definování počtu stěn a jejich rozměrů, nebo využití nástroje Grease Pencil, kde uživatel v půdorysném pohledu nakreslí hrubé obrysy místností a doplněk tyto tahy automaticky převede na trojrozměrné stěny. Addon dále umožňuje automatické generování podlah a stropů. Co se týče otvorů, podporuje dva typy oken --- kolejnicová a panelová --- s parametrickými parapety a systémem žaluzií. Součástí je rovněž generátor kuchyňských linek, polic a dalšího interiérového vybavení.
+Pro tvorbu místností nabízí Archimesh dva přístupy: definování počtu stěn a jejich rozměrů, nebo využití nástroje Grease Pencil, kde uživatel v půdorysném pohledu nakreslí hrubé obrysy místností a doplněk tyto tahy automaticky převede na trojrozměrné stěny. Addon dále umožňuje automatické generování podlah a stropů. Co se týče otvorů, podporuje dva typy oken --- kolejnicová a panelová --- s parametrickými parapety a systémem žaluzií. Součástí je rovněž generátor kuchyňských linek, polic a dalšího interiérového vybavení @archimesh.
 
-*Archipack* @archipack byl vytvořen jako robustnější a výkonnější alternativa k Archimesh, zaměřená primárně na profesionální architekty a vizualizátory. Autorem je Stephen Leger a addon existuje ve dvou verzích --- Community Edition a Pro. Klíčovým rysem je důraz na interaktivní manipulaci: systém Auto-manipulate on select při výběru objektu zobrazí přímo ve 3D viewportu táhla (gizmos) a textové popisky. Parametry prvků jsou spravovány vlastním systémem vlastností, které zůstávají zachovány po celou dobu životnosti projektu --- uživatel může kdykoliv vybrat stěnu a změnit její tloušťku nebo výšku a všechny připojené prvky automaticky na tuto změnu reagují. Pro export nabízí Archipack generování řezů a půdorysů ve formátu #gls("svg", long: false); Pro verze pak export do formátu #gls("ifc", long: false).
+*Archipack* @archipack byl vytvořen jako robustnější a výkonnější alternativa k Archimesh, zaměřená primárně na profesionální architekty a vizualizátory. Autorem je Stephen Leger a addon existuje ve dvou verzích --- Community Edition a Pro. Klíčovým rysem je důraz na interaktivní manipulaci: systém Auto-manipulate on select při výběru objektu zobrazí přímo ve 3D viewportu táhla (gizmos) a textové popisky. Parametry prvků jsou spravovány vlastním systémem vlastností, které zůstávají zachovány po celou dobu životnosti projektu --- uživatel může kdykoliv vybrat stěnu a změnit její tloušťku nebo výšku a všechny připojené prvky automaticky na tuto změnu reagují. Pro export nabízí Archipack generování řezů a půdorysů ve formátu #gls("svg", long: false); Pro verze pak export do formátu #gls("ifc", long: false) @archipack.
 
-*BonsaiBIM* @bonsaibim zaujímá zcela odlišnou pozici: na rozdíl od Archimesh a Archipack je navržen jako nativní platforma pro tvorbu a správu informačních modelů budov, fungující na mezinárodním standardu IFC @iso16739 (#gls("iso", long: false) 16739). Zatímco Archimesh a Archipack jsou nadstavby nad standardním modelovacím procesem a jejich data jsou spjata s `.blend` souborem, BonsaiBIM umožňuje Blenderu fungovat jako prohlížeč a editor databáze IFC.
+*BonsaiBIM* @bonsaibim zaujímá zcela odlišnou pozici: na rozdíl od Archimesh a Archipack je navržen jako nativní platforma pro tvorbu a správu informačních modelů budov, fungující na mezinárodním standardu IFC @iso16739 (#gls("iso", long: false) 16739). Zatímco Archimesh a Archipack jsou nadstavby nad standardním modelovacím procesem a jejich data jsou spjata s `.blend` souborem, BonsaiBIM transformuje program Blender v plnohodnotný prohlížeč a editor databáze IFC @bonsaibim.
 
 ==== Architektonické nástroje mimo Blender
 
-Mimo ekosystém Blenderu existují tři dominantní nástroje pro architektonické modelování, která tvoří referenční rámec pro analýzu potřeb cílových skupin. *SketchUp* @sketchup je postaven na principu přímého modelování ploch a jako prioritu klade rychlost a intuitivní transformaci myšlenky do 3D formy. *AutoCAD* @autocad představuje standard pro 2D dokumentaci a detailní rýsování --- funguje jako digitální rýsovací prkno, nepostradatelné pro technické výkresy. *Revit* @revit je robustní parametrický BIM nástroj, kde každý prvek v modelu je instancí v databázi s definovanými funkčními vztahy; změna v jednom zobrazení se automaticky promítne do všech výkresů a výkazů.
+Mimo ekosystém programu Blender existují tři dominantní nástroje pro architektonické modelování, která tvoří referenční rámec pro analýzu potřeb cílových skupin. *SketchUp* @sketchup je postaven na principu přímého modelování ploch a jako prioritu klade rychlost a intuitivní transformaci myšlenky do 3D formy. *AutoCAD* @autocad představuje standard pro 2D dokumentaci a detailní rýsování --- funguje jako digitální rýsovací prkno, nepostradatelné pro technické výkresy. *Revit* @revit je robustní parametrický BIM nástroj, kde každý prvek v modelu je instancí v databázi s definovanými funkčními vztahy; změna v jednom zobrazení se automaticky promítne do všech výkresů a výkazů.
+
+#figure(
+  table(
+    columns: (2fr, auto, auto, auto, auto, auto),
+    align: (left, center, center, center, center, center),
+    table.header(
+      [*Nástroj*], [*(1) Kreslení*], [*(2) Param. editace*], [*(3) Místnosti*], [*(4) Otvory*], [*(5) Nedestruktivní*],
+    ),
+    [Archimesh @archimesh], [Částečně], [Částečně], [Ne], [Ano], [Částečně],
+    [Archipack @archipack], [Částečně], [Ano], [Ne], [Ano], [Ano],
+    [BonsaiBIM @bonsaibim], [Ne], [Ano], [Ne], [Ano], [Ano],
+    [SketchUp @sketchup], [Ano], [Částečně], [Ne], [Částečně], [Ne],
+    [AutoCAD @autocad], [Částečně], [Ne], [Ne], [Základní], [Ne],
+    [Revit @revit], [Částečně], [Ano], [Ano], [Ano], [Ano],
+  ),
+  caption: [Srovnání analyzovaných nástrojů podle hodnotících kritérií],
+) <tab-tools-comparison>
 
 ==== Identifikované mezery a příležitosti
 
@@ -144,7 +165,7 @@ Přehled existujících řešení odhaluje opakující se nedostatky, které př
 
 *Chybějící přehled o místnostech a plochách.* Žádný z analyzovaných addonů pro Blender nedetekuje uzavřené cykly stěn jako místnosti automaticky a nezobrazuje jejich plochu jako primární informaci. Analytické výměry jsou v Archipacku i Archimesh skryté v technickém rozhraní, nebo zcela chybí. Přitom právě integrace detekce místností a zobrazení ploch přímo do hlavního přehledu v N-panelu by představovala klíčový výstup jak pro architekta, tak pro game designéra při ověřování parametrů návrhu.
 
-*Izolace externích nástrojů mimo ekosystém Blenderu.* SketchUp, AutoCAD a Revit sice ve svém oboru vynikají, ale postrádají integraci do prostředí Blenderu — přechod z konceptuálního modelu ve SketchUpu do plnohodnotné renderovací scény v Blenderu vyžaduje export, čištění topologie a vede ke ztrátě parametrických vlastností. Cílem FloorPlanMasteru je tuto bariéru eliminovat a zajistit, aby celý životní cyklus — od prvního načrtnutí dispozice přes parametrické úpravy až po finalizovanou síť (mesh) pro rendering — probíhal přímo v jedné scéně v rámci Blenderu.
+*Izolace externích nástrojů mimo ekosystém programu Blender.* SketchUp, AutoCAD a Revit sice ve svém oboru vynikají, ale postrádají integraci do programu Blender — přechod z konceptuálního modelu z programu SketchUp do plnohodnotné renderovací scény v programu Blender vyžaduje export, čištění topologie a vede ke ztrátě parametrických vlastností. Cílem FloorPlanMasteru je tuto bariéru eliminovat a zajistit, aby celý životní cyklus — od prvního načrtnutí dispozice přes parametrické úpravy až po finalizovanou síť (mesh) pro rendering — probíhal přímo v jedné scéně v programu Blender.
 
 == Cílové skupiny
 
@@ -365,11 +386,11 @@ Blender využívá kombinaci vzoru #gls("mvc", long: false) (Model-View-Controll
 
 === Interaktivní kreslení a interakce ve viewportu
 
-Kreslení stěny musí být plynulé: kurzor se pohybuje, náhledová linka sleduje jeho polohu, stěna se potvrdí kliknutím --- ale každý z těchto kroků musí být zpracován v rámci jednoho snímku. Tato sekce vysvětluje, jak Blender takovou interakci umožňuje přes modální operátory a stavový automat, a kde leží výkonnostní limit Pythonu, který je nutné obejít delegováním práce na C++ jádro.
+Plynulé kreslení stěny — sledování kurzoru, průběžná aktualizace náhledové linky a potvrzení kliknutím — vyžaduje zpracování každého z těchto kroků v rámci jednoho snímku. Tato sekce vysvětluje, jak Blender takovou interakci umožňuje přes modální operátory a stavový automat, a kde leží výkonnostní limit Pythonu, který je nutné obejít delegováním práce na C++ jádro.
 
 ==== Modální operátory
 
-Interaktivní kreslení ve viewportu stojí na modálních operátorech --- podtřídách `bpy.types.Operator` @blender_api, které po spuštění zůstávají aktivní a naslouchají událostem myši a klávesnice. Na rozdíl od standardních operátorů, které vykonávají jednorázovou funkci a okamžitě skončí, modální operátor kontinuálně naslouchá událostem generovaným uživatelem nebo systémem. Je nezbytný pro plynulé kreslení, kdy systém musí v každém okamžiku znát polohu kurzoru a dynamicky na ni reagovat.
+Interaktivní kreslení ve viewportu stojí na modálních operátorech --- podtřídách `bpy.types.Operator` @blender_api, které po spuštění zůstávají aktivní a naslouchají událostem myši a klávesnice. Na rozdíl od standardních operátorů, které vykonávají jednorázovou funkci a okamžitě skončí, modální operátor kontinuálně naslouchá událostem generovaným uživatelem nebo systémem. Je nezbytný pro plynulé kreslení, kdy systém průběžně sleduje polohu kurzoru a dynamicky na ni reaguje.
 
 Inicializace operátoru začíná metodou `invoke()`, která připraví počáteční stav a registruje operátor do modálního handleru správce oken pomocí `context.window_manager.modal_handler_add(self)`. Od tohoto momentu je každá událost ve viewportu předávána metodě `modal()`. Návratové hodnoty `modal()` určují, jak Blender s událostí dále naloží:
 
@@ -390,21 +411,21 @@ Metoda `modal()` funguje na principu stavového automatu, který umožňuje oper
 
 Stavový automat přináší tři klíčové výhody: řízení složitosti při implementaci vícekrokových nástrojů, možnost kontextového snappingu (v různých stavech jsou aktivní různé typy přichytávání) a optimalizaci výkonu --- složité operace se spouštějí pouze při přechodu mezi stavy, zatímco při pohybu myši se aktualizuje pouze drobná vizualizace.
 
-==== Limity výkonu Pythonu v Blenderu
+==== Limity výkonu jazyka Python v programu Blender
 
-Python je v prostředí Blenderu interpretovaným jazykem, proto je potřeba náročné operace delegovat na stranu Blenderu nebo GPU využívající C++. Zkušenosti z vývoje komplexních generativních nástrojů ukazují, že čistý Python je při hromadném zpracování dat řádově pomalejší. V kontextu architektonického kreslení jsou hlavními limitujícími faktory iterace přes mesh data pomocí `for` smyčky, rostoucí počet unikátních objektů ve scéně a časté aktualizace DepsGraphu.
+Python je v programu Blender interpretovaným jazykem, proto je potřeba náročné operace delegovat na stranu programu Blender nebo GPU využívající C++. Zkušenosti z vývoje komplexních generativních nástrojů ukazují, že čistý Python je při hromadném zpracování dat řádově pomalejší. V kontextu architektonického kreslení jsou hlavními limitujícími faktory iterace přes mesh data pomocí `for` smyčky, rostoucí počet unikátních objektů ve scéně a časté aktualizace DepsGraphu.
 
-K překonání těchto limitů se v profesionálních addonech využívají tři techniky. Metody `foreach_set` a `foreach_get` umožňují přenášet celá pole dat mezi Pythonem a C++ strukturami Blenderu v jedné operaci namísto nastavování každého vrcholu zvlášť. Delegování na modifikátory spočívá v tom, že Python vytvoří pouze základní čárový model a na něj aplikuje modifikátory jako Solidify nebo Bevel --- ty jsou implementovány v C++, plně využívají multithreading a jsou optimalizovány pro real-time aktualizaci. Geometry Nodes jako výpočetní backend pak umožňují Pythonu pouze manipulovat se vstupními hodnotami uzlového stromu, zatímco veškerý výpočet geometrie probíhá v nativním kódu Blenderu.
+K překonání těchto limitů se v profesionálních addonech využívají tři techniky. Metody `foreach_set` a `foreach_get` umožňují přenášet celá pole dat mezi jazykem Python a interními C++ strukturami v jedné operaci namísto nastavování každého vrcholu zvlášť. Delegování na modifikátory spočívá v tom, že Python vytvoří pouze základní čárový model a na něj aplikuje modifikátory jako Solidify nebo Bevel --- ty jsou implementovány v C++, plně využívají multithreading a jsou optimalizovány pro real-time aktualizaci. Geometry Nodes jako výpočetní backend pak umožňují jazyku Python pouze manipulovat se vstupními hodnotami uzlového stromu, zatímco veškerý výpočet geometrie probíhá v nativním kódu programu Blender.
 
 === Reprezentace geometrie
 
-Stěna musí mít přesnou tloušťku v ostrých rozích, reagovat real-time na posun parametru a zároveň generovat čistou topologii pro UV mapování --- a ne každý přístup k reprezentaci geometrie tyto tři požadavky splňuje najednou. Tato sekce srovnává dvě dostupné možnosti: imperativní BMesh, který nabízí maximální topologickou kontrolu za cenu výkonu, a deklarativní Geometry Nodes, které výpočet přesouvají do nativního C++ jádra Blenderu.
+Přesná tloušťka v ostrých rozích, real-time odezva na změnu parametru a čistá topologie vhodná pro UV mapování jsou tři protichůdné nároky, které ne každý přístup k reprezentaci geometrie splňuje najednou. Tato sekce srovnává dvě dostupné možnosti: imperativní BMesh, který nabízí maximální topologickou kontrolu za cenu výkonu, a deklarativní Geometry Nodes, které výpočet přesouvají do nativního C++ jádra programu Blender.
 
-Geometrie (poloha prvků v prostoru) a topologie (vzájemné vztahy a propojení) tvoří základní dualitu jakékoli 3D struktury. V Blenderu je základní jednotkou mesh složená z vrcholů, hran a ploch.
+Geometrie (poloha prvků v prostoru) a topologie (vzájemné vztahy a propojení) tvoří základní dualitu jakékoli 3D struktury. V programu Blender je základní jednotkou mesh složená z vrcholů, hran a ploch.
 
 ==== Datová struktura BMesh
 
-BMesh je interní datová struktura Blenderu, která na rozdíl od tradičních struktur založených na trojúhelnících podporuje n-gony (polygony s více než čtyřmi vrcholy). Využívá systém podobný half-edge datovým strukturám, kde jsou vztahy mezi plochami a hranami uloženy tak, aby umožňovaly rychlou navigaci po povrchu sítě.
+BMesh je interní datová struktura programu Blender, která na rozdíl od tradičních struktur založených na trojúhelnících podporuje n-gony (polygony s více než čtyřmi vrcholy). Využívá systém podobný half-edge datovým strukturám, kde jsou vztahy mezi plochami a hranami uloženy tak, aby umožňovaly rychlou navigaci po povrchu sítě.
 
 Z pohledu parametrického modelování nabízí BMesh skrze Python API (modul `bmesh`) nízkoúrovňový přístup k topologii --- možnost dotazovat se, které hrany jsou spojeny s daným vrcholem, a tím provádět operace jako dissolve bez poškození okolní topologie. Algoritmus pro generování stěn obvykle začíná načtením 2D hran, identifikuje uzavřené smyčky jako obrysy místností a operací tloušťky (offset) --- například přes `bmesh.ops.bevel` nebo posunem vrcholů podél normál hran --- vytváří 3D stěny. Tento proces je v Pythonu relativně pomalý, zejména při průběžné validaci integrity sítě.
 
@@ -444,7 +465,7 @@ Hlavní výhodou je jednoduchost --- řešení nevyžaduje žádné externí kni
 
 Druhý přístup udržuje aplikační stav v Pythonu pomocí plochých (flat) seznamů nebo slovníků. Eviduje uzly (styky stěn), stěny a místnosti jako samostatné objekty. Každý prvek má přiřazen jednoznačný identifikátor (ID) a informace o sousednosti je uložena přímo v záznamu daného prvku jako seznam ID jeho sousedů.
 
-Tato varianta je plně implementovatelná pomocí standardních knihoven Pythonu a lze ji snadno testovat i mimo prostředí Blenderu. Jejím hlavním limitem je však rychlé snížení výkonu při složitějších topologických operacích. Například automatická detekce nově vzniklých místností (uzavřených cyklů) by vyžadovala implementaci vlastních algoritmů pro prohledávání grafu a výpočetní náročnost při opakovaném přepočítávání sousednosti by expocencionálně rostla s každým novým prvkem.
+Tato varianta je plně implementovatelná pomocí standardních knihoven Pythonu a lze ji snadno testovat i nezávisle na programu Blender. Jejím hlavním limitem je však rychlé snížení výkonu při složitějších topologických operacích. Například automatická detekce nově vzniklých místností (uzavřených cyklů) by vyžadovala implementaci vlastních algoritmů pro prohledávání grafu a výpočetní náročnost při opakovaném přepočítávání sousednosti by expocencionálně rostla s každým novým prvkem.
 
 ==== Grafová reprezentace
 
@@ -462,7 +483,7 @@ _Lazy_ přístup naproti tomu vytváří místnost výhradně tehdy, kdy je dete
 
 === Tvorba otvorů pro okna a dveře
 
-Okno osazené ve stěně se musí pohybovat spolu s ní, přizpůsobit při změně její tloušťky a okamžitě regenerovat otvor bez jakéhokoli ručního zásahu --- to je základní podmínka nedestruktivního workflow. Splnit ji lze více způsoby, přičemž každý nabízí jiný kompromis mezi výkonem, numerickou stabilitou a topologickou čistotou výsledné geometrie. Tato sekce porovnává následující tři hlavní přístupy jak zmíněnou podmínku splnit:
+Nedestruktivní přístup k otvorům předpokládá, že pohyb stěny automaticky přesune i zabudované okno, změna tloušťky ho přizpůsobí a aktualizace parametrů otvor okamžitě regeneruje --- bez jakéhokoli ručního zásahu. Splnit ji lze více způsoby, přičemž každý nabízí jiný kompromis mezi výkonem, numerickou stabilitou a topologickou čistotou výsledné geometrie. Tato sekce porovnává následující tři hlavní přístupy jak zmíněnou podmínku splnit:
 
 _Boolean operace spravované přes Python API_ využívají standardní modifikátorový stack, kde Python dynamicky vytváří cutter objekty a přiřazuje je ke stěně. Hlavní nevýhodou je vysoká režie při správě stacku s desítkami modifikátorů a numerická nestabilita --- pokud souřadnice po transformaci nejsou binárně identické (kvůli zaokrouhlení floatů), `Exact` solver může selhat při detekci společných ploch.
 
@@ -488,7 +509,7 @@ Následující tabulka zobrazuje hlavní rozdíly mezi zmíněnými přístupy:
 
 === Ukládání dat a správa metadat
 
-Parametrický addon pracuje s daty na dvou odlišných úrovní: s geometrií stěn, která musí přežít každý zpětný (Undo) krok, i s metadaty místností --- jejich názvem, typem a plochou --- která musí zůstat konzistentní při sdílení souborů nebo instancování objektů. Tato sekce analyzuje, které mechanismy Blender API pro tato data nabízí, na které úrovni hierarchie BLenderu je přirozeně ukládat a jak zajistit, aby grafové struktury v paměti přežily uložení a opětovné otevření `.blend` souboru.
+Parametrický addon pracuje s daty na dvou odlišných úrovní: s geometrií stěn, která musí přežít každý zpětný (Undo) krok, i s metadaty místností --- jejich názvem, typem a plochou --- která musí zůstat konzistentní při sdílení souborů nebo instancování objektů. Tato sekce analyzuje, které mechanismy Blender API pro tato data nabízí, na které úrovni hierarchie programu Blender je přirozeně ukládat a jak zajistit, aby grafové struktury v paměti přežily uložení a opětovné otevření `.blend` souboru.
 
 ==== Systémy pro správu uživatelských parametrů
 
