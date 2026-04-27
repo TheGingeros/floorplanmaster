@@ -113,6 +113,7 @@ class FLOORPLAN_PT_room_properties(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         settings = context.scene.floorplan
+        root = layout.box()
 
         from .. import _graph_store, find_floorplan_obj
         from .selection_state import _selection
@@ -172,14 +173,18 @@ class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
                 length = sg.wall_length(wall_uuid)
                 wall_label = f"Wall #{wall_num}  ({length:.2f} m)"
 
-        layout.label(text=wall_label, icon='MOD_BUILD')
+        root = layout.box()
+        header = root.row(align=True)
+        split = header.split(factor=0.9, align=True)
+        split.label(text=wall_label, icon='MOD_BUILD')
+        split.operator("floorplan.remove_selected_wall", text="", icon='X')
 
-        col = layout.column(align=True)
+        col = root.column(align=True)
         col.prop(settings, "active_wall_thickness")
         col.prop(settings, "active_wall_height")
 
-        layout.separator()
-        row = layout.row(align=True)
+        root.separator()
+        row = root.row(align=True)
         door_enabled = True
         window_enabled = True
         if obj is not None and obj.name in _graph_store:
@@ -196,17 +201,17 @@ class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
         op = window_row.operator("floorplan.add_opening", text="Add Window", icon='WINDOW')
         op.opening_type = 'WINDOW'
         if not door_enabled and not window_enabled:
-            layout.label(text="No space for another opening", icon='INFO')
+            root.label(text="No space for another opening", icon='INFO')
 
         # List existing openings on this wall.
         if obj is not None and obj.name in _graph_store:
             sg, _, mapper = _graph_store[obj.name]
             openings = sg.get_openings_for_wall(wall_uuid)
             if openings:
-                layout.separator()
+                root.separator()
 
                 # Collapsible openings header
-                header = layout.row(align=True)
+                header = root.row(align=True)
                 header.prop(
                     settings, "openings_expanded",
                     icon='TRIA_DOWN' if settings.openings_expanded else 'TRIA_RIGHT',
@@ -220,7 +225,7 @@ class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
                         item = items_by_id.get(opening.id)
                         if item is None:
                             continue
-                        box = layout.box()
+                        box = root.box()
 
                         # Header row: expand toggle + type icon + #N + remove button
                         hdr = box.row(align=True)

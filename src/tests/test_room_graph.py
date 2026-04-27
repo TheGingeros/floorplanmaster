@@ -22,6 +22,15 @@ def make_single_room():
     return sg, rg, [j1, j2, j3, j4]
 
 
+def make_single_room_with_branch():
+    # One closed room plus one branch wall that does not participate in any cycle.
+    sg, rg, juncs = make_single_room()
+    j_branch = sg.add_junction((0, -2))
+    w_branch = sg.add_wall(juncs[0].id, j_branch.id)
+    rg.sync_from_structural_graph()
+    return sg, rg, w_branch
+
+
 def make_two_rooms():
     # Two 3x3 rooms side by side sharing a wall.
     sg = StructuralGraph()
@@ -187,6 +196,15 @@ class TestRoomPersistence:
         sg.remove_wall(walls[0].id)
         rg.sync_from_structural_graph()
         assert rg.get_all_rooms() == []
+
+    def test_room_unchanged_when_non_cycle_wall_removed(self):
+        sg, rg, w_branch = make_single_room_with_branch()
+        assert len(rg.get_all_rooms()) == 1
+
+        sg.remove_wall(w_branch.id)
+        rg.sync_from_structural_graph()
+
+        assert len(rg.get_all_rooms()) == 1
 
 
 # Adjacency
