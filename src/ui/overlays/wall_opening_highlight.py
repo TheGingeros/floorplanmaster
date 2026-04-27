@@ -36,11 +36,13 @@ def _append_box_edges(lines, p0, p1, p2, p3, z_min, z_max):
     lines.extend([b0, t0, b1, t1, b2, t2, b3, t3])
 
 
-def _draw_lines(shader, lines, color):
+def _draw_lines(shader, lines, color, viewport_size):
     if not lines:
         return
     batch = batch_for_shader(shader, 'LINES', {"pos": lines})
     shader.bind()
+    shader.uniform_float("viewportSize", viewport_size)
+    shader.uniform_float("lineWidth", _LINE_WIDTH)
     shader.uniform_float("color", color)
     batch.draw(shader)
 
@@ -97,10 +99,14 @@ def draw_wall_opening_highlight(context):
     if settings is None or not settings.show_wall_highlight:
         return
 
-    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    region = getattr(context, "region", None)
+    if region is None:
+        return
+    viewport_size = (float(region.width), float(region.height))
+
+    shader = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
     gpu.state.blend_set('ALPHA')
     gpu.state.depth_test_set('LESS_EQUAL')
-    gpu.state.line_width_set(_LINE_WIDTH)
 
     for obj in context.scene.objects:
         if not is_floorplan_obj(obj):
@@ -112,10 +118,9 @@ def draw_wall_opening_highlight(context):
 
         sg, _rg, _mapper = _graph_store[obj.name]
         wall_lines, door_lines, window_lines = _collect_lines_for_object(sg)
-        _draw_lines(shader, wall_lines, _WALL_COLOR)
-        _draw_lines(shader, door_lines, _DOOR_COLOR)
-        _draw_lines(shader, window_lines, _WINDOW_COLOR)
+        _draw_lines(shader, wall_lines, _WALL_COLOR, viewport_size)
+        _draw_lines(shader, door_lines, _DOOR_COLOR, viewport_size)
+        _draw_lines(shader, window_lines, _WINDOW_COLOR, viewport_size)
 
     gpu.state.depth_test_set('NONE')
-    gpu.state.line_width_set(1.0)
     gpu.state.blend_set('NONE')
