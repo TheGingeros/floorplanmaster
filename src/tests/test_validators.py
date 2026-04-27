@@ -7,6 +7,11 @@ from src.core.validators import (
     validate_room_area,
     validate_aspect_ratio,
     validate_room_vertex_count,
+    can_fit_opening,
+    clamp_opening_position,
+    get_opening_free_spans,
+    max_opening_width,
+    max_opening_width_at_position,
     validate_opening_width,
     validate_opening_height,
     validate_opening_placement,
@@ -189,6 +194,12 @@ class TestValidateOpeningPlacement:
         existing = Opening("w1", position=0.2, width=0.5)
         validate_opening_placement(0.8, 0.5, 2.0, existing_openings=[existing])
 
+    def test_touching_is_rejected(self):
+        from src.core.structural_graph import Opening
+        existing = Opening("w1", position=0.25, width=0.5)
+        with pytest.raises(ValidationError, match=E_OPENING_OVERLAP):
+            validate_opening_placement(0.75, 0.5, 2.0, existing_openings=[existing])
+
     def test_inset_blocks_placement_at_start(self):
         # inset_start = 0.2 on a 2m wall -> t_min = 0.1
         # opening at position=0.15 with half_norm=0.1 -> t_start=0.05 < 0.1
@@ -209,6 +220,43 @@ class TestValidateOpeningPlacement:
     def test_inset_zero_behaves_like_original(self):
         # Explicitly passing zero insets should behave identically to omitting them.
         validate_opening_placement(0.5, 0.9, 2.0, inset_start=0.0, inset_end=0.0)
+
+
+class TestOpeningConstraintHelpers:
+    def test_free_spans_split_by_openings(self):
+        openings = [
+            {"position": 0.2, "width": 0.4},
+            {"position": 0.8, "width": 0.4},
+        ]
+        spans = get_opening_free_spans(2.0, existing_openings=openings)
+        assert len(spans) == 3
+        assert spans[1][0] < 0.5 < spans[1][1]
+
+    def test_max_opening_width_uses_largest_remaining_span(self):
+        openings = [
+            {"position": 0.2, "width": 0.4},
+            {"position": 0.8, "width": 0.4},
+        ]
+        assert max_opening_width(2.0, existing_openings=openings) == pytest.approx(0.8, abs=1e-4)
+
+    def test_max_opening_width_at_position_respects_neighbors(self):
+        openings = [
+            {"position": 0.2, "width": 0.4},
+            {"position": 0.8, "width": 0.4},
+        ]
+        assert max_opening_width_at_position(0.5, 2.0, existing_openings=openings) == pytest.approx(0.8, abs=1e-4)
+
+    def test_clamp_opening_position_moves_into_nearest_valid_interval(self):
+        openings = [{"position": 0.5, "width": 0.4}]
+        clamped = clamp_opening_position(0.5, 0.4, 2.0, existing_openings=openings)
+        assert clamped == pytest.approx(0.2, abs=1e-4)
+
+    def test_can_fit_opening_false_when_wall_is_full(self):
+        openings = [
+            {"position": 0.25, "width": 0.5},
+            {"position": 0.75, "width": 0.5},
+        ]
+        assert not can_fit_opening(0.3, 2.0, existing_openings=openings)
 
 
 class TestValidateOpeningSill:

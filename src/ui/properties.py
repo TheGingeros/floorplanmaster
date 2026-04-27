@@ -35,6 +35,19 @@ def set_room_props_updating(val: bool) -> None:
     _updating_room_props = val
 
 
+def _restore_opening_item_from_graph(item, opening):
+    global _updating_opening_items
+    _updating_opening_items = True
+    try:
+        item.opening_type = opening.opening_type
+        item.width = opening.width
+        item.height = opening.height
+        item.sill_height = opening.sill_height
+        item.position = opening.position
+    finally:
+        _updating_opening_items = False
+
+
 def _on_room_name_update(self, context):
     global _updating_room_props
     if _updating_room_props:
@@ -133,6 +146,22 @@ def _on_opening_type_update(self, context):
     if obj is None or obj.name not in _graph_store:
         return
     sg, rg, mapper = _graph_store[obj.name]
+    op = sg.get_opening(opening_id)
+    if op is None:
+        return
+    max_w = min(MAX_OPENING_WIDTH, sg.max_opening_width(op.wall_id, exclude_opening_id=opening_id))
+    if max_w < MIN_OPENING_WIDTH:
+        _restore_opening_item_from_graph(self, op)
+        return
+    if self.width > max_w:
+        _updating_opening_items = True
+        self.width = max_w
+        _updating_opening_items = False
+    clamped_pos = sg.clamp_opening_position(op.wall_id, self.width, self.position, exclude_opening_id=opening_id)
+    if clamped_pos is not None and abs(clamped_pos - self.position) > 1e-7:
+        _updating_opening_items = True
+        self.position = clamped_pos
+        _updating_opening_items = False
     try:
         sg.update_opening(
             opening_id,
@@ -140,8 +169,10 @@ def _on_opening_type_update(self, context):
             width=self.width,
             height=self.height,
             sill_height=self.sill_height,
+            position=self.position,
         )
     except Exception:
+        _restore_opening_item_from_graph(self, op)
         return
     sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
     context.area.tag_redraw()
@@ -162,14 +193,14 @@ def _on_opening_width_update(self, context):
     op = sg.get_opening(opening_id)
     if op is None:
         return
-    w = sg.get_wall(op.wall_id)
-    if w is None:
+    max_w = min(MAX_OPENING_WIDTH, sg.max_opening_width_at_position(
+        op.wall_id,
+        op.position,
+        exclude_opening_id=opening_id,
+    ))
+    if max_w < MIN_OPENING_WIDTH:
+        _restore_opening_item_from_graph(self, op)
         return
-    wl = sg.wall_length(op.wall_id)
-    inset_s = sg.junction_inset(w.junction_start, op.wall_id)
-    inset_e = sg.junction_inset(w.junction_end, op.wall_id)
-    usable = max(MIN_OPENING_WIDTH, wl - inset_s - inset_e)
-    max_w = min(MAX_OPENING_WIDTH, usable * 0.98)
     clamped = max(MIN_OPENING_WIDTH, min(self.width, max_w))
     if abs(clamped - self.width) > 1e-7:
         _updating_opening_items = True
@@ -178,6 +209,7 @@ def _on_opening_width_update(self, context):
     try:
         sg.update_opening(opening_id, width=clamped)
     except Exception:
+        _restore_opening_item_from_graph(self, op)
         return
     sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
     context.area.tag_redraw()
@@ -210,6 +242,7 @@ def _on_opening_height_update(self, context):
     try:
         sg.update_opening(opening_id, height=clamped)
     except Exception:
+        _restore_opening_item_from_graph(self, op)
         return
     sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
     context.area.tag_redraw()
@@ -242,6 +275,7 @@ def _on_opening_sill_update(self, context):
     try:
         sg.update_opening(opening_id, sill_height=clamped)
     except Exception:
+        _restore_opening_item_from_graph(self, op)
         return
     sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
     context.area.tag_redraw()
@@ -262,23 +296,15 @@ def _on_opening_position_update(self, context):
     op = sg.get_opening(opening_id)
     if op is None:
         return
-    w = sg.get_wall(op.wall_id)
-    if w is None:
+    clamped = sg.clamp_opening_position(
+        op.wall_id,
+        op.width,
+        self.position,
+        exclude_opening_id=opening_id,
+    )
+    if clamped is None:
+        _restore_opening_item_from_graph(self, op)
         return
-    wl = sg.wall_length(op.wall_id)
-    inset_s = sg.junction_inset(w.junction_start, op.wall_id)
-    inset_e = sg.junction_inset(w.junction_end, op.wall_id)
-    if wl >= MIN_OPENING_WIDTH:
-        half_norm = (op.width / 2.0) / wl
-        inset_s_norm = inset_s / wl
-        inset_e_norm = inset_e / wl
-        min_pos = inset_s_norm + half_norm + 0.005
-        max_pos = 1.0 - inset_e_norm - half_norm - 0.005
-        if min_pos > max_pos:
-            min_pos = max_pos = (inset_s_norm + 1.0 - inset_e_norm) / 2.0
-        clamped = max(min_pos, min(self.position, max_pos))
-    else:
-        clamped = self.position
     if abs(clamped - self.position) > 1e-7:
         _updating_opening_items = True
         self.position = clamped
@@ -286,6 +312,7 @@ def _on_opening_position_update(self, context):
     try:
         sg.update_opening(opening_id, position=clamped)
     except Exception:
+        _restore_opening_item_from_graph(self, op)
         return
     sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
     context.area.tag_redraw()

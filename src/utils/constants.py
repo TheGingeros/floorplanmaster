@@ -16,6 +16,7 @@ MIN_ROOM_VERTICES = 3
 # Openings (doors, windows)
 MIN_OPENING_WIDTH = 0.3    # meters
 MAX_OPENING_WIDTH = 5.0
+MIN_OPENING_CLEARANCE = 0.0  # meters between neighboring openings; exact touch is still forbidden
 DEFAULT_DOOR_WIDTH = 0.9
 DEFAULT_WINDOW_WIDTH = 1.2
 

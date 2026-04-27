@@ -5,6 +5,8 @@
 import bpy
 import json
 
+from ..utils.constants import DEFAULT_DOOR_WIDTH, DEFAULT_WINDOW_WIDTH
+
 
 def _sync_room_names_to_object(obj, rg):
     # Sync room names between RoomGraph and object custom properties.
@@ -178,10 +180,23 @@ class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
 
         layout.separator()
         row = layout.row(align=True)
-        op = row.operator("floorplan.add_opening", text="Add Door", icon='MESH_PLANE')
+        door_enabled = True
+        window_enabled = True
+        if obj is not None and obj.name in _graph_store:
+            sg, _, _ = _graph_store[obj.name]
+            door_enabled = sg.can_fit_opening(wall_uuid, DEFAULT_DOOR_WIDTH)
+            window_enabled = sg.can_fit_opening(wall_uuid, DEFAULT_WINDOW_WIDTH)
+
+        door_row = row.row(align=True)
+        door_row.enabled = door_enabled
+        op = door_row.operator("floorplan.add_opening", text="Add Door", icon='MESH_PLANE')
         op.opening_type = 'DOOR'
-        op = row.operator("floorplan.add_opening", text="Add Window", icon='WINDOW')
+        window_row = row.row(align=True)
+        window_row.enabled = window_enabled
+        op = window_row.operator("floorplan.add_opening", text="Add Window", icon='WINDOW')
         op.opening_type = 'WINDOW'
+        if not door_enabled and not window_enabled:
+            layout.label(text="No space for another opening", icon='INFO')
 
         # List existing openings on this wall.
         if obj is not None and obj.name in _graph_store:
@@ -215,8 +230,8 @@ class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
                             text="", emboss=False,
                         )
                         op_num = mapper.get(opening.id)
-                        type_icon = 'MESH_PLANE' if item.opening_type == 'DOOR' else 'WINDOW'
-                        hdr.label(text=f"#{op_num}", icon=type_icon)
+                        type_label = "Door" if item.opening_type == 'DOOR' else "Window"
+                        hdr.label(text=f"{type_label} #{op_num}")
                         remove_op = hdr.operator("floorplan.remove_opening", text="", icon='X')
                         remove_op.opening_id = opening.id
 

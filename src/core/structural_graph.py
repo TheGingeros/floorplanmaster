@@ -12,6 +12,12 @@ from .validators import (
     validate_opening_height,
     validate_opening_placement,
     validate_opening_sill,
+    clamp_opening_position,
+    can_fit_opening,
+    get_opening_center_intervals,
+    get_opening_free_spans,
+    max_opening_width,
+    max_opening_width_at_position,
     E_WALL_DUPLICATE,
     E_WALL_SELF_LOOP,
     E_JUNCTION_DUPLICATE,
@@ -263,8 +269,25 @@ class StructuralGraph:
         wl = self.wall_length(wall_id)
         inset_s = self.junction_inset(w.junction_start, wall_id)
         inset_e = self.junction_inset(w.junction_end, wall_id)
-        validate_opening_placement(position, width, wl, existing_openings=w.openings,
-                                   inset_start=inset_s, inset_end=inset_e)
+        if not can_fit_opening(
+            width,
+            wl,
+            existing_openings=w.openings,
+            inset_start=inset_s,
+            inset_end=inset_e,
+        ):
+            raise ValidationError(
+                "E_OPENING_TOO_LARGE",
+                f"Wall {wall_id[:8]} has no remaining span for opening width {width:.3f}",
+            )
+        validate_opening_placement(
+            position,
+            width,
+            wl,
+            existing_openings=w.openings,
+            inset_start=inset_s,
+            inset_end=inset_e,
+        )
 
         op = Opening(
             wall_id,
@@ -297,7 +320,102 @@ class StructuralGraph:
         w = self._walls.get(wall_id)
         if w is None:
             return []
-        return list(w.openings)
+        return sorted(w.openings, key=lambda op: (op.position, op.id))
+
+    def get_opening_free_spans(self, wall_id, exclude_opening_id=None):
+        w = self._walls.get(wall_id)
+        if w is None:
+            return []
+        wl = self.wall_length(wall_id)
+        inset_s = self.junction_inset(w.junction_start, wall_id)
+        inset_e = self.junction_inset(w.junction_end, wall_id)
+        others = [op for op in w.openings if op.id != exclude_opening_id]
+        return get_opening_free_spans(
+            wl,
+            existing_openings=others,
+            inset_start=inset_s,
+            inset_end=inset_e,
+        )
+
+    def get_opening_center_intervals(self, wall_id, width, exclude_opening_id=None):
+        w = self._walls.get(wall_id)
+        if w is None:
+            return []
+        wl = self.wall_length(wall_id)
+        inset_s = self.junction_inset(w.junction_start, wall_id)
+        inset_e = self.junction_inset(w.junction_end, wall_id)
+        others = [op for op in w.openings if op.id != exclude_opening_id]
+        return get_opening_center_intervals(
+            width,
+            wl,
+            existing_openings=others,
+            inset_start=inset_s,
+            inset_end=inset_e,
+        )
+
+    def can_fit_opening(self, wall_id, width, exclude_opening_id=None):
+        w = self._walls.get(wall_id)
+        if w is None:
+            return False
+        wl = self.wall_length(wall_id)
+        inset_s = self.junction_inset(w.junction_start, wall_id)
+        inset_e = self.junction_inset(w.junction_end, wall_id)
+        others = [op for op in w.openings if op.id != exclude_opening_id]
+        return can_fit_opening(
+            width,
+            wl,
+            existing_openings=others,
+            inset_start=inset_s,
+            inset_end=inset_e,
+        )
+
+    def clamp_opening_position(self, wall_id, width, position, exclude_opening_id=None):
+        w = self._walls.get(wall_id)
+        if w is None:
+            return None
+        wl = self.wall_length(wall_id)
+        inset_s = self.junction_inset(w.junction_start, wall_id)
+        inset_e = self.junction_inset(w.junction_end, wall_id)
+        others = [op for op in w.openings if op.id != exclude_opening_id]
+        return clamp_opening_position(
+            position,
+            width,
+            wl,
+            existing_openings=others,
+            inset_start=inset_s,
+            inset_end=inset_e,
+        )
+
+    def max_opening_width(self, wall_id, exclude_opening_id=None):
+        w = self._walls.get(wall_id)
+        if w is None:
+            return 0.0
+        wl = self.wall_length(wall_id)
+        inset_s = self.junction_inset(w.junction_start, wall_id)
+        inset_e = self.junction_inset(w.junction_end, wall_id)
+        others = [op for op in w.openings if op.id != exclude_opening_id]
+        return max_opening_width(
+            wl,
+            existing_openings=others,
+            inset_start=inset_s,
+            inset_end=inset_e,
+        )
+
+    def max_opening_width_at_position(self, wall_id, position, exclude_opening_id=None):
+        w = self._walls.get(wall_id)
+        if w is None:
+            return 0.0
+        wl = self.wall_length(wall_id)
+        inset_s = self.junction_inset(w.junction_start, wall_id)
+        inset_e = self.junction_inset(w.junction_end, wall_id)
+        others = [op for op in w.openings if op.id != exclude_opening_id]
+        return max_opening_width_at_position(
+            position,
+            wl,
+            existing_openings=others,
+            inset_start=inset_s,
+            inset_end=inset_e,
+        )
 
     def update_opening(self, opening_id, **kwargs):
         op = self.get_opening(opening_id)
@@ -321,8 +439,25 @@ class StructuralGraph:
         others = [o for o in w.openings if o.id != opening_id]
         inset_s = self.junction_inset(w.junction_start, op.wall_id)
         inset_e = self.junction_inset(w.junction_end, op.wall_id)
-        validate_opening_placement(new_pos, new_width, wl, existing_openings=others,
-                                   inset_start=inset_s, inset_end=inset_e)
+        if not can_fit_opening(
+            new_width,
+            wl,
+            existing_openings=others,
+            inset_start=inset_s,
+            inset_end=inset_e,
+        ):
+            raise ValidationError(
+                "E_OPENING_TOO_LARGE",
+                f"Wall {op.wall_id[:8]} has no remaining span for opening width {new_width:.3f}",
+            )
+        validate_opening_placement(
+            new_pos,
+            new_width,
+            wl,
+            existing_openings=others,
+            inset_start=inset_s,
+            inset_end=inset_e,
+        )
 
         op.width = new_width
         op.height = new_height

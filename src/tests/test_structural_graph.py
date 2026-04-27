@@ -526,6 +526,12 @@ class TestOpeningCRUD:
         op2 = sg.add_opening(w.id, width=0.5, position=0.8)
         assert op2 is not None
 
+    def test_opening_touch_rejected(self):
+        sg, w = self._wall_2m()
+        sg.add_opening(w.id, width=0.5, position=0.25)
+        with pytest.raises(ValidationError, match=E_OPENING_OVERLAP):
+            sg.add_opening(w.id, width=0.5, position=0.75)
+
     def test_opening_exceeds_wall_height(self):
         sg, w = self._wall_2m()  # wall height = 3.0
         with pytest.raises(ValidationError, match=E_OPENING_EXCEEDS_WALL):
@@ -570,6 +576,20 @@ class TestOpeningCRUD:
         op2 = sg.add_opening(w.id, width=0.5, position=0.8)
         with pytest.raises(ValidationError, match=E_OPENING_OVERLAP):
             sg.update_opening(op2.id, position=0.3)
+
+    def test_wall_full_detected_for_new_opening(self):
+        sg, w = self._wall_2m()
+        sg.add_opening(w.id, width=0.5, position=0.25)
+        sg.add_opening(w.id, width=0.5, position=0.75)
+        assert sg.max_opening_width(w.id) < 0.3
+        assert sg.can_fit_opening(w.id, 0.3) is False
+
+    def test_width_limit_at_position_respects_neighbors(self):
+        sg, w = self._wall_2m()
+        left = sg.add_opening(w.id, width=0.4, position=0.2)
+        right = sg.add_opening(w.id, width=0.4, position=0.8)
+        middle = sg.add_opening(w.id, width=0.2, position=0.5)
+        assert sg.max_opening_width_at_position(w.id, middle.position, exclude_opening_id=middle.id) == pytest.approx(0.8, abs=1e-4)
 
 
 # junction_inset() and inset-aware opening placement

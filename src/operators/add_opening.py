@@ -3,9 +3,12 @@
 # The redo panel (F9 / bottom-left) allows the user to adjust type and parameters.
 # Values are clamped via check() so the UI never shows validation errors.
 
+import json
+
 import bpy
 from bpy.props import EnumProperty, FloatProperty, StringProperty
 
+from ..core.validators import clamp_opening_position, max_opening_width
 from ..utils.constants import (
     DEFAULT_DOOR_WIDTH, DEFAULT_WINDOW_WIDTH,
     DEFAULT_DOOR_HEIGHT, DEFAULT_WINDOW_HEIGHT,
@@ -84,6 +87,17 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
     # (idempotent) instead of colliding with the previous run's opening that
     # may still be in sg when Blender's undo failed to revert the mesh.
     target_opening_id: StringProperty(options={'HIDDEN'}, default='')
+    # Snapshot of other openings on the wall used by check() during redo.
+    cached_existing_openings: StringProperty(options={'HIDDEN'}, default='[]')
+
+    def _get_cached_openings(self):
+        try:
+            data = json.loads(self.cached_existing_openings or '[]')
+        except Exception:
+            return []
+        if not isinstance(data, list):
+            return []
+        return data
 
     @classmethod
     def poll(cls, context):
@@ -117,6 +131,7 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
 
         wh = self.cached_wall_height
         wl = self.cached_wall_length
+        existing = self._get_cached_openings()
 
         # A wall shorter than the minimum opening width cannot hold any opening;
         # skip clamping to avoid half_norm overflow in the position section below.
@@ -145,33 +160,35 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
             self.sill_height = max_sill
             changed = True
 
-        # Width max is the usable wall span — independent of position.
-        # This ensures moving position never silently shrinks the width.
+        # Width max is the largest remaining span on the wall.
         inset_s = self.cached_inset_start
         inset_e = self.cached_inset_end
-        usable = max(MIN_OPENING_WIDTH, wl - inset_s - inset_e)
-        max_w = min(MAX_OPENING_WIDTH, usable * 0.98)
+        max_w = min(
+            MAX_OPENING_WIDTH,
+            max_opening_width(
+                wl,
+                existing_openings=existing,
+                inset_start=inset_s,
+                inset_end=inset_e,
+            ),
+        )
+        if max_w < MIN_OPENING_WIDTH:
+            return changed
         if self.width > max_w:
             self.width = max_w
             changed = True
 
-        # Clamp position so the opening fits at the current width.
-        # Guard uses MIN_OPENING_WIDTH (not 0) so that half_norm never overflows
-        # for degenerate walls — such walls already fail sg.add_opening validation.
-        if wl >= MIN_OPENING_WIDTH:
-            half_norm = (self.width / 2.0) / wl
-            inset_s_norm = inset_s / wl
-            inset_e_norm = inset_e / wl
-            min_pos = inset_s_norm + half_norm + 0.005
-            max_pos = 1.0 - inset_e_norm - half_norm - 0.005
-            if min_pos > max_pos:
-                min_pos = max_pos = (inset_s_norm + 1.0 - inset_e_norm) / 2.0
-            if self.position < min_pos:
-                self.position = min_pos
-                changed = True
-            if self.position > max_pos:
-                self.position = max_pos
-                changed = True
+        clamped_pos = clamp_opening_position(
+            self.position,
+            self.width,
+            wl,
+            existing_openings=existing,
+            inset_start=inset_s,
+            inset_end=inset_e,
+        )
+        if clamped_pos is not None and abs(clamped_pos - self.position) > 1e-7:
+            self.position = clamped_pos
+            changed = True
 
         return changed
 
@@ -219,6 +236,10 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
         self.cached_wall_length = wl
         self.cached_inset_start = sg.junction_inset(wall.junction_start, wall_uuid)
         self.cached_inset_end = sg.junction_inset(wall.junction_end, wall_uuid)
+        self.cached_existing_openings = json.dumps([
+            {"id": op.id, "position": op.position, "width": op.width}
+            for op in sg.get_openings_for_wall(wall_uuid)
+        ])
         # Keep prev_type in sync so check() can detect the next type switch.
         self.prev_type = self.opening_type
 
@@ -235,20 +256,16 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
         # Width: wall-level cap, independent of position.
         inset_s = self.cached_inset_start
         inset_e = self.cached_inset_end
-        if wl >= MIN_OPENING_WIDTH:
-            usable = max(MIN_OPENING_WIDTH, wl - inset_s - inset_e)
-            max_w = min(MAX_OPENING_WIDTH, usable * 0.98)
-            width = max(MIN_OPENING_WIDTH, min(width, max_w))
-
-            # Position: clamp so the opening fits at the current width.
-            half_norm = (width / 2.0) / wl
-            inset_s_norm = inset_s / wl
-            inset_e_norm = inset_e / wl
-            min_pos = inset_s_norm + half_norm + 0.005
-            max_pos = 1.0 - inset_e_norm - half_norm - 0.005
-            if min_pos > max_pos:
-                min_pos = max_pos = (inset_s_norm + 1.0 - inset_e_norm) / 2.0
-            position = max(min_pos, min(position, max_pos))
+        max_w = min(MAX_OPENING_WIDTH, sg.max_opening_width(wall_uuid))
+        if max_w < MIN_OPENING_WIDTH:
+            self.report({'ERROR'}, "Wall has no remaining span for another opening")
+            return {'CANCELLED'}
+        width = max(MIN_OPENING_WIDTH, min(width, max_w))
+        clamped_pos = sg.clamp_opening_position(wall_uuid, width, position)
+        if clamped_pos is None:
+            self.report({'ERROR'}, "Wall has no remaining span for this opening")
+            return {'CANCELLED'}
+        position = clamped_pos
 
         try:
             op = sg.add_opening(
@@ -311,6 +328,10 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
                     self.cached_wall_length = sg.wall_length(wall_uuid)
                     self.cached_inset_start = sg.junction_inset(wall.junction_start, wall_uuid)
                     self.cached_inset_end = sg.junction_inset(wall.junction_end, wall_uuid)
+                    self.cached_existing_openings = json.dumps([
+                        {"id": op.id, "position": op.position, "width": op.width}
+                        for op in sg.get_openings_for_wall(wall_uuid)
+                    ])
 
         # Seed prev_type so check() can detect a type switch in the redo panel.
         # Leaving it as '' causes check() to skip the default-application branch
