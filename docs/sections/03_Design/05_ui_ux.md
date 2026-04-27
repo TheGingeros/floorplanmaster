@@ -20,3 +20,5 @@ Addon se vyskytuje na čtyřech místech Blender prostředí. Každé místo má
 ## [Viewport UI](./05_ui_ux_viewport.md)
 
 ## [Kontextová nabídka](./05_ui_ux_context_menu.md)
+
+## [FloorPlan kontext — simulovaný pracovní mód](./05_ui_ux_work_mode.md)
