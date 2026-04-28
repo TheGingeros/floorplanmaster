@@ -90,7 +90,29 @@
 //   }
 // }
 
-#show figure.where(kind: table): set figure.caption(position: top)
+#show figure.where(kind: table): it => {
+  let b = {
+    box(
+      width: 100%,
+      grid(
+        rows: (auto),
+        row-gutter: it.gap,
+        it.caption,
+        {
+          h(1fr)
+          box(it.body)
+          h(1fr)
+        },
+      )
+    )
+  }
+  if it.placement == none {
+    b
+  } else {
+    place(it.placement, float: true, b)
+  }
+  par[]
+}
 
 = Analýza
 
@@ -285,35 +307,35 @@ Následujících sedm funkčních požadavků pokrývá celý zamýšlený rozsa
 
 ==== FP1 — Interaktivní tvorba místností a kreslení (Pencil Tool)
 
-Nástroj pro kreslení („tužka“) představuje primární vstupní metodu addonu. Umožňuje uživateli definovat půdorys klikáním bodů přímo ve 3D scéně. Jádrem je modální operátor, který po dobu kreslení přebírá veškerou interakci s myší a klávesnicí a průběžně generuje stěny.
+Nástroj pro kreslení představuje primární vstup addonu. Umožňuje uživateli definovat půdorys klikáním bodů přímo ve 3D scéně. Jádrem je modální operátor, který po dobu kreslení přebírá veškerou interakci s myší a klávesnicí a průběžně generuje stěny.
 
-Nezbytným minimem pro realizaci (must-have) je kreslení půdorysu v pohledu shora a spolehlivá správa uživatelských vstupů modálním operátorem. Důležitým rozšířením (should-have) je automatické přichytávání (snapping) k osám XYZ odvozené od vzdálenosti kurzoru k existujícím bodům či osám. Jako volitelné vylepšení (nice-to-have) se nabízí průběžné vykreslování náhledu budoucí stěny před jejím potvrzením – systém by neustále sledoval pozici kurzoru, kreslil vodicí linku a čekal na kliknutí nebo stisk klávesy Enter.
+Nezbytným minimem pro realizaci je kreslení půdorysu v pohledu shora a spolehlivá správa uživatelských vstupů modálním operátorem. Důležitým rozšířením je automatické přichytávání (snapping) k osám XY odvozené od vzdálenosti kurzoru k existujícím bodům či osám. Jako volitelné vylepšení se nabízí průběžné vykreslování náhledu budoucí stěny před jejím potvrzením – systém by neustále sledoval pozici kurzoru, kreslil vodicí linku a čekal na potvrzení uživatelem.
 
 ==== FP2 — Generování a úprava parametrických objektů
 
 Tento požadavek definuje parametrické chování všech prvků půdorysu, tedy stěn i otvorů. Každý objekt si uchovává své parametry (délku, výšku, tloušťku, pozici v prostoru). Při jejich změně se automaticky přepočítá geometrie prvku a dynamicky se zaktualizuje poloha případných navázaných otvorů.
 
-Základní implementace (must-have) vyžaduje dynamickou reprezentaci stěn formou parametrického systému (nikoliv jako statickou síť), okamžitou aktualizaci geometrie při úpravě hodnot, zachování relativní pozice otvorů vůči stěně pomocí pevných datových vazeb a inteligentní generování ořezů (Boolean operací) přímo prostřednictvím Geometry Nodes.
+Základní implementace vyžaduje dynamickou reprezentaci stěn formou parametrického systému (nikoliv jako statickou síť), okamžitou aktualizaci geometrie při úpravě hodnot, zachování relativní pozice otvorů vůči stěně pomocí pevných datových vazeb a inteligentní generování ořezů (Boolean operací) přímo prostřednictvím Geometry Nodes.
 
 ==== FP3 — Správa prostoru a metadat
 
-Správce prostoru tvoří sémantickou vrstvu nad obyčejnou 3D geometrií. Modul musí umět automaticky detekovat uzavřené cykly stěn, rozpoznat je jako samostatné místnosti a vypočítat jejich plochu (celý tento blok je klasifikován jako must-have). Jako volitelné rozšíření (nice-to-have) je koncipována hierarchizace prostorů – organizace místností a celých podlaží do přehledných kolekcí, které umožní například hromadné přepínání viditelnosti v projektu.
+Správce prostoru tvoří sémantickou vrstvu nad obyčejnou 3D geometrií. Modul musí umět automaticky detekovat uzavřené cykly stěn, rozpoznat je jako samostatné místnosti a vypočítat jejich plochu. Jako volitelné rozšíření je koncipována hierarchizace prostorů – organizace místností a celých podlaží do přehledných kolekcí, které umožní například hromadné přepínání viditelnosti v projektu.
 
 ==== FP4 — Finalizační nástroj
 
-Finalizační nástroj uzavírá nedestruktivní fázi návrhu. Po dokončení úprav převede parametrický systém na čistou, statickou 3D geometrii, která je připravená pro UV mapování, export do herního enginu nebo nasazení v renderovací pipeline. Hlavním požadavkem (must-have) je trvalá aplikace všech procedurálních generátorů a modifikátorů u vybraných objektů scény.
+Finalizační nástroj uzavírá nedestruktivní fázi návrhu. Po dokončení úprav převede parametrický systém na čistou, statickou 3D geometrii, která je připravená pro UV mapování, export do herního enginu nebo nasazení v renderovací pipeline. Hlavním požadavkem je trvalá aplikace všech procedurálních generátorů a modifikátorů u vybraných objektů scény.
 
 ==== FP5 — Kontextová nabídka
 
-Kontextová nabídka zpřístupňuje akce vázané na konkrétní prvek pomocí plovoucí uživatelské nabídky zobrazené přímo u kurzoru. Addon by měl využívat metodu vržení paprsku (raycast) k identifikaci cílového objektu a přes moduly #gls("gpu", long: false) nebo #gls("blf", long: false) vykreslovat vlastní rozhraní překrývající 3D viewport. Tato interakční zkratka je hodnocena jako důležité rozšíření (should-have).
+Kontextová nabídka zpřístupňuje akce vázané na konkrétní prvek pomocí plovoucí uživatelské nabídky zobrazené přímo u kurzoru. Addon by měl využívat metodu vržení paprsku (raycast) k identifikaci cílového objektu a přes moduly #gls("gpu", long: false) nebo #gls("blf", long: false) vykreslovat vlastní rozhraní překrývající 3D viewport.
 
 ==== FP6 — Interaktivní 3D manipulátory
 
-Interaktivní 3D manipulátory (gizma) nabízejí alternativu k ručnímu vypisování parametrů. Umožňují geometrickou manipulaci přímo v prostoru: uživatel uchopí barevné grafické táhlo u daného prvku a tažením myši plynule mění jeho rozměry nebo výšku. Implementace by měla využít nativní rozhraní `bpy.types.Gizmo` a `GizmoGroup`. Funkcionalita je zařazena jako should-have.
+Interaktivní 3D manipulátory (gizma) nabízejí alternativu k ručnímu vypisování parametrů. Umožňují geometrickou manipulaci přímo v prostoru: uživatel uchopí barevné grafické táhlo u daného prvku a tažením myši plynule mění jeho rozměry nebo výšku. Implementace by měla využít nativní rozhraní `bpy.types.Gizmo` a `GizmoGroup`.
 
 ==== FP7 — Automatické kótování
 
-Kótovací vrstva průběžně zobrazuje délky stěn a plochy místností jako dynamický text přímo ve viewportu, takže uživatel nemusí zjišťovat rozměry v postranních panelech. Texty generované modulem BLF přes překreslovací smyčku (draw handler) se musejí aktualizovat v reálném čase při každé změně dispozice. Požadavek je klasifikován jako should-have.
+Kótovací vrstva průběžně zobrazuje délky stěn a plochy místností jako dynamický text přímo ve viewportu, takže uživatel nemusí zjišťovat rozměry v postranních panelech. Texty generované modulem BLF přes překreslovací smyčku (draw handler) se musejí aktualizovat v reálném čase při každé změně dispozice.
 
 === Nefunkční požadavky
 
@@ -374,6 +396,7 @@ Každý požadavek je hodnocen zvlášť každou cílovou skupinou (Vysoká / St
   caption: [Vážená prioritizace požadavků podle cílových skupin],
 ) <tab-req-priority>
 
+Tabulka nám v další kapitole návrhu poslouží jako výchozí bod pro určení definice minimálního funkčního produktu a jeho hranic. 
 == Technická analýza
 
 Funkční požadavky říkají _co_ má addon umět; technická analýza odpovídá na otázku _jak_ --- které části Blender API to umožňují, jaké jsou jejich limity a kde hrozí designová nedostatky, které by ovlivnily celou architekturu. Klíčové otázky jsou, jak zachytit kreslení půdorysu v reálném čase bez ztráty výkonu, jak reprezentovat půdorys jako responsivní datový model schopný detekovat místnosti a reagovat na každou změnu stěny, a jak parametrické objekty převést do statické geometrie připravené pro export.
