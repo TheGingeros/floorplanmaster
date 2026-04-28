@@ -1,6 +1,5 @@
 # 3.1 Definice MVP scopu a rozšiřitelnosti
-
-Dříve než bude popsána architektura, datový model a jednotlivé funkce, je nutné přesně vymezit hranice projektu. Tato sekce definuje, co je a co záměrně není součástí aktuálního návrhu, a slouží jako výchozí bod pro všechna následující technologická a designová rozhodnutí. Jasné mantinely umožňují obhájit každé návrhové rozhodnutí vůči pevně stanoveným cílům.
+úvod todo
 
 ## Prioritizace prvků
 
