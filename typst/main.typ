@@ -607,5 +607,445 @@ Abychom získali čistou síť připravenou pro export, je nezbytné načíst vy
 Zvláštní pozornost vyžadují UV mapy a materiály. V prostředí Geometry Nodes jsou UV mapy ukládány pouze jako 2D vektory v rozích polygonů (v doméně Face Corner). Pokud by zůstaly v této podobě, exportéry do formátů FBX nebo glTF by je zcela ignorovaly. Po aplikaci procedurální geometrie je proto nezbytné tyto pojmenované atributy explicitně převést na standardní UV vrstvy. Další komplikace vzniká při slučování instancí – často totiž dochází ke kumulaci geometrií s odlišnými definicemi, čímž vznikají zbytečně duplicitní materiálové sloty. V herních enginech by tento stav vedl k nežádoucímu nárůstu vykreslovacích požadavků (draw calls). Závěrečná finalizace by proto měla zahrnovat důkladné čištění materiálů, při kterém nástroj zanalyzuje existující sloty, identifikuje duplikáty, pomocí modulu BMesh přemapuje indexy a následně odstraní veškeré prázdné a nadbytečné pozice.
 
 = Návrh
+
+Analytická část práce zmapovala doménu architektonického modelování, identifikovala cílové skupiny a jejich scénáře, stanovila funkční a nefunkční požadavky a v technické analýze prověřila dostupné prostředky Blender #gls("api", long: false). Návrhová část na tyto analytické nálezy navazuje a přetavuje je do konkrétní softwarové architektury, datového modelu a specifikace funkcí, které lze bezprostředně implementovat. Než však první řádek kódu vznikne, je nezbytné vymezit, co MVP tvoří a co je záměrně odloženo --- bez tohoto filtru hrozí, že návrh sklouzne do nerealizovatelné šíře. Kapitola postupuje od nejobecnějšího rámce (rozsah MVP a architektura) přes strukturu dat (datový model) a chování systému (návrh funkcí) až k uživatelskému rozhraní a závěrečné validaci návrhu.
+
+== Definice rozsahu MVP
+
+Funkční požadavky FP1 až FP7 identifikované v analýze (@tab-req-priority) pokrývají kompletní workflow od prvního načrtnutí dispozice až po finální export pro herní engine či renderovací pipeline. Celý tento rozsah nelze realizovat najednou --- pokus o to by vedl k nekonzistentní a nedokončené implementaci. Tato sekce proto zavádí MoSCoW prioritizaci jako filtr: musí být zcela jasné, které dílčí prvky tvoří nezbytné jádro MVP, které jsou hodnotnou, ale volitelnou nadstavbou a které lze realizovat až v pozdějších iteracích. Toto rozlišení prostupuje celým návrhem a v každé z následujících sekcí je každá funkce explicitně označena svou prioritou.
+
+MVP realizuje kompletní workflow jednoho podlaží: interaktivní kreslení stěn, automatickou detekci místností, parametrické otvory a finalizaci do statické geometrie. Must-have prvky tvoří minimální sadu, bez níž addon nesplňuje základní účel a nemůže být nasazen.
+
+#figure(
+  table(
+    columns: (auto, 2fr, 2fr),
+    align: (left, left, left),
+    table.header(
+      [*Požadavek*], [*Must-have základ*], [*Odložené prvky*],
+    ),
+    [FP1], [Kreslení bodů klikáním v top view; modální operátor; preview stěny], [Snap na osu, mřížku a úhel; pokročilý #gls("gpu", long: false) overlay],
+    [FP2], [Dynamické parametry stěny; update geometrie; vazba otvorů; GN Mesh Boolean], [Napojení místnosti na existující půdorys],
+    [FP3], [Automatická detekce uzavřených místností; zobrazení plochy], [Hierarchizace místností],
+    [FP4], [Finalizace --- aplikace GN modifikátoru, konverze UV, konsolidace materiálů], [---],
+    [FP5], [---], [Kontextová nabídka a raycast elementů (should-have)],
+    [FP6], [---], [Interaktivní 3D manipulátory (should-have)],
+    [FP7], [---], [Automatické kótování (should-have)],
+  ),
+  caption: [MoSCoW prioritizace prvků FP1--FP7; must-have prvky tvoří jádro MVP],
+) <tab-mvp-scope>
+
+Záměrně vyloučeny z celého rozsahu návrhu jsou: více podlaží a hierarchie budov, import a export formátů #gls("dxf", long: false) a #gls("ifc", long: false), generování střech a schodišť a napojení nové místnosti na existující geometrii při vkládání z parametrů. Tato omezení nejsou chybami návrhu --- jsou vědomou hranicí, která umožňuje soustředit se na jádro a dodat funkční addon v rozumném časovém rámci.
+
+== Architektura systému
+
+Analýza odhalila klíčový problém: Blender @blender jako obecný 3D nástroj zná geometrické primitivy --- vrchol, hranu, plochu --- ale nezná stěnu, junction ani místnost. Bez sémantické vrstvy by každý objekt v scéně byl pouhým seskupením polygonů bez doménového kontextu a jakákoli změna půdorysu by vyžadovala manuální přepočítání okolní geometrie. Architektura FloorPlanMasteru tuto mezeru zaplňuje oddělením sémantické logiky v Pythonu od vizualizace v Blenderu: Python vlastní veškeré znalosti o stěnách, místnostech a jejich vztazích; Blender slouží výhradně jako zobrazovací engine. Analogický přístup volí Revit @revit, ArchiCAD a FreeCAD Arch --- jsou postaveny na obecném geometrickém jádru, ale přidávají nad ním sémantickou vrstvu entit (stěna, místnost, podlaží) s vlastními omezeními a vztahy.
+
+=== Třívrstvá hybridní architektura
+
+Jádrem návrhu je architektura striktně oddělující matematickou logiku od vizualizace. Systém stojí na třech specializovaných vrstvách: první dvě běží čistě v Pythonu a starají se o topologii a sémantiku půdorysu; třetí funguje jako jednosměrný most do vykreslovacího jádra Blenderu.
+
+==== Vrstva 1: Topologický skelet
+
+*Vrstva 1* (strukturální graf) je čistě Python planární 2D graf, který reprezentuje stěny jako hrany a jejich styky jako uzly --- bez jakékoli závislosti na Blender #gls("api", long: false). Uzly ($V_s$) jsou junctions --- místa setkání stěn nesoucí 2D souřadnice $(x, y)$. Hrany ($E_s$) jsou osy stěn propojující dva uzly, nesoucí tloušťku, výšku a seznam otvorů. Planarita grafu garantuje, že se stěny v rámci podlaží nekříží. Detailní datový model Vrstvy 1 je popsán v kapitole 3.3.
+
+==== Vrstva 2: Sémantický graf místností
+
+*Vrstva 2* (sémantický graf místností) je duální graf odvozený z Vrstvy 1: jakmile stěny uzavřou cyklus, Vrstva 2 jej automaticky detekuje jako místnost a vypočítá její plochu, obvod a centroid. Každá místnost nese perzistentní UUID a uživatelský název; identita místnosti přetrvává geometrickými změnami. Sdílené stěny dvou cyklů tvoří hrany sousednosti (Adjacency) s typem propojení.
+
+==== Vrstva 3: Synchronizační most
+
+*Vrstva 3* (synchronizační most) přenáší data obou grafů do Blender mesh ve formě pojmenovaných atributů --- jednosměrně a vždy až po ustálení Vrstev 1 a 2. Na tyto atributy čekají Geometry Nodes @blender_dev, které generují 3D geometrii v reálném čase bez přímého zásahu Pythonu do geometrie scény. Synchronizační modul pracuje ve dvou fázích: fáze 1 udržuje topologii mesh v souladu s Vrstvou 1; fáze 2 zapisuje hodnotové atributy z Vrstev 1 a 2.
+
+=== Dynamika systému --- tok dat
+
+Komunikace mezi vrstvami je striktně jednosměrná: Vrstva 1 → Vrstva 2 → Vrstva 3 → Geometry Nodes. Zpětný tok neexistuje --- Blender mesh je vždy odrazem aktuálního stavu grafů, nikoli jejich výchozím bodem. Toto jednosměrné uspořádání eliminuje cyklické přepočty a zaručuje konzistenci dat: žádná operace v Blenderu nemůže nepozorovaně změnit stav grafů. Přidání stěny spouští kompletní řetězec (Vrstva 1 → Vrstva 2 → Vrstva 3 fáze 1 → fáze 2 → GN reevaluace); parametrická změna spouští pouze fázi 2 sync, protože topologie mesh se nemění.
+
+#figure(
+  image("/typst/assets/add_edge_diagram.png", width: 80%),
+  caption: [Tok dat: Přidání stěny],
+) <fig-toolbar>
+
+#figure(
+  image("/typst/assets/add_room_diagram.png", width: 80%),
+  caption: [Tok dat: Přidání místnosti / uzavření cyklu],
+) <fig-toolbar>
+
+#figure(
+  image("/typst/assets/remove_edge_diagram.png", width: 80%),
+  caption: [Tok dat: Odstranění stěny],
+) <fig-toolbar>
+
+#figure(
+  image("/typst/assets/change_attribute_diagram.png", width: 80%),
+  caption: [Tok dat: Změna atributu],
+) <fig-toolbar>
+
+=== Vzor MVC v kontextu Blenderu
+
+Architektura přirozeně odpovídá vzoru #gls("mvc", long: false) v prostředí Blenderu. *Model* tvoří Vrstvy 1 a 2 --- čisté Python struktury bez závislosti na `bpy`, testovatelné izolovaně jednotkovými testy. *Vrstva 3* funguje jako synchronizační most, který zapisuje výsledky Modelu do Blender mesh. *View* zahrnuje Geometry Nodes modifikátor pro 3D geometrii a #gls("gpu", long: false) overlay pro kreslicí náhled a #gls("hud", long: false). *Controller* jsou modální operátory zachytávající uživatelské vstupy a překládající je na volání metod Modelu; Controller nikdy nepíše přímo do Blender geometrie.
+
+#figure(
+  image("/typst/assets/mvc_diagram.png", width: 80%),
+  caption: [MVC diagram reprezentující oddělení vrstev addonu],
+) <fig-toolbar>
+
+=== Principy návrhu
+
+Návrh se řídí pěti principy: *oddělení zájmů* (grafová logika nezávisí na `bpy`, lze ji testovat jednotkovými testy bez Blenderu); *nedestruktivní úpravy* (změna parametru spustí přegenerování přes Geometry Nodes, nikoli přepis geometrie); *zpětná vazba v reálném čase* (každá změna v Modelu se okamžitě projeví díky automatické reevaluaci GN modifikátoru); *modularita* (každý funkční požadavek FP1--FP7 je realizován v samostatném Python modulu); a *konvence Blenderu* (addon dodržuje standardní pojmenování operátorů, integraci Undo/Redo a strukturu addonu pro Blender Extensions).
+
+=== Rozšiřitelnost architektury
+
+Třívrstvá architektura je navržena s výhledem na budoucí rozšíření. Více podlaží lze přidat koordinační vrstvou nad stávající Vrstvy 1 a 2 --- ty samotné zůstanou beze změny. Nové typy prvků (sloup, příčka) nevyžadují změnu struktury grafu: stačí rozšířit sadu atributů a přidat odpovídající GN podstrom. Alternativní výstupní formáty pracují výhradně s daty Vrstvy 3, bez zásahu do zbytku systému.
+
+== Datový model
+
+Architektura vymezila, z jakých vrstev se systém skládá a jak tyto vrstvy komunikují. Tato sekce přibližuje pohled na úroveň samotných dat: jaká je struktura entit, jaké atributy nesou a jaká pravidla musejí dodržovat. Datový model je záměrně oddělen od implementačních detailů --- popisuje logické entity a jejich vztahy, nikoli konkrétní Python třídy s kódem.
+
+=== Vrstva 1: Strukturální graf
+
+Vrstva 1 je čistě matematická reprezentace půdorysu jako planárního 2D grafu. Uzly ($V_s$) jsou *junctions* --- místa setkání stěn, nesoucí dvourozměrnou polohu $(x, y)$ a unikátní identifikátor (UUID interně, celé číslo v serializaci). Hrany ($E_s$) jsou *stěny* --- osy stěn propojující dva uzly, nesoucí tloušťku, výšku, identifikátor materiálu a seznam otvorů. Planarita grafu garantuje, že se stěny v rámci podlaží nekříží --- tato podmínka je fyzikálně nutná pro smysluplnou půdorysnou dispozici a je vynucována validací před každým zápisem do grafu.
+
+Třída `StructuralGraph` (Vrstva 1) nabízí operace pro celý životní cyklus grafu: přidávání a odebírání junctions a stěn, vyhledávání junctions v blízkosti zadané polohy (pro snap-on-junction), získávání stěn napojených na daný junction, detekci minimálních cyklů (implementováno přes NetworkX @networkx) a validaci planarity. Výchozí hodnoty jsou `thickness = 0.2` m a `height = 3.0` m.
+
+#figure(
+  image("/typst/assets/layer1_classdiagram.png", width: 55%),
+  caption: [Diagram tříd na vrstvě 1],
+) <fig-toolbar>
+
+=== Vrstva 2: Sémantický graf místností
+
+Vrstva 2 je duální graf odvozený z Vrstvy 1 algoritmem detekce minimálních cyklů. Uzly ($V_r$) jsou *místnosti* --- každá mapována na uzavřený cyklus ve Vrstvě 1, nesoucí perzistentní UUID, uživatelský název, vypočítanou plochu, obvod, centroid a výšku. Identita místnosti je stabilní přes geometrické změny: pokud uživatel změní tvar místnosti, ID a sémantická metadata (název, materiály) přetrvávají, dokud nedojde k úplnému rozpojení cyklu. Hrany ($E_r$) jsou *sousednosti* (Adjacency) --- sdílené stěny dvou místností, nesoucí typ propojení (uzavřená stěna, dveřní otvor, průchod).
+
+Třída `RoomGraph` spravuje kolekci místností a sousedností, poskytuje prostorové dotazy (sousedé místnosti, celková plocha dle typu, nalezení vnějších místností) a synchronizuje stav s Vrstvou 1 při každé topologické změně.
+
+#figure(
+  image("/typst/assets/layer2_classdiagram.png", width: 60%),
+  caption: [Diagram tříd na vrstvě 2],
+) <fig-toolbar>
+
+=== Vrstva 3: Synchronizační bridge
+
+Vrstva 3 je jednosměrný datový kanál z Python grafů do Blender mesh. Synchronizační modul má dvě fáze, které musejí proběhnout v tomto pořadí: *fáze 1* udržuje topologii mesh v souladu s Vrstvou 1 (přidává a odebírá vrcholy, hrany a plochy); *fáze 2* zapisuje hodnotové atributy z Vrstev 1 a 2 na příslušné elementy mesh přes `mesh.attributes` #gls("api", long: false). Geometry Nodes tyto atributy čtou jako pojmenované vstupy a generují z nich 3D geometrii.
+
+#figure(
+  image("/typst/assets/layer3_classdiagram.png", width: 80%),
+  caption: [Diagram tříd na vrstvě 3],
+) <fig-toolbar>
+
+#figure(
+  table(
+    columns: (auto, 2fr, auto, 2fr),
+    align: (left, left, left, left),
+    table.header(
+      [*Doména*], [*Atribut*], [*Typ*], [*Účel*],
+    ),
+    [Vertex], [`junction_id`], [Integer], [identifikace styku stěn],
+    [Edge], [`wall_id`], [Integer], [identifikace stěny],
+    [Edge], [`wall_thickness`], [Float], [tloušťka pro 3D generování],
+    [Edge], [`wall_height`], [Float], [výška stěny],
+    [Face], [`room_id`], [Integer], [identifikace místnosti],
+    [Face], [`room_area`], [Float], [plocha místnosti v $m^2$],
+    [Face], [`is_wall`], [Integer], [příznak stěnové plochy (1 = stěna, 0 = podlaha)],
+    [Face], [`is_opening`], [Integer], [příznak plochy otvoru (cutter pro Mesh Boolean)],
+  ),
+  caption: [Pojmenované atributy Vrstvy 3 zapisované synchronizačním modulem a čtené Geometry Nodes],
+) <tab-named-attributes>
+
+UUID identifikátory z Vrstev 1 a 2 se převádějí na celá čísla třídou `IdMapper` pro optimalizaci GPU zpracování v Geometry Nodes. Celoobjektová metadata a data persistence jsou ukládána jako Custom Property na Blender objekt.
+
+=== Vztah mezi vrstvami
+
+Všechny tři vrstvy jsou provázány jednosměrným asymetrickým tokem dat. Vrstva 1 (topologie) diktuje obsah Vrstvy 2 (sémantika): cyklus stěn ve Vrstvě 1 tvoří místnost ve Vrstvě 2; sdílená stěna dvou cyklů definuje sousedství. Vrstvy 1 a 2 společně zásobují Vrstvu 3 (synchronizace): topologie přechází z Vrstvy 1 do Vrstvy 3 v první fázi synchronizace; sémantická metadata přechází z Vrstvy 2 do Vrstvy 3 ve druhé fázi. Geometry Nodes čtou výsledné atributy a generují 3D geometrii. Zpětný tok neexistuje: Blender mesh je vždy odrazem aktuálního stavu grafů, nikoli jejich výchozím bodem.
+
+#figure(
+  image("/typst/assets/static_flow_diagram.png", width: 80%),
+  caption: [Statický pohled — závislosti tříd],
+) <fig-toolbar>
+
+#figure(
+  image("/typst/assets/seq_diagram.png", width: 80%),
+  caption: [Dynamický pohled — sekvenční diagram],
+) <fig-toolbar>
+
+=== Validační pravidla
+
+Validace se aplikuje před zápisem dat do grafů a zabraňuje vzniku degenerované geometrie, která by způsobila vizuální artefakty nebo selhání algoritmů. Pro stěny platí: tloušťka $0{,}05 <= t <= 1{,}0$ m (tenčí stěny způsobují Z-fighting, tlustší nemají architektonický smysl), výška $1{,}0 <= h <= 10{,}0$ m, úhel napojení $0° < alpha <= 180°$. Pro místnosti: minimální plocha $> 1{,}0 m^2$ (menší prostory typicky indikují chybu v kreslení, ne reálnou místnost), poměr stran $0{,}1 <= "šířka"/"délka" <= 10{,}0$ a minimálně 3 hraniční vrcholy. Pro otvory: šířka je validována vůči délce stěny s odečtením inset zón u junctions (junction inset = polovina maximální tloušťky sousedních stěn), výška nesmí přesáhnout výšku stěny a cutter boxy nesmějí přesahovat pod Z = 0 (podmínka numerické stability EXACT Boolean solveru). Veškeré interní výpočty probíhají v metrech; převod jednotek se aplikuje výhradně na prezentační vrstvě při zobrazování v #gls("ui", long: false).
+
+== Návrh funkcí
+
+Architektura a datový model definují statiku systému --- z čeho se skládá a jaká data nese. Tato sekce popisuje dynamiku: jak systém reaguje na uživatelské akce v každé funkci FP1 až FP7. Každá funkce je označena prioritou (must-have / should-have) v souladu s MVP filtrem z kapitoly 3.1.
+
+=== FP1 --- Nástroj tužka
+
+Pencil Tool _(must-have)_ je primárním vstupním rozhraním addonu --- modální operátor zachytávající vstupy myši a klávesnice a překládající je na operace nad Vrstvou 1. Veškerá logika kreslení probíhá ve 2D rovině XY; Z-souřadnice je ignorována.
+
+==== Stavový automat
+
+Operátor je řízen třestavovým automatem, který garantuje, že stěna nikdy nevznikne bez platného počátečního bodu a nelze skončit v nekonzistentním stavu. Stav *NEAKTIVNÍ* --- nástroj je registrován, ale nepřijímá vstupy; jiné nástroje Blenderu fungují normálně. Stav *ČEKÁNÍ* --- nástroj aktivní, kurzor sleduje myš, žádný počáteční bod ještě nebyl umístěn; #gls("gpu", long: false) overlay zobrazuje existující geometrii a snap indikátory. Stav *KRESLENÍ* --- první junction byl umístěn; overlay v reálném čase kreslí náhled stěny od posledního bodu ke kurzoru a #gls("hud", long: false) zobrazuje délku a úhel navrhované stěny. Z obou aktivních stavů lze sezení buď *potvrdit* (všechny stěny sezení se synchronizují do meshe a zapíší do Undo stacku jedním krokem) nebo *přerušit* bez uložení (všechny stěny a junctions sezení se odstraní, mesh zůstane nezměněn). Zrušení aktuální čáry (přechod KRESLENÍ → ČEKÁNÍ) neodstraňuje dříve potvrzené stěny téže sezení.
+
+#figure(
+  image("/typst/assets/fp1_statediagram.png", width: 100%),
+  caption: [Stavový diagram nástroje tužka],
+) <fig-toolbar>
+
+==== Snapping
+
+Snapping má přesně danou prioritní hierarchii. Nejvyšší prioritu má *snap na existující junction* _(must-have)_ --- kurzor blíže než 15 pixelů od existujícího junctionu se přichytí na jeho přesné souřadnice. Nižší prioritu mají snap na osu, snap na mřížku a snap na úhel násobků 45° _(všechny should-have)_. Aktivní snap je vizuálně indikován žlutým kruhem u kurzoru; podržení Shift snap dočasně potlačí.
+
+==== Interakce s datovým modelem
+
+Zápis do Vrstvy 1 nastane vždy až po potvrzení bodu, nikdy průběžně při pohybu myši. Potvrzení bodu vyvolá `L1.add_junction(x, y)` nebo reuse existujícího junctionu v toleranci. Potvrzení stěny vyvolá `L1.add_wall(j_start, j_end, thickness, height, material)`, spustí detekci cyklů a synchronizační cyklus Vrstvy 3 (fáze 1 + fáze 2). Vrácení posledního bodu vyvolá `L1.remove_wall(last_wall_id)` a odstraní osiřelé junctions. Přerušení sezení žádný zápis do dat neprovádí.
+
+==== Vizuální zpětná vazba (GPU overlay)
+
+Veškerý kreslicí náhled probíhá v `draw_handler` registrovaném na `SpaceView3D` --- neukládá se do geometrie ani datového modelu. Náhled stěny: čára od posledního junctionu ke kurzoru v odlišné barvě od potvrzených stěn. #gls("hud", long: false): délka navrhované stěny a úhel k poslednímu úseku aktualizované při každém pohybu myši; ve stavu ČEKÁNÍ zobrazuje stavovou zprávu. Snap indikátor: barevný kruh u kurzoru při aktivním snapu. Nápověda kláves: ikony kláves a tlačítek myši v dolní stavové liště Blenderu (`STATUSBAR_HT_header`) --- vzor přejatý z nativního Blender Knife Tool.
+
+==== Způsob generování stěny
+
+Preview stěny reprezentuje osu stěny, avšak fyzická stěna má tloušťku, kterou je nutné rozložit. Tři *módy generování stěny* _(should-have)_ --- Center (symetricky na obě strany), Left (tloušťka nalevo od směru kreslení) a Right (napravo) --- odpovídají konvenci používané ve vektorových nástrojích a #gls("cad", long: false) programech. Mód lze přepínat klávesou `Tab` kdykoli během aktivního nástroje bez přerušení sezení; pojmy „levá" a „pravá" jsou vztaženy k _směru kreslení_, nikoli k pohledu kamery.
+
+=== FP2 --- Parametrické objekty a otvory
+
+FP2 _(must-have)_ definuje, jak se změna parametru stěny propíše do geometrie a jak jsou otvory svázány se stěnou tak, aby se pohybovaly spolu s ní.
+
+==== Parametry stěny a update mechanismus
+
+Každá stěna ve Vrstvě 1 nese atributy `thickness`, `height` a `material_id`. Změna kteréhokoli z nich spustí přesně definovaný *update cyklus*: validace nové hodnoty → zápis do Vrstvy 1 → případný přepočet sousedních místností ve Vrstvě 2 → Vrstva 3 fáze 2 serializuje pouze změněný atribut → Geometry Nodes reevaluace. Tento update je záměrně levnější než přidání stěny: neprovádí se detekce cyklů ani fáze 1 sync, protože topologie mesh se nemění.
+
+==== Otvory --- GN Mesh Boolean
+
+*Otvory* (dveře, okna) jsou závislé objekty vázané na konkrétní hranu Vrstvy 1. Python předá poziční data otvoru (střed, šířka, výška, výška parapetu) jako pojmenované atributy na přilehlé hrany Vrstvy 3; Geometry Nodes je čtou, sestaví cutter boxy jako watertight solid a node Mesh Boolean (DIFFERENCE, EXACT solver) díru dynamicky vyřízne. Cutter nesmí přesahovat pod Z = 0, protože EXACT Boolean solver je numericky nestabilní při práci s cuttery zasahujícími pod spodní plochu stěny.
+
+==== Vložení pravoúhlé místnosti z parametrů
+
+*Vložení pravoúhlé místnosti z parametrů* _(must-have)_ je alternativní vstupní metodou k Pencil Toolu: uživatel zadá šířku, hloubku, výšku a tloušťku stěn v N-panelu a addon vytvoří čtyři junctions a čtyři stěny se středem v poloze 3D kurzoru Blenderu. Výsledná místnost je datově nerozeznatelná od místnosti nakreslené tužkou --- všechny navazující operace (FP5, FP6, FP7) fungují identicky. V rámci MVP se místnost vkládá vždy jako samostatná izolovaná místnost bez sdílených junctions s existující sítí.
+
+==== Vazba otvorů na stěnu
+
+Závislost otvoru na stěně je uložena ve Vrstvě 1 jako atribut hrany. Po posunu junctionu nebo změně délky stěny se relativní pozice otvoru $t in [0, 1]$ zachovává --- absolutní souřadnice se přepočítá automaticky z nové délky stěny; orientace otvoru se přepočítá z nového směrového vektoru stěny. Vrstva 3 fáze 2 serializuje nové poziční atributy a GN reevaluace posune otvor vizuálně.
+
+=== FP3 --- Detekce místností a metadata
+
+FP3 _(must-have)_ realizuje klíčovou vlastnost, která odlišuje FloorPlanMaster od obecného 3D modelování: místnosti nevznikají manuálně, ale jsou automatickým důsledkem topologie Vrstvy 1. Detekce cyklů je spuštěna automaticky po každé změně topologie Vrstvy 1 (*lazy strategie* --- přepočet probíhá jen tehdy, kdy je nezbytný, ne průběžně). Algoritmus využívá NetworkX @networkx pro detekci všech minimálních cyklů v planárním grafu. Každý nový cyklus spouští vznik nového uzlu `Room` ve Vrstvě 2 s perzistentním UUID; zánik cyklu odstraní příslušnou místnost; sloučení dvou cyklů (smazání dělící stěny) provede node fusion --- jeden uzel místnosti přežije a jeho metadata přetrvají.
+
+Pro každou místnost systém průběžně udržuje *plochu* (Gaussův vzorec pro polygon), *obvod* (součet délek hraničních stěn), *centroid* (průměr souřadnic vrcholů cyklu pro umístění kótovacího textu FP7) a *název* (uživatelem editovatelný řetězec). Metriky jsou serializovány do Vrstvy 3 jako pojmenované atributy na plochy.
+
+Perzistence dat využívá *rekonstrukci z Vrstvy 3*: base mesh uložený Blenderem automaticky obsahuje veškerou topologickou informaci v named attributes (`junction_id`, `wall_id`, `room_id` atd.), z nichž lze Vrstvy 1 a 2 plně obnovit. Jedinou výjimkou jsou uživatelské názvy místností, ukládané jako Blender Custom Property na objekt. I při absenci tohoto záznamu grafy fungují správně --- místnosti pouze ztratí uživatelská jména. Tento mechanismus zajišťuje správné obnovení stavu po Undo, reload souboru i reload addonu.
+
+=== FP4 --- Finalizační nástroj
+
+Finalizační nástroj _(must-have)_ provede nevratný převod parametrického modelu do statické polygonové sítě vhodné pro export, UV mapování nebo herní engine. Jde o jednosměrnou operaci --- proto addon před zahájením vygeneruje záchranný bod Undo. Operátor je řízen automatem se stavy NEAKTIVNÍ → DIALOG (spuštění) → BAKING (potvrzení voleb) → HOTOVO nebo CHYBA.
+
+#figure(
+  image("/typst/assets/fp4_statediagram.png", width: 100%),
+  caption: [Stavový diagram finalizačního nástroje],
+) <fig-toolbar>
+
+V dialogu uživatel volí: *organizaci výstupu* (jeden objekt / per místnost / separace stěny + podlahy + stropy), *přiřazení materiálů* (automaticky z metadat Vrstvy 2 nebo ponechat výchozí Blender materiál), *čistění atributů* (odstranit named attributes z výsledné sítě pro úsporu dat) a *zachovat originál* (duplikovat před finalizací vs. finalizovat přímo).
+
+Technicky finalizace pracuje přes vyhodnocený depsgraph (`evaluated_get(depsgraph)`): aplikace GN modifikátoru z vyhodnoceného stavu → konverze UV atributů z face-corner domény na standardní UV vrstvy (`MeshUVLoopLayer`, jinak je exportéry #gls("fbx", long: false) a glTF ignorují) → deduplikace materiálových slotů (Join Geometry v GN produkuje duplicitní sloty; identické materiály se sloučí, indexy polygonů přemapují, prázdné sloty odstraní).
+
+=== FP5 --- Kontextová nabídka
+
+Kontextová nabídka _(should-have)_ poskytuje rychlý přístup k méně frekventovaným operacím (přejmenování, smazání, rozdělení stěny) bez nutnosti hledat je v panelech. Vyvolává se stiskem #gls("rmb", long: false) ve 3D Viewportu --- primární Blender konvence od verze 2.80.
+
+Klíčovým mechanismem je *raycast*: addon vrhne paprsek z pozice kurzoru přes Vrstvu 3 (Blender mesh s named attributes) a identifikuje typ elementu. Plocha → místnost; hrana → stěna; vrchol → junction; prázdný prostor → globální akce. Obsah nabídky se dynamicky přizpůsobuje kontextu: uživatel vidí vždy jen akce relevantní pro kliknutý prvek, nikoli celý katalog operátorů addonu.
+
+Pro kontext místnosti jsou dostupné přejmenování, změna materiálu a smazání (kaskádové odebrání stěn z Vrstvy 1). Pro kontext stěny: editace tloušťky, výšky a materiálu; přidání otvoru; rozdělení stěny vložením nového junctionu; smazání. Pro kontext junctionu: smazání s přilehlými stěnami; sloučení s nejbližším junctionem (merge v toleranci). Pro prázdný prostor: přepnutí viditelnosti mřížky, kótování a spuštění Pencil Tool --- alternativa ke klávesové zkratce pro uživatele preferující nabídky.
+
+=== FP6 --- Interaktivní manipulátory
+
+Gizmos _(should-have)_ jsou interaktivní grafické ovládací prvky ve 3D Viewportu, které umožňují přímou geometrickou manipulaci taháním myší bez přepínání nástrojů. Vzor je přejat z Archipack @archipack, kde výběr stěny automaticky zobrazí táhla pro tloušťku a výšku.
+
+Addon definuje tři typy manipulátorů. *Manipulátor tloušťky stěny* (světle modrá) --- obousměrná šipka kolmá na osu stěny v rovině XY; táhnutím se aktualizuje `wall_thickness` ve Vrstvě 1 a spouští fáze 2 sync a GN reevaluace, topologie Vrstvy 1 zůstává nezměněna. *Manipulátor výšky stěny* (zelená) --- svislá šipka na středu stěny, pohyb omezen na osu Z; aktualizuje `wall_height` bez změny topologie. *Manipulátor pohybu junctionu* (žlutá) --- kruh na vybraném junctionu; pohyb striktně omezen na rovinu XY (*2D zámek*) --- Z-složka tahu je zahozena, protože pohyb mimo rovinu by narušil planarita Vrstvy 1 a způsobil selhání detekce místností.
+
+=== FP7 --- Automatické kótování
+
+Kótovací overlay _(should-have)_ zobrazuje rozměry stěn a metriky místností průběžně ve 3D Viewportu bez nutnosti aktivovat speciální nástroj. Text je vykreslován jako `POST_PIXEL` overlay přes draw_handler registrovaný na `SpaceView3D` (@blender_api) --- zůstává čitelný nezávisle na úhlu kamery, protože pracuje v souřadnicích obrazovky. Data jsou čtena výhradně z Vrstev 1 a 2, nikoli z geometrie scény: délky stěn z Euklidovské vzdálenosti junction--junction, plochy a centroidy z uzlů Vrstvy 2. Středy hran a centroidy místností jsou transformovány do 2D souřadnic obrazovky pomocí `view3d_utils`. Viditelnost kótování přepíná globální přepínač v Nastavení (klávesa `T`).
+
+== Návrh uživatelského rozhraní
+
+Architektura a funkce definují, co systém dělá. Tato sekce popisuje, jak uživatel se systémem komunikuje --- kde jsou nástroje umístěny, jaká klávesová zkratka co spouští a jak viewport vizuálně reflektuje aktuální stav. Návrh #gls("ui", long: false) vychází z principu konzistence s ekosystémem Blenderu: každý prvek rozhraní kopíruje vzor, který uživatelé Blenderu již ovládají, aby minimalizoval náklady na učení. Současně musí návrh reflektovat omezení Blender Python #gls("api", long: false), zejména nemožnost přidat nativní pracovní mód, a dosáhnout ekvivalentního výsledku kompozicí dostupných mechanismů.
+
+=== Toolbar --- umístění nástroje tužka
+
+Toolbar je levý svislý panel ve 3D Viewportu, kde Blender soustřeďuje veškeré modální nástroje vyžadující trvalé zachytávání vstupu myši a klávesnice --- Knife Tool, Loop Cut, Poly Build a Draw. Konvencí Blenderu od verze 2.80 je, že nástroj ovládaný levým tlačítkem myši v kontinuálním modálním režimu patří do Toolbaru. Pencil Tool tuto podmínku splňuje: po aktivaci přebírá všechny vstupy a každé LMB kliknutí potvrzuje bod. Addon proto registruje Pencil Tool jako `WorkspaceTool` --- Blender jej automaticky zobrazí jako ikonové tlačítko v Toolbaru, vizuálně zvýrazní při aktivaci a zobrazí tooltip s názvem a klávesovou zkratkou.
+
+Alternativní přístupy byly zvažovány a zamítnuty: čistá klávesová zkratka bez Toolbaru nemá vizuální indikaci aktivního stavu a tlačítko výhradně v N-panelu porušuje Blender konvenci, která N-panel rezervuje pro parametry a nastavení, nikoli pro spouštění modálních nástrojů. Při aktivaci nástroje se v levém horním rohu viewportu a v sekci Active Tool v N-panelu zobrazí ovládací prvky pro tloušťku, výšku a příchycení stěny --- vzor přejatý z nativních sculpting nástrojů Blenderu.
+
+#figure(
+  image("../docs/assets/blender_ui_viewport_penciltool_annotated.png", width: 80%),
+  caption: [Umístění nástroje Pencil Tool v Toolbaru ve 3D Viewportu Blenderu],
+) <fig-toolbar>
+
+=== Postranní panel (N-panel)
+
+N-panel (Sidebar) je standardním místem pro trvalé parametrické rozhraní architektonických addonů. Addon přidává záložku *FloorPlanMaster* se čtyřmi skládacími sekcemi. Toto členění přejímá vzor z Archipack @archipack, kde je panel rozdělen na sekci operátorů a sekci parametrů vybraného objektu.
+
+*Sekce Nástroje* sdružuje spouštěče akcí: tlačítko Pencil Tool (alternativa ke klávesové zkratce `D`), Vložit místnost (otevírá inline formulář s poli šířka, hloubka, výška, tloušťka) a Zapéct (spouští finalizační pop-over FP4 s volbami výstupu). Toto odlišení je záměrné: Blender konvencí je, že akce vkládající nové prvky patří do sekce Nástrojů, nikoli do sekcí modifikujících výběr.
+
+*Sekce Místnosti* je přehledem uzlů Vrstvy 2: seznam všech místností s editovatelným názvem a průběžně aktualizovanou plochou. Kliknutím na položku dojde k výběru místnosti ve viewportu a rozbalení detailního pohledu přímo pod položkou (obvod, výška, počet stěn). Vzor odpovídá technice „list panel s automatickým výběrem", kterou Blender nativně používá pro vertex groups nebo shape keys.
+
+*Sekce Nastavení* obsahuje globální parametry scény uložené v `Scene PropertyGroup` (konzistentní s pravidlem persistence --- projektové hodnoty jsou součástí `.blend` souboru a přenositelné s projektem). Záměrně jsou sem zařazeny pouze parametry ovlivňující chování celého projektu --- nikoli parametry jednotlivých prvků.
+
+#figure(
+  table(
+    columns: (2fr, auto, 2fr),
+    align: (left, center, left),
+    table.header(
+      [*Parametr*], [*Výchozí hodnota*], [*Popis*],
+    ),
+    [Systém jednotek], [Metrický], [Přepíná zobrazení rozměrů; interně vždy metry],
+    [Výchozí tloušťka stěny], [0,3 m], [Přednabídnuto při kreslení a vkládání místnosti],
+    [Kótovací overlay], [Vypnuto], [Zapíná draw_handler FP7],
+    [Barevné odlišení místností], [Vypnuto], [Každá místnost dostane automaticky odlišnou barvu],
+    [Názvy místností ve viewportu], [Zapnuto], [Text v centroidu místnosti],
+    [Highlight výběru], [Zapnuto], [Označí aktuálně vybraný prvek],
+    [Manipulátory (gizmos)], [Vypnuto], [Zobrazí táhla pro vybranou stěnu],
+  ),
+  caption: [Přehled globálních nastavení v sekci Nastavení N-panelu s výchozími hodnotami],
+) <tab-settings>
+
+*Sekce aktuálně vybrané stěny* je umístěna na vrcholu záložky a zobrazuje se výhradně tehdy, když je ve scéně vybrána stěna. Zobrazuje délku stěny (pouze pro čtení), editovatelnou tloušťku a výšku a seznam otvorů s možností přidání a odebrání. Detail každého otvoru poskytuje editaci názvu, typu (dveře/okno), šířky, výšky, výšky parapetu a relativní polohy na stěně.
+
+=== Klávesové zkratky
+
+Návrh klávesových zkratek se řídí dvěma principy: zkratky musejí být kompatibilní se stávající svalovou pamětí uživatelů Blenderu a AutoCADu @autocad; zkratky platné v modálním kontextu nesmějí kolidovat s globálními Blender zkratkami. Klávesový mód Pencil Tool je záměrně analogický Blender Knife Tool: rozlišuje stav ČEKÁNÍ a stav KRESLENÍ.
+
+#figure(
+  table(
+    columns: (2fr, auto, auto, 2fr),
+    align: (left, center, left, left),
+    table.header(
+      [*Akce*], [*Klávesa*], [*Kontext*], [*Zdůvodnění*],
+    ),
+    [Aktivovat Pencil Tool], [`D`], [Object Mode], [`D` = Draw; AutoCAD konvence; v Blenderu Object Mode neobsazeno],
+    [Umístit bod / pokračovat], [`LMB`], [Pencil Tool aktivní], [LMB jako primární potvrzovací vstup --- Blender standard od v2.80],
+    [Potvrdit sezení], [`Enter`], [Oba stavy], [Blender konvence pro potvrzení modálního operátoru (Knife Tool, Loop Cut)],
+    [Vrátit poslední bod], [`Z`], [Oba stavy], [`Z` jako Undo; bezpečné --- Blender `Z` (shading pie) blokováno po dobu aktivity operátoru],
+    [Zrušit aktuální čáru], [`RMB`], [Stav KRESLENÍ], [Analogie s Knife Toolem; ve stavu ČEKÁNÍ RMB propustí do Blenderu (kontextová nabídka)],
+    [Přerušit sezení bez uložení], [`ESC`], [Oba stavy], [Zruší všechny změny sezení; identické chování s Knife Tool a Loop Cut],
+    [Potlačit snap], [Shift (držet)], [Pencil Tool aktivní], [Blender konvence pro dočasné přepnutí snap modu],
+    [Přepnout kótování FP7], [`T`], [3D Viewport], [`T` = Toggle; alternativně nastavitelné v Preferences],
+  ),
+  caption: [Klávesové zkratky addonu s kontextem a zdůvodněním volby klávesy],
+) <tab-shortcuts>
+
+Všechny zkratky jsou registrovány s podmínkou kontextu (`bl_space_type = 'VIEW_3D'`). Klávesa `D` je registrována pouze pro Object Mode, kde Blender tuto klávesu nativně neobsazuje. Po dobu aktivity modálního operátoru jsou ostatní Blender zkratky blokovány --- s výjimkou navigačních vstupů (střední tlačítko myši, Numpad pohledy) a `RMB` ve stavu ČEKÁNÍ.
+
+=== Viewport UI
+
+Viewport #gls("ui", long: false) tvoří čtyři kategorie vizuálních prvků vykreslovaných přímo ve 3D Viewportu nad geometrií scény prostřednictvím #gls("gpu", long: false) overlay vrstev.
+
+*#gls("hud", long: false) overlay (Pencil Tool aktivní)* --- text a grafika překrývající viewport po dobu aktivity Pencil Tool, vykreslované v `POST_PIXEL` režimu (souřadnice obrazovky), takže zůstávají čitelné a stabilní nezávisle na zoomu. Ve stavu ČEKÁNÍ zobrazuje stavovou zprávu. Ve stavu KRESLENÍ zobrazuje délku navrhované stěny a úhel k poslednímu úseku. Vzor je přejat přímo z Blender Knife Tool. Nápověda kláves je zobrazena v dolní stavové liště Blenderu (`STATUSBAR_HT_header`) jako ikony kláves a tlačítek myši --- Blender standardní přístup zavedený nativními nástroji.
+
+*Kótovací overlay (FP7)* --- délky stěn jako text nad středem každé hrany, plocha a název místnosti v centroidu každé místnosti. Data čtena z Vrstev 1 a 2; text vykreslován přes modul #gls("blf", long: false) v `POST_PIXEL` handleru. Přepínač viditelnosti v sekci Nastavení (klávesa `T`).
+
+*Barevné odlišení místností* --- průhledná barevná výplň uzavřených cyklů vykreslovaná v `POST_VIEW` režimu; každá místnost dostane automaticky odlišnou barvu. Výplň je poloprůhledná, aby nerušila viditelnost geometrie. Vzor přejat z ArchiCAD a Revit @revit, kde barevné kódování místností patří k základní orientaci v půdorysu.
+
+#figure(
+  table(
+    columns: (auto, auto, 2fr),
+    align: (left, left, left),
+    table.header(
+      [*Prvek*], [*Barva*], [*Sémantika*],
+    ),
+    [Potvrzené stěny], [Světle šedá], [Existující hmota --- neutrální],
+    [Preview stěna (FP1)], [Modrá], [Navrhovaný, nepotvrzený prvek],
+    [Snap indikátor], [Žlutá], [Aktivní přichycení --- příští klik se přichytí na tuto pozici],
+    [Vybraný prvek (stěna, místnost)], [Oranžová], [Blender konvence pro aktivní výběr],
+    [Chybová indikace], [Červená], [Neplatná operace --- Blender error state barva],
+  ),
+  caption: [Barevná sémantika overlay vrstvy v souladu s konvencemi nativních Blender nástrojů],
+) <tab-colors>
+
+*Gizmos (FP6)* --- interaktivní táhla zobrazující se při výběru prvku: manipulátor tloušťky (světle modrá obousměrná šipka kolmá na stěnu v rovině XY), manipulátor výšky (zelená svislá šipka na středu stěny) a manipulátor pohybu junctionu (žlutý kruh omezený na rovinu XY).
+
+=== Kontextová nabídka
+
+Kontextová nabídka je vyvolána stiskem #gls("rmb", long: false) ve 3D Viewportu. Raycast identifikuje typ elementu a obsah nabídky se dynamicky přizpůsobuje: uživatel v každém kontextu vidí pouze relevantní akce, čímž se redukuje vizuální šum. Vzor kopíruje Archipack @archipack (RMB na objekt zobrazuje akce specifické pro typ architektonického prvku) a AutoCAD @autocad (RMB = kontextová nabídka závislá na výběru). Operace vyžadující textový vstup nebo výběr z enumu otevírají *pop-over dialog* u pozice kurzoru --- shodný vzor jako F9 Last Operator pop-over v nativním Blenderu; zavírá se kliknutím mimo bez nutnosti potvrzení.
+
+=== FloorPlan kontext --- simulovaný pracovní mód
+
+Ideálním designovým řešením by byl vlastní pracovní mód paralelní k Object Mode a Edit Mode --- „FloorPlan Mode" s jednoznačně vymezeným kontextem, vlastními klávesami a explicitní bariérou vůči obecným Blender nástrojům. Blender Python #gls("api", long: false) @blender_dev však neumožňuje přidání nativního módu; `object.mode_set()` je pevně omezeno na módy implementované v C jádru. Návrh proto realizuje ekvivalentní řešení kompozicí tří mechanismů: WorkspaceTool vizuálně indikuje aktivní kontext v Toolbaru; persistentní #gls("gpu", long: false) overlay vizuálně odlišuje sémantická data kdykoli je objekt viditelný; modální operátor Pencil Tool blokuje Blender klávesové zkratky po dobu kreslení.
+
+Viditelnost overlay a dostupnost výběru řídí dvoustupňový přístup konzistentní s Blender konvencemi. Overlay je viditelný kdykoli je FloorPlan objekt viditelný v kolekci. Výběr stěn a místností (LMB raycast) je dostupný výhradně pro aktivní objekt (`context.active_object`); operátor `FLOORPLAN_OT_select_wall` obsahuje `poll()` vracející `False`, pokud aktivní objekt není FloorPlan mesh. Jedno `.blend` může obsahovat více FloorPlan objektů (různá podlaží, varianty) --- overlay je viditelný pro všechny viditelné objekty zároveň, editovatelný je vždy jen aktivní.
+
+== Testování a validace návrhu
+
+Před zahájením implementace je nezbytné ověřit, že navržená architektura a funkce společně spolehlivě pokrývají zadání z MVP scope a neobsahují logické mezery. Tato kapitola plní roli kontroly návrhu prostřednictvím kontrolních seznamů, teoretických průchodů scénáři a analýzy okrajových případů.
+
+=== Pokrytí požadavků
+
+Každý must-have prvek FP1--FP4 má jednoznačně přiřazenou návrhovou sekci (kapitola 3.4), datový model (kapitola 3.3) a průchoditelný tok dat napříč vrstvami. Should-have prvky FP5--FP7 jsou navrhnuty a datově pokryty, ale nejsou součástí MVP scope --- architektura je připravena je pojmout bez změny Vrstev 1 a 2.
+
+#figure(
+  table(
+    columns: (auto, 2fr, auto, auto),
+    align: (left, left, left, center),
+    table.header(
+      [*Požadavek*], [*Navrhující sekce*], [*Datový model*], [*MVP*],
+    ),
+    [FP1 --- modální kreslení], [FP1 --- stavový automat], [Junction, Wall (L1)], [✓],
+    [FP1 --- snap na junction], [FP1 --- snapping], [Junction.position (L1)], [✓],
+    [FP2 --- update stěny], [FP2 --- update mechanismus], [Wall.thickness/height (L1)], [✓],
+    [FP2 --- otvory GN Boolean], [FP2 --- otvory], [Wall.openings, L3 atributy], [✓],
+    [FP3 --- detekce místností], [FP3 --- detekce cyklů], [Room (L2) z cyklu (L1)], [✓],
+    [FP4 --- finalizace], [FP4 --- interakce s modelem], [L3 → statická mesh], [✓],
+    [FP5 --- kontextová nabídka], [FP5 --- raycast + akce], [L3 raycast → L1/L2], [---],
+    [FP6 --- manipulátory], [FP6 --- typy gizmos], [Wall.thickness/height, Junction.pos], [---],
+    [FP7 --- kótování], [FP7 --- datový pipeline], [L1 délky, L2 area + centroid], [---],
+  ),
+  caption: [Matice pokrytí požadavků návrhovou dokumentací; ✓ = součást MVP, --- = odloženo za MVP],
+) <tab-coverage>
+
+Nefunkční požadavky jsou pokryty architekturálně. NP1 (Geometry Nodes jako backend, Python jako manažer) je zajištěn oddělením Vrstev 1--2 od Vrstvy 3. NP2 (výkon a nedestruktivnost) je zajištěn jednosměrným tokem dat a dvoufázovou synchronizací --- změna atributu nevyvolá detekci cyklů (pouze fáze 2). NP3 (použitelnost) je zajištěn výběrem klávesových zkratek a barevné sémantiky konzistentních s Blender konvencemi a validačními chybami hlášenými pop-overem.
+
+=== Průchod scénáři použití
+
+Průchod scénáři ověřuje, že navržená architektura a funkce společně pokrývají celý uživatelský workflow. Must-have scénáře UC 1.1--3.2 jsou plně průchozí must-have prvky FP1--FP4.
+
+UC 1.2 (kreslení dispozice tužkou) je průchozí krok za krokem: aktivace Pencil Tool (FP1) → kreslení s snapem na existující junctiony (FP1) → uzavření cyklu spouští detekci místnosti (FP3) → výběr stěny a úprava parametrů v N-panelu (FP2) → update cyklus → GN reevaluace. UC 1.1 (hmotová studie z parametrů) je průchozí: zadání plochy a poměru stran v N-panelu → FP2 vytvoří čtyři stěny → Vrstva 2 vypočítá metriky (FP3) → opakování pro každou místnost stavebního programu. UC 2.2 (příprava pro rendering) a UC 3.2 (export herní úrovně) jsou průchozí díky FP2 (otvory s GN Boolean) a FP4 (finalizace s UV konverzí a deduplikací materiálů).
+
+Should-have scénáře UC 1.3 (kótování), UC 2.3 (kontextová editace) a UC 3.3 (manipulátory) nejsou průchozí v MVP --- závisejí na FP5--FP7, jejichž implementace je záměrně odložena. Datový základ (L1 délky, L2 plochy a centroidy) je však dostupný od MVP.
+
+=== Analýza okrajových případů
+
+Topologické edge cases jsou ošetřeny validací Vrstvy 1: stěna s nulovým rozpětím (start = end junction) je odmítnuta, duplicitní stěna mezi dvěma junctions je odmítnuta (prostý graf), posun junctionu vedoucí ke crossing edges spouští planaritní kontrolu. Sémantické edge cases jsou ošetřeny automatickou synchronizací: smazání dělící stěny provede node fusion (zachová ID místnosti), zánik posledního cyklu odstraní místnost, změna geometrie bez změny topologie přepočítá pouze metriky. Persistence edge cases jsou pokryty rekonstrukcí z named attributes: reload souboru bez Custom Property (poškozený soubor) rekonstruuje grafy funkčně --- místnosti ztratí uživatelská jména, ale jsou jinak plně funkční. Undo po přidání stěny obnoví mesh snapshot a rekonstrukce ze snapshottu vrátí konzistentní stav Vrstev 1 a 2.
+
+== Hodnocení návrhu uživatelského rozhraní
+
+Kapitola 3.5 definovala návrh #gls("ui", long: false) addonu. Před zahájením implementace je vhodné provést jeho systematické hodnocení --- ověřit, že navržené rozhraní je konzistentní s ekosystémem Blenderu, splňuje klíčové principy použitelnosti a umožňuje novému uživateli dokončit základní úkoly bez zbytečných překážek. Hodnocení aplikuje tři doplňující se metody: kontrolu konzistence, heuristické hodnocení dle Nielsena a kognitivní průchody vybranými scénáři.
+
+=== Konzistence s ekosystémem Blenderu
+
+Kontrola konzistence hodnotí, jak plynule addon zapadá do stávajícího Blender ekosystému a zda je vnitřně soudržný.
+
+*Vnější konzistence.* Pencil Tool je registrován jako WorkspaceTool v T-panelu, shodně s nativními modálními nástroji Knife Tool, Loop Cut a Poly Build --- addony umísťující modální nástroje mimo Toolbar (Archimesh @archimesh, Archipack @archipack) tak činí z historických důvodů předcházejících WorkspaceTool #gls("api", long: false). Klávesové zkratky respektují stávající Blender keymapping: LMB jako potvrzení (standard od v2.80), RMB jako kontextová nabídka (primární konvence), ESC pro zrušení modálního operátoru (identické s Knife Tool). Barevná sémantika přejímá konvence nativních nástrojů: oranžová pro výběr odpovídá standardnímu Blender theme, modrá pro nepotvrzené prvky odpovídá Loop Cut preview, žlutá pro snap odpovídá nativnímu Blender snap markeru. N-panel sekce Nástroje → Místnosti → Nastavení odpovídá logické hierarchii Blender Properties editoru (Tool → Item → View).
+
+*Vnitřní konzistence.* Každá klíčová akce je dosažitelná více cestami se shodným výsledkem: aktivace Pencil Tool přes `D`, tlačítko v N-panelu i klik na ikonu v Toolbaru vede do identického vstupního stavu FP1 automatu; přepnutí kótování přes `T`, přepínač v kontextovém menu i v Nastavení mění tentýž stav FP7 draw_handleru. Obousměrná synchronizace výběru (klik na místnost v N-panelu vybere ji ve viewportu a naopak) zabraňuje situaci, kde uživatel edituje jiný prvek než zvýrazněný.
+
+=== Heuristické hodnocení
+
+Heuristické hodnocení porovnává návrh s třemi Nielsonovými heuristikami použitelnosti nejvíce relevantními pro nástrojový addon v 3D editoru.
+
+*Viditelnost stavu systému.* Pencil Tool jako modální operátor s více stavy je nejvýraznějším rizikovým místem --- uživatel musí vždy vědět, zda je nástroj aktivní a v jakém stavu se automat nachází. Návrh adresuje toto riziko na třech úrovních: HUD overlay v levém dolním rohu viewportu zobrazuje aktuální stav automatu (ČEKÁNÍ / KRESLENÍ) a nápovědu platných kláves --- vzor přejatý z Blender Knife Tool; dynamická preview stěna ve stavu KRESLENÍ potvrzuje, že první bod byl zaregistrován; snap indikátor (žlutý kruh) signalizuje výsledek příštího kliknutí ještě před jeho provedením --- SketchUp @sketchup používá identický vzor. Hodnocení: heuristika je dobře pokryta.
+
+*Shoda se skutečným světem.* Terminologie addonu (místnost, stěna, otvor, tloušťka, výška) odpovídá slovní zásobě architektů i game designérů. Rozměry jsou zobrazeny v nastaveném systému jednotek, nikoli jako interní hodnoty v metrech. Workflow Pencil Tool (bod → stěna → uzavření cyklu → místnost) odpovídá způsobu, jakým architekti ručně kreslí půdorysy --- místnosti vznikají jako logický důsledek uzavřených smyček bez explicitní deklarace; zásadní rozdíl oproti Archimesh @archimesh, kde se místnosti vkládají jako předpřipravené objekty. Hodnocení: heuristika je pokryta.
+
+*Uživatelská kontrola a svoboda.* ESC kdykoli během Pencil Tool zruší aktuální kreslicí akci a vrátí automat do stavu ČEKÁNÍ; opakované ESC deaktivuje nástroj. `Z` vrátí poslední potvrzený junction bez opuštění nástroje --- zkrácení iterativního cyklu o dva kroky oproti globálnímu `Ctrl+Z`. Každá operace modifikující Vrstvy 1 nebo 2 je zapsána do Blender Undo stacku. Nedestruktivní architektura GN zaručuje, že změna parametru stěny je kdykoliv vrátitelná. Smazání místnosti nebo stěny z kontextové nabídky zobrazí pop-over s potvrzením --- nevratné akce bez potvrzení by porušovaly jak tuto heuristiku, tak Blender konvenci. Hodnocení: heuristika je pokryta.
+
+=== Kognitivní průchody
+
+Kognitivní průchod simuluje zkušenost nového uživatele při plnění konkrétního úkolu. Hodnotitel prochází každý krok a klade čtyři otázky: ví uživatel, jakou akci provést? Vidí ovládací prvek? Pokročil správným směrem? Je zpětná vazba správná? Zvoleny jsou dva reprezentativní scénáře.
+
+*UC 1.2 --- Kreslení dispozice tužkou.* Aktivace nástroje (krok 1) --- ikona tužky v Toolbaru s tooltipem je dohledatelná průzkumem Toolbaru nebo N-panelu; po aktivaci se ikona zvýrazní a HUD zobrazí stavovou zprávu se stavem ČEKÁNÍ --- zpětná vazba je správná. Umístění prvního bodu (krok 2) --- stavová zpráva říká „LMB: umístit první bod"; po kliknutí se preview linka táhne ke kurzoru a HUD přejde do stavu KRESLENÍ --- zpětná vazba potvrzuje přechod stavu. Uzavření místnosti (krok 3) --- snap indikátor u prvního junctionu signalizuje možnost uzavření; uzavření cyklu způsobí okamžité zobrazení barevné výplně plochy --- vizuální signál detekce místnosti bez technické hlášky. Identifikovaný potenciál rizika: uživatel nemusí vědět, že uzavření cyklu na první junction je podmínkou vzniku místnosti; snap indikátor a chybějící barevná výplň při neuzavření toto riziko zmírňují.
+
+*UC 1.1 --- Vložení místnosti z parametrů.* Nalezení funkce (krok 1) --- tlačítko „Vložit místnost" je v sekci Nástroje jako první viditelný prvek; tooltip říká „Vloží pravoúhlou místnost se středem na 3D kurzoru". Identifikované riziko: uživatel bez Blender zkušenosti nemusí znát pojem „3D kurzor" --- riziko akceptovatelné, protože 3D kurzor je fundamentální Blender koncept předcházející práci s libovolným addonem pro modelování. Zadání parametrů a potvrzení (krok 2) --- po potvrzení se místnost ihned zobrazí ve viewportu jako obarvená plocha a N-panel sekce Místnosti zobrazí novou položku s vypočítanou plochou --- okamžitá vizuální a numerická zpětná vazba potvrzující správnost operace.
+
+=== Závěr hodnocení
+
+Hodnocení provedené třemi metodami neprokázalo žádné systémové nedostatky zabraňující zahájení implementace. Kontrola konzistence potvrdila soulad s Blender konvencemi na všech úrovních. Heuristické hodnocení dospělo u všech tří heuristik k pozitivnímu výsledku. Kognitivní průchody UC 1.2 a UC 1.1 identifikovaly dvě drobná rizika (nutnost uzavřít cyklus pro vznik místnosti; znalost pojmu 3D kurzor) a obě jsou zmírněna vizuálními mechanismy nebo jsou akceptovatelná pro cílovou skupinu se základní znalostí Blenderu.
+
 = Implementace
 = Testování
