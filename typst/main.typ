@@ -397,6 +397,7 @@ Každý požadavek je hodnocen zvlášť každou cílovou skupinou (Vysoká / St
 ) <tab-req-priority>
 
 Tabulka nám v další kapitole návrhu poslouží jako výchozí bod pro určení definice minimálního funkčního produktu a jeho hranic. 
+
 == Technická analýza
 
 Funkční požadavky říkají _co_ má addon umět; technická analýza odpovídá na otázku _jak_ --- které části Blender API to umožňují, jaké jsou jejich limity a kde hrozí designová nedostatky, které by ovlivnily celou architekturu. Klíčové otázky jsou, jak zachytit kreslení půdorysu v reálném čase bez ztráty výkonu, jak reprezentovat půdorys jako responsivní datový model schopný detekovat místnosti a reagovat na každou změnu stěny, a jak parametrické objekty převést do statické geometrie připravené pro export.
@@ -442,7 +443,7 @@ K překonání těchto limitů se v profesionálních addonech využívají tři
 
 === Reprezentace geometrie
 
-Přesná tloušťka v ostrých rozích, real-time odezva na změnu parametru a čistá topologie vhodná pro UV mapování jsou tři protichůdné nároky, které ne každý přístup k reprezentaci geometrie splňuje najednou. Tato sekce srovnává dvě dostupné možnosti: imperativní BMesh, který nabízí maximální topologickou kontrolu za cenu výkonu, a deklarativní Geometry Nodes, které výpočet přesouvají do nativního C++ jádra programu Blender.
+Přesná tloušťka v ostrých rozích, interaktivní odezva na změnu parametru a čistá topologie vhodná pro UV mapování jsou tři protichůdné nároky, které ne každý přístup k reprezentaci geometrie splňuje najednou. Tato sekce analyzuje tři dostupné možnosti: imperativní BMesh, který nabízí maximální topologickou kontrolu za cenu výkonu; deklarativní Geometry Nodes, které výpočet přesouvají do nativního C++ jádra programu Blender; a hybridní přístup kombinující přesný výpočet geometrie v Pythonu s GN jako vykreslovacím backendem.
 
 Geometrie (poloha prvků v prostoru) a topologie (vzájemné vztahy a propojení) tvoří základní dualitu jakékoli 3D struktury. V programu Blender je základní jednotkou mesh složená z vrcholů, hran a ploch.
 
@@ -450,28 +451,39 @@ Geometrie (poloha prvků v prostoru) a topologie (vzájemné vztahy a propojení
 
 BMesh je interní datová struktura programu Blender, která na rozdíl od tradičních struktur založených na trojúhelnících podporuje n-gony (polygony s více než čtyřmi vrcholy). Využívá systém podobný half-edge datovým strukturám, kde jsou vztahy mezi plochami a hranami uloženy tak, aby umožňovaly rychlou navigaci po povrchu sítě.
 
-Z pohledu parametrického modelování nabízí BMesh skrze Python API (modul `bmesh`) nízkoúrovňový přístup k topologii --- možnost dotazovat se, které hrany jsou spojeny s daným vrcholem, a tím provádět operace jako dissolve bez poškození okolní topologie. Algoritmus pro generování stěn obvykle začíná načtením 2D hran, identifikuje uzavřené smyčky jako obrysy místností a operací tloušťky (offset) --- například přes `bmesh.ops.bevel` nebo posunem vrcholů podél normál hran --- vytváří 3D stěny. Tento proces je v Pythonu relativně pomalý, zejména při průběžné validaci integrity sítě.
+Z pohledu parametrického modelování nabízí BMesh skrze Python API (modul `bmesh`) nízkoúrovňový přístup k topologii --- možnost dotazovat se, které hrany jsou spojeny s daným vrcholem, a tím provádět operace jako dissolve bez poškození okolní topologie. Algoritmus pro generování stěn obvykle začíná načtením 2D hran, identifikuje uzavřené smyčky jako obrysy místností a operací tloušťky (offset) --- například přes `bmesh.ops.bevel` nebo posunem vrcholů podél normál hran --- vytváří 3D stěny. Tento proces je v Pythonu relativně pomalý a neumožňuje plynulou interaktivní odezvu, zejména při průběžné validaci integrity sítě. Na druhou stranu ale poskytuje absolutní kontrolu nad datovou strukturou a zaručuje bezchybnou, čistou topologii.
 
-==== Geometry Nodes a koncept polí
+==== Geometry Nodes
 
 Geometry Nodes (#gls("gn", long: false)) zastupují deklarativní, paralelní přístup: uživatel definuje systém pravidel aplikovaných na celou geometrii současně. Data jsou reprezentována jako pole atributů vázaných na různé domény (vrcholy, hrany, plochy, instance), přičemž výpočet probíhá v nativním kódu C++ s plným multithreadingem.
 
-Pro generování stěn se v GN nejčastěji používá uzel `Curve to Mesh`. Klíčovou výzvou je Miter Joint problém --- standardní vytažení profilu podél křivky vede ke ztenčení stěny v ostrých rozích. Řešením je matematická korekce měřítka profilu v každém bodě křivky pomocí faktoru $f = 1 / sin(theta / 2)$, kde $theta$ je úhel mezi sousedními segmenty stěny. Tento výpočet se v GN realizuje pomocí vektorové matematiky (skalární součin pro výpočet úhlu) a ač je komplexnější na přípravu, umožňuje dynamicky měnit tloušťku stěn pouhým posunutím bodu v 2D půdorysu.
+Pro generování stěn se v GN nejčastěji používá uzel `Curve to Mesh`. Klíčovou výzvou je Miter Joint problém --- standardní vytažení profilu podél křivky vede ke ztenčení stěny v ostrých rozích. Řešením je matematická korekce měřítka profilu v každém bodě křivky pomocí faktoru $f = 1 / sin(theta / 2)$, kde $theta$ je úhel mezi sousedními segmenty stěny. Tento výpočet se v GN realizuje pomocí vektorové matematiky (skalární součin pro výpočet úhlu) a ač je komplexnější na přípravu, umožňuje dynamicky měnit tloušťku stěn pouhým posunutím bodu v 2D půdorysu. Zásadní slabinou GN je ovšem výsledná topologie. Zvláště po aplikaci booleovských operací (např. pro otvory oken a dveří) GN často generují nepředvídatelnou, triangulovanou nebo nevhodnou n-gonovou síť, která silně komplikuje čisté UV mapování a další manuální úpravy.
+
+==== Hybridní přístup: Python quad-polygon a GN extrude
+
+Třetí možností je kombinace obou předchozích přístupů, kde Python řeší geometricky náročné výpočty a Geometry Nodes (GN) fungují primárně jako vykreslovací backend. Důvodem je, že čistě programový ani čistě uzlový přístup nedokážou současně zajistit všechny tři úvodní požadavky: přesné napojení stěn, interaktivní odezvu i čistou topologii --- každý z nich má v určitém ohledu slabinu.
+
+Zvláštní pozornost je věnována rohům a křížení stěn pod různými úhly, kde by jednoduchý kolmý řez vytvářel mezery nebo nechtěné překryvy. Tento problém je řešen algoritmicky na straně Pythonu. Systém analyzuje všechny stěny v daném spoji, seřadí je podle úhlu odchozího směru a následně vypočítá přesné průsečíky jejich hran. Pro každou stěnu tak vznikne přesný 2D půdorys, který plně respektuje její osu a tloušťku. U složitějších spojů, jako jsou křížení ve tvaru T nebo X, algoritmus navíc generuje speciální výplňovou geometrii (_junction fill_), která spoj plynule uzavře a zabrání vzniku vizuálních děr v horní ploše křížení.
+
+Vypočítané půdorysy jsou následně zapsány do základní sítě modelu společně s potřebnými metadaty, jako je cílová výška stěn. Role stromu Geometry Nodes je díky tomu zredukována na minimalistickou a stabilní sadu operací: vyfiltrování příslušného půdorysu, jeho vytažení do 3D prostoru na základě předaných parametrů a následné vyříznutí otvorů pro architektonické prvky pomocí booleovských operací.
+
+Zásadní výhodou tohoto řešení je, že úspěšně uzavírá pomyslný trojúhelník nároků definovaný v úvodu. Generování 2D půdorysů a spojů čistě v Pythonu zajišťuje naprostou přesnost tloušťky i čistou quad topologii, přičemž oddělenou logiku lze spolehlivě ověřovat pomocí standardních automatizovaných testů. Následné delegování 3D extruze na C++ jádro GN zase poskytuje potřebný výkon pro rychlou interaktivní odezvu při úpravách. Nevýhodou je naopak o něco náročnější implementace synchronizační vrstvy. Přenos vypočítaných vlastností z Pythonu do Geometry Nodes vyžaduje pečlivou správu dat a obcházení určitých limitací při zápisu interních atributů sítě. Celkové srovnání analyzovaných přístupů napříč klíčovými technickými parametry shrnuje @tab-bmesh-gn.
 
 #figure(
   table(
-    columns: (1.5fr, 1fr, 1fr),
-    align: (left, left, left),
-    table.header([*Charakteristika*], [*BMesh*], [*Geometry Nodes*]),
-    [Způsob práce], [Iterativní / Imperativní], [Paralelní / Deklarativní],
-    [Výkon], [Omezený interpretací Pythonu], [Vysoce optimalizované C++],
-    [Topologická flexibilita], [Absolutní], [Omezená na definované uzly],
-    [Vizuální odezva], [Po spuštění skriptu], [Real-time ve viewportu],
-    [Vytváření tloušťky], [Přesné, výpočetně drahé], [Vyžaduje manuální korekci],
-    [Multithreading], [Ne (omezení #gls("gil", long: false)u)], [Ano (nativní)],
-    [Stabilita topologie], [Riziko non-manifold chyb], [Stabilnější],
+    columns: (1.5fr, 1fr, 1fr, 1fr),
+    align: (left, left, left, left),
+    table.header([*Charakteristika*], [*BMesh*], [*Geometry Nodes*], [*Hybridní*]),
+    [Způsob práce], [Iterativní / Imperativní], [Paralelní / Deklarativní], [Python geometrie + GN render],
+    [Výkon], [Omezený interpretací Pythonu], [Vysoce optimalizované C++], [Python sync odložen na konec seance],
+    [Topologická flexibilita], [Absolutní], [Omezená na definované uzly], [Plná (Python vrstva)],
+    [Vizuální odezva], [Po spuštění skriptu], [Real-time ve viewportu], [GPU preview per-click; full sync na konci],
+    [Přesnost spojů], [Přesné, výpočetně drahé], [Vyžaduje manuální korekci], [Přesné (angular sort)],
+    [Multithreading], [Ne (omezení #gls("gil", long: false)u)], [Ano (nativní)], [GN část ano; Python část ne],
+    [Testovatelnost], [Omezená (závislost na bpy)], [Obtížná], [Plná (čistý Python, bez bpy)],
+    [Implementační složitost], [Střední], [Nízká], [Vysoká (sync vrstva)],
   ),
-  caption: [Srovnání BMesh a Geometry Nodes pro generování 3D stěn],
+  caption: [Srovnání přístupů k reprezentaci geometrie stěn],
 ) <tab-bmesh-gn>
 
 === Datový model
@@ -486,7 +498,7 @@ Hlavní výhodou je jednoduchost --- řešení nevyžaduje žádné externí kni
 
 ==== Lineární datové struktury
 
-Druhý přístup udržuje aplikační stav v Pythonu pomocí plochých (flat) seznamů nebo slovníků. Eviduje uzly (styky stěn), stěny a místnosti jako samostatné objekty. Každý prvek má přiřazen jednoznačný identifikátor (ID) a informace o sousednosti je uložena přímo v záznamu daného prvku jako seznam ID jeho sousedů.
+Druhý přístup udržuje aplikační stav v Pythonu pomocí plochých seznamů nebo slovníků. Eviduje uzly (styky stěn), stěny a místnosti jako samostatné objekty. Každý prvek má přiřazen jednoznačný identifikátor (ID) a informace o sousednosti je uložena přímo v záznamu daného prvku jako seznam ID jeho sousedů.
 
 Tato varianta je plně implementovatelná pomocí standardních knihoven Pythonu a lze ji snadno testovat i nezávisle na programu Blender. Jejím hlavním limitem je však rychlé snížení výkonu při složitějších topologických operacích. Například automatická detekce nově vzniklých místností (uzavřených cyklů) by vyžadovala implementaci vlastních algoritmů pro prohledávání grafu a výpočetní náročnost při opakovaném přepočítávání sousednosti by expocencionálně rostla s každým novým prvkem.
 
@@ -502,7 +514,7 @@ S grafovou reprezentací úzce souvisí i strategie automatické detekce místno
 
 Pro detekci místností existují dva přístupy. _Eager_ přístup ihned při vzniku stěny vytváří dočasný objekt místnosti, který je při uzavření cyklu validován. Toto vede k řadě problémů: nedefinovanému stavu dočasného objektu, konfliktu při slučování po uzavření cyklu (systém musí vybrat, který dočasný objekt zachovat), problémům se simultánním uzavřením více cyklů a složité vlastní správou Undo historie.
 
-_Lazy_ přístup naproti tomu vytváří místnost výhradně tehdy, kdy je detekován uzavřený cyklus v strukturálním grafu. Invariant `Room ↔ minimální uzavřený cyklus` platí vždy a plně --- neexistuje žádný stav „rozpracované místnosti". NetworkX vrátí seznam všech nových minimálních cyklů najednou, pro každý vznikne jeden Room node bez spojovací logiky. Undo je přirozené: odebrání uzavírající stěny znamená zánik cyklu a zánik Room nodu. Lazy detekce zajišťuje determinismus --- stejná topologie Vrstvy 1 vždy produkuje stejnou Vrstvu 2 bez závislosti na pořadí editací.
+_Lazy_ přístup naproti tomu vytváří místnost výhradně tehdy, kdy je detekován uzavřený cyklus v strukturálním grafu. Invariant `Room ↔ minimální uzavřený cyklus` platí vždy a plně --- neexistuje žádný stav „rozpracované místnosti". NetworkX vrátí seznam všech nových minimálních cyklů najednou, pro každý vznikne jeden Room node bez spojovací logiky. Undo je přirozené: odebrání uzavírající stěny znamená zánik cyklu a zánik Room nodu. Lazy detekce zajišťuje determinismus --- stejná topologie spojů a stěn vždy produkuje stejnou sématiku místností bez závislosti na pořadí editací.
 
 === Tvorba otvorů pro okna a dveře
 
