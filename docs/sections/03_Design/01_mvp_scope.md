@@ -3,7 +3,7 @@
 
 ## Prioritizace prvků
 
-Funkční požadavky FP1–FP7 z analýzy (kapitola 2.5) jsou rozděleny na dílčí prvky, z nichž každý nese prioritu:
+Funkční požadavky FP1–FP7 z analýzy (zde odkaz na kapitolu) jsou rozděleny na dílčí prvky, z nichž každý nese prioritu:
 
 - **Must-have** — prvky tvořící jádro MVP. Bez nich addon nesplňuje minimální funkční požadavky a nemůže být nasazen. Tyto prvky jsou předmětem celého následujícího návrhu (kapitoly 3.2–3.5) a jejich pokrytí je ověřeno v kapitole 3.6 (Testování a validace návrhu).
 - **Should-have** — prvky s vysokou hodnotou, které rozšiřují použitelnost addonu, ale nejsou podmínkou funkčního MVP. Jsou prioritní pro budoucí rozšíření.
@@ -13,26 +13,28 @@ Konkrétní označení každého dílčího prvku je uvedeno přímo v návrhu p
 
 ## Rozsah MVP
 
-MVP realizuje kompletní workflow jednoho podlaží: interaktivní kreslení stěn, automatickou detekci místností, parametrické otvory, kótování a finalizaci do statické geometrie. Do MVP patří výhradně must-have prvky:
+MVP realizuje kompletní workflow jednoho podlaží: interaktivní kreslení stěn, automatickou detekci místností, parametrické otvory, kótování a finalizaci do statické geometrie. Do MVP patří výhradně prvky, které byly identifikovány jako Vysoká priorita v Tabulce 3. 
 
 | Požadavek | MVP základ (must-have) |
 | :--- | :--- |
 | FP1 | Kreslení půdorysu klikáním bodů v top view; nástroj jako modální operátor |
-| FP1 | GPU overlay náhled stěny a HUD |
+| FP1 | Mód preview čáry stěny |
 | FP2 | Dynamická reprezentace stěn řízená parametry; update geometrie při změně parametrů; svázání otvorů se stěnou; GN Mesh Boolean pro vizuální výřez otvorů |
 | FP3 | Automatická detekce uzavřených místností; zobrazení plochy místnosti |
-| FP4 | Aplikace modifikátorů a finalizace do statické geometrie |
+
+Ačkoliv priorita požadavku FP3 z hlediska cílových skupin byla vyhodnocena jako střední, její část byla zařazena do MVP základu pro minimální funkčnost celého addonu. 
 
 ## Záměrně vyloučené prvky
 
-Následující should-have a nice-to-have části požadavků FP1, FP2 a FP3 jsou záměrně odloženy za MVP:
+Následující should-have a nice-to-have části požadavků FP1, FP2 a FP3 jsou záměrně odloženy za MVP spolu s ostatními požadavky:
 
 | Zdroj | Odložený prvek | Priorita |
 | :--- | :--- | :--- |
 | FP1 | Snap na osu, mřížku a úhel | should-have |
-| FP1 | Mód preview čáry stěny | should-have |
+| FP1 | GPU overlay náhled stěny a HUD | should-have |
 | FP3 | Hierarchizace místností | nice-to-have |
-| FP5 | Kontextová nabídka | should-have |
+| FP4 | Aplikace modifikátorů a finalizace do statické geometrie | nice-to-have |
+| FP5 | Kontextová nabídka | nice-to-have |
 | FP6 | Interaktivní 3D manipulátory | should-have |
 | FP7 | Automatické kótování | should-have |
 
