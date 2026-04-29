@@ -73,6 +73,17 @@ def reset_graphs_for_obj(obj):
         from .core.sync import restore_room_names
         restore_room_names(obj, rg)
     _graph_store[obj.name] = (sg, rg, mapper)
+    # Safely initialize room-name custom properties (N-panel editability).
+    # Wrap in try-except to handle read-only draw context gracefully.
+    try:
+        for room in rg.get_all_rooms():
+            key = f"room_name_{room.id}"
+            if key not in obj:
+                obj[key] = room.name
+    except (AttributeError, RuntimeError):
+        # Context is read-only (e.g., panel draw). Will be initialized in
+        # depsgraph_update_handler or _rebuild_graph_store on next safe write.
+        pass
     return sg, rg, mapper
 
 
@@ -167,13 +178,28 @@ if _HAS_BPY:
                 if obj.get("is_floorplan") and obj.name not in seen:
                     seen.add(obj.name)
                     reset_graphs_for_obj(obj)
+                    # Initialize room-name custom properties so N-panel rooms are editable.
+                    # Done here (not in draw()) where we can safely write to object data.
+                    if obj.name in _graph_store:
+                        sg_local, rg_local, _ = _graph_store[obj.name]
+                        for room in rg_local.get_all_rooms():
+                            key = f"room_name_{room.id}"
+                            if key not in obj:
+                                obj[key] = room.name
 
     @bpy.app.handlers.persistent
     def _depsgraph_update_handler(scene, depsgraph):
         # Push room name edits from the rooms-list custom properties to the graph.
+        # Also ensure room-name custom properties exist for newly detected rooms.
         for obj in scene.objects:
             if obj.get("_floorplan_graphs") is not None and obj.name in _graph_store:
                 sg_local, rg_local, _ = _graph_store[obj.name]
+                # Ensure all rooms have custom properties (for N-panel editability).
+                for room in rg_local.get_all_rooms():
+                    key = f"room_name_{room.id}"
+                    if key not in obj:
+                        obj[key] = room.name
+                # Push inline edits to graph if they differ.
                 changed = False
                 for room in rg_local.get_all_rooms():
                     key = f"room_name_{room.id}"

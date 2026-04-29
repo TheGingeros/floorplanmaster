@@ -325,6 +325,8 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
             reset_graphs_for_obj(obj)
 
         sg, rg, _mapper = _graph_store[obj.name]
+        # Push any pending inline edits from custom properties into the graph.
+        _push_room_names_from_object(obj, rg, context)
         rooms = rg.get_all_rooms()
 
         if not rooms:

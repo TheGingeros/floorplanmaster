@@ -125,6 +125,11 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         # mesh so that any previous undo restoring the mesh is the source of truth.
         from .. import reset_graphs_for_obj
         self._obj = _get_floorplan_obj(context)
+        # Make the FloorPlan object the active selected object so that
+        # find_floorplan_obj() returns it immediately when the tool exits and
+        # the N-panel can show rooms without requiring a manual click.
+        context.view_layer.objects.active = self._obj
+        self._obj.select_set(True)
         self._sg, self._rg, self._id_mapper = reset_graphs_for_obj(self._obj)
 
         # Read defaults from scene settings.
@@ -427,6 +432,9 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             # Confirm path: sync L1 → mesh and commit a single undo step.
             sync_graph_to_mesh(self._obj, self._sg, self._rg, id_mapper=self._id_mapper)
             ensure_gn_modifier(self._obj)
+            # Update the graph cache so N-panel sees the new rooms immediately.
+            from .. import _graph_store
+            _graph_store[self._obj.name] = (self._sg, self._rg, self._id_mapper)
             bpy.ops.ed.undo_push(message="Draw Walls")
         else:
             # Abort path: strip every wall and junction placed this session
@@ -449,6 +457,10 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         context.workspace.status_text_set(None)
         context.window.cursor_modal_restore()
         context.area.tag_redraw()
+        
+        # Tag all areas (including sidebar) for redraw to refresh N-panel rooms list.
+        for area in context.screen.areas:
+            area.tag_redraw()
 
     # -- GPU overlay draw callbacks --
 
