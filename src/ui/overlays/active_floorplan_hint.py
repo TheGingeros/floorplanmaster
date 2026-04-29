@@ -17,4 +17,4 @@ def draw_active_floorplan_hint(context):
     blf.size(font_id, 16)
     blf.color(font_id, 1.0, 1.0, 1.0, 0.8)
     blf.position(font_id, 20, 40, 0)
-    blf.draw(font_id, "FloorPlanMaster - FloorPlan Object Active")
+    blf.draw(font_id, "Floor Plan - Object Active")

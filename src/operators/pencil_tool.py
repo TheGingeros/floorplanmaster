@@ -85,13 +85,14 @@ def _draw_pencil_status(self, context):
 
 
 def _get_floorplan_obj(context):
-    # Find or create the FloorPlanMaster mesh object in the scene.
+    # Find or create the Floor Plan mesh object in the scene.
+    # Blender auto-increments duplicate datablock names (Floor Plan.001, ...).
     for obj in context.scene.objects:
         if obj.get("is_floorplan"):
             return obj
     # Create new object.
-    mesh = bpy.data.meshes.new("FloorPlanMaster")
-    obj = bpy.data.objects.new("FloorPlanMaster", mesh)
+    mesh = bpy.data.meshes.new("Floor Plan")
+    obj = bpy.data.objects.new("Floor Plan", mesh)
     obj["is_floorplan"] = True
     context.scene.collection.objects.link(obj)
     return obj
