@@ -12,6 +12,9 @@ from bpy_extras import view3d_utils
 from mathutils import Vector
 
 from ..core.sync import sync_graph_to_mesh, _compute_wall_quad
+from ..core.structural_graph import StructuralGraph
+from ..core.room_graph import RoomGraph
+from ..core.sync import IdMapper
 from ..geometry.gn_setup import ensure_gn_modifier
 from ..utils.constants import SNAP_JUNCTION_TOLERANCE
 
@@ -84,18 +87,31 @@ def _draw_pencil_status(self, context):
         layout.label(text=" Abort")
 
 
-def _get_floorplan_obj(context):
-    # Find or create the Floor Plan mesh object in the scene.
-    # Blender auto-increments duplicate datablock names (Floor Plan.001, ...).
+def _find_floorplan_obj(context):
+    # Find an existing Floor Plan mesh object in the scene.
     for obj in context.scene.objects:
         if obj.get("is_floorplan"):
             return obj
-    # Create new object.
+    return None
+
+
+def _create_floorplan_obj(context):
+    # Create a new Floor Plan mesh object.
+    # Blender auto-increments duplicate datablock names (Floor Plan.001, ...).
     mesh = bpy.data.meshes.new("Floor Plan")
     obj = bpy.data.objects.new("Floor Plan", mesh)
     obj["is_floorplan"] = True
     context.scene.collection.objects.link(obj)
     return obj
+
+
+def _get_floorplan_obj(context):
+    # Backward-compatible helper used by non-modal operators (e.g. Insert Room):
+    # return existing floor plan object, or create one when absent.
+    obj = _find_floorplan_obj(context)
+    if obj is not None:
+        return obj
+    return _create_floorplan_obj(context)
 
 
 class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
@@ -122,24 +138,26 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         self._floor_tris_new = []
         self._junction_positions = []
 
-        # Get or create the FloorPlan object and rebuild graphs from the current
-        # mesh so that any previous undo restoring the mesh is the source of truth.
+        # Use existing floor plan object data if present; otherwise keep the
+        # drawing session purely in-memory and create the object on confirm.
         from .. import reset_graphs_for_obj
-        self._obj = _get_floorplan_obj(context)
-        # Make the FloorPlan object the active selected object so that
-        # find_floorplan_obj() returns it immediately when the tool exits and
-        # the N-panel can show rooms without requiring a manual click.
-        context.view_layer.objects.active = self._obj
-        self._obj.select_set(True)
-        self._sg, self._rg, self._id_mapper = reset_graphs_for_obj(self._obj)
+        self._obj = _find_floorplan_obj(context)
+        if self._obj is not None:
+            # Make the existing Floor Plan object active for semantic editing.
+            context.view_layer.objects.active = self._obj
+            self._obj.select_set(True)
+            self._sg, self._rg, self._id_mapper = reset_graphs_for_obj(self._obj)
+            # Ensure GN modifier is attached for existing objects.
+            ensure_gn_modifier(self._obj)
+        else:
+            self._sg = StructuralGraph()
+            self._rg = RoomGraph(self._sg)
+            self._id_mapper = IdMapper()
 
         # Read defaults from scene settings.
         settings = context.scene.floorplan
         self._thickness = settings.default_thickness
         self._height = settings.default_height
-
-        # Ensure GN modifier is attached with correct dimensions.
-        ensure_gn_modifier(self._obj)
 
         # Register GPU draw layers via the overlay manager:
         #   POST_VIEW  — 3D world-space geometry (committed walls, preview line)
@@ -430,6 +448,12 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         self._placed_walls_count = len(self._placed_walls)
 
         if confirm and self._placed_walls:
+            if self._obj is None:
+                self._obj = _create_floorplan_obj(context)
+                # Make the new object active so post-confirm interactions (N-panel,
+                # selection operators) target this freshly created floor plan.
+                context.view_layer.objects.active = self._obj
+                self._obj.select_set(True)
             # Confirm path: sync L1 → mesh and commit a single undo step.
             sync_graph_to_mesh(self._obj, self._sg, self._rg, id_mapper=self._id_mapper)
             ensure_gn_modifier(self._obj)
