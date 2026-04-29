@@ -16,7 +16,7 @@ class FLOORPLAN_OT_remove_room(bpy.types.Operator):
     bl_idname = "floorplan.remove_room"
     bl_label = "Remove Room"
     bl_description = "Remove this room and keep shared walls with neighboring rooms"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     room_id: StringProperty()
     room_cycle_key: StringProperty(default="")
