@@ -131,9 +131,9 @@ class FLOORPLAN_PT_room_properties(bpy.types.Panel):
         if room is None:
             return
 
-        layout.prop(settings, "active_room_name")
-        layout.separator()
-        col = layout.column(align=True)
+        root.prop(settings, "active_room_name")
+        # root.separator()
+        col = root.column(align=True)
         for label_text in (
             f"Area: {room.area:.2f} m²",
             f"Perimeter: {room.perimeter:.2f} m",
