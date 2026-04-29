@@ -62,9 +62,17 @@ def _on_room_name_update(self, context):
     if obj is None or not _selection.belongs_to_object(obj) or obj.name not in _graph_store:
         return
     sg, rg, mapper = _graph_store[obj.name]
-    rg.set_room_name(room_uuid, self.active_room_name)
+    effective_name = rg.set_room_name(room_uuid, self.active_room_name)
+    if effective_name is None:
+        return
+    if self.active_room_name != effective_name:
+        _updating_room_props = True
+        try:
+            self.active_room_name = effective_name
+        finally:
+            _updating_room_props = False
     # Keep the inline rooms-list custom property in sync.
-    obj[f"room_name_{room_uuid}"] = self.active_room_name
+    obj[f"room_name_{room_uuid}"] = effective_name
     persist_room_names(obj, rg)
 
 

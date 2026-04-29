@@ -266,6 +266,26 @@ class TestRoomMetadata:
         rg.set_room_name(room.id, "Kitchen")
         assert room.name == "Kitchen"
 
+    def test_blank_name_keeps_previous_name(self):
+        _, rg, _ = make_single_room()
+        room = rg.get_all_rooms()[0]
+        rg.set_room_name(room.id, "Kitchen")
+
+        effective_name = rg.set_room_name(room.id, "")
+
+        assert effective_name == "Kitchen"
+        assert room.name == "Kitchen"
+
+    def test_whitespace_name_keeps_previous_name(self):
+        _, rg, _ = make_single_room()
+        room = rg.get_all_rooms()[0]
+        rg.set_room_name(room.id, "Kitchen")
+
+        effective_name = rg.set_room_name(room.id, "   ")
+
+        assert effective_name == "Kitchen"
+        assert room.name == "Kitchen"
+
 
 class TestRoomDeletion:
     def test_delete_single_room_removes_all_walls(self):

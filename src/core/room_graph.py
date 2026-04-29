@@ -130,8 +130,12 @@ class RoomGraph:
     # Room metadata updates
     def set_room_name(self, room_id, name):
         room = self._rooms.get(room_id)
-        if room:
-            room.name = name
+        if room is None:
+            return None
+        if str(name).strip() == "":
+            return room.name
+        room.name = name
+        return room.name
 
     def delete_room(self, room_id):
         # Delete one room by removing only its non-shared boundary walls.

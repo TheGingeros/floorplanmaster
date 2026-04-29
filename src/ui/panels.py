@@ -41,8 +41,11 @@ def _push_room_names_from_object(obj, rg, context=None):
         if key in obj:
             stored = obj[key]
             if stored != room.name:
-                rg.set_room_name(room.id, stored)
-                changed = True
+                effective_name = rg.set_room_name(room.id, stored)
+                if effective_name != stored:
+                    obj[key] = effective_name
+                if effective_name != room.name:
+                    changed = True
     if changed:
         from ..core.sync import persist_room_names
         persist_room_names(obj, rg)
