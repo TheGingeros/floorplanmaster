@@ -16,6 +16,13 @@ _WALL_COLOR = (0.0, 0.0, 0.0, 0.95)
 _DOOR_COLOR = (0.0, 0.85, 1.0, 0.95)
 _WINDOW_COLOR = (0.62, 0.22, 0.95, 0.95)
 _LINE_WIDTH = 2.25
+# Visual-only padding to keep highlight lines slightly off the generated
+# opening geometry and reduce viewport z-fighting flicker.
+_OPENING_HIGHLIGHT_LEN_PAD = 0.003
+_OPENING_HIGHLIGHT_DEPTH_PAD = 0.012
+_OPENING_HIGHLIGHT_Z_PAD_WINDOW = 0.012
+_OPENING_HIGHLIGHT_Z_PAD_DOOR_BOTTOM = 0.012
+_OPENING_HIGHLIGHT_Z_PAD_DOOR_TOP = 0.02
 
 
 def _append_box_edges(lines, p0, p1, p2, p3, z_min, z_max):
@@ -78,16 +85,20 @@ def _collect_lines_for_object(sg):
         for opening in getattr(wall, "openings", []):
             cx = sx + opening.position * dx
             cy = sy + opening.position * dy
-            half_w = opening.width / 2.0
-            half_d = wall.thickness / 2.0
+            half_w = opening.width / 2.0 + _OPENING_HIGHLIGHT_LEN_PAD
+            half_d = wall.thickness / 2.0 + _OPENING_HIGHLIGHT_DEPTH_PAD
 
             op0 = (cx - half_w * ux + half_d * nx, cy - half_w * uy + half_d * ny)
             op1 = (cx + half_w * ux + half_d * nx, cy + half_w * uy + half_d * ny)
             op2 = (cx + half_w * ux - half_d * nx, cy + half_w * uy - half_d * ny)
             op3 = (cx - half_w * ux - half_d * nx, cy - half_w * uy - half_d * ny)
 
-            z = opening.sill_height
-            z_max = opening.sill_height + opening.height
+            if opening.opening_type == 'DOOR':
+                z = opening.sill_height - _OPENING_HIGHLIGHT_Z_PAD_DOOR_BOTTOM
+                z_max = opening.sill_height + opening.height + _OPENING_HIGHLIGHT_Z_PAD_DOOR_TOP
+            else:
+                z = opening.sill_height - _OPENING_HIGHLIGHT_Z_PAD_WINDOW
+                z_max = opening.sill_height + opening.height + _OPENING_HIGHLIGHT_Z_PAD_WINDOW
             target = door_lines if opening.opening_type == 'DOOR' else window_lines
             _append_box_edges(target, op0, op1, op2, op3, z, z_max)
 
