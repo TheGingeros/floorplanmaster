@@ -37,6 +37,10 @@ from .core.room_graph import RoomGraph
 # Per-object graph storage: obj.name -> (StructuralGraph, RoomGraph, IdMapper)
 _graph_store = {}
 
+# Semantic interaction mode state.
+# Empty string means the mode is disabled.
+_mode_object_name = ""
+
 
 def get_graphs(obj):
     # Return (StructuralGraph, RoomGraph) for a FloorPlanMaster object.
@@ -114,6 +118,14 @@ def get_floorplan_obj_by_name(context, object_name):
     return None
 
 
+def get_selected_floorplan_obj(context):
+    # Return active FloorPlan object only when it is also explicitly selected.
+    obj = getattr(context, 'active_object', None)
+    if is_floorplan_obj(obj) and obj.select_get():
+        return obj
+    return None
+
+
 def is_floorplan_obj_visible(context, obj):
     if not is_floorplan_obj(obj):
         return False
@@ -127,13 +139,46 @@ def is_floorplan_obj_visible(context, obj):
 
 
 def find_floorplan_obj(context):
-    # Return the active FloorPlan object only.
-    # Semantic interactions are scoped to the active object, matching Blender's
-    # object-mode editing model when multiple floorplans are visible.
-    obj = getattr(context, 'active_object', None)
-    if is_floorplan_obj(obj):
-        return obj
-    return None
+    # Return FloorPlan object that currently owns semantic mode.
+    # Mode ownership is independent from temporary Blender active selection.
+    if not _mode_object_name:
+        return None
+    return get_floorplan_obj_by_name(context, _mode_object_name)
+
+
+def is_floorplan_mode_active(context):
+    # True when semantic mode is enabled and its owner object still exists.
+    if not _mode_object_name:
+        return False
+    return get_floorplan_obj_by_name(context, _mode_object_name) is not None
+
+
+def set_floorplan_mode_active(context, enabled):
+    # Enable/disable semantic mode for the active+selected FloorPlan object.
+    global _mode_object_name
+    if not enabled:
+        _mode_object_name = ""
+        return False
+    obj = get_selected_floorplan_obj(context)
+    if obj is None:
+        _mode_object_name = ""
+        return False
+    _mode_object_name = obj.name
+    return True
+
+
+def toggle_floorplan_mode(context):
+    # Toggle semantic mode for the active+selected FloorPlan object.
+    global _mode_object_name
+    obj = get_selected_floorplan_obj(context)
+    if obj is None:
+        _mode_object_name = ""
+        return False
+    if _mode_object_name == obj.name:
+        _mode_object_name = ""
+        return False
+    _mode_object_name = obj.name
+    return True
 
 
 if _HAS_BPY:
@@ -154,7 +199,9 @@ if _HAS_BPY:
         _draw_pencil_status,
     )
     from .operators.select_wall import (
+        register_floorplan_mode_keymap,
         register_select_keymap,
+        unregister_floorplan_mode_keymap,
         unregister_select_keymap,
     )
     from .operators.remove_wall import (
@@ -249,6 +296,7 @@ if _HAS_BPY:
 
         bpy.utils.register_tool(FLOORPLAN_WT_pencil)
         register_pencil_keymap()
+        register_floorplan_mode_keymap()
         register_select_keymap()
         register_remove_wall_keymap()
         bpy.types.STATUSBAR_HT_header.prepend(_draw_pencil_status)
@@ -280,6 +328,7 @@ if _HAS_BPY:
 
         bpy.types.STATUSBAR_HT_header.remove(_draw_pencil_status)
         unregister_pencil_keymap()
+        unregister_floorplan_mode_keymap()
         unregister_select_keymap()
         unregister_remove_wall_keymap()
         bpy.utils.unregister_tool(FLOORPLAN_WT_pencil)

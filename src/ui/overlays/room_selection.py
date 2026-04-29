@@ -9,7 +9,7 @@ from gpu_extras.batch import batch_for_shader
 from mathutils import Vector
 
 from ..selection_state import _selection
-from ... import _graph_store, get_floorplan_obj_by_name, is_floorplan_obj_visible
+from ... import _graph_store, get_floorplan_obj_by_name, is_floorplan_mode_active, is_floorplan_obj_visible
 
 # Small Z lift to avoid z-fighting with the mesh floor face at Z=0.
 _FLOOR_Z = 0.005
@@ -59,6 +59,8 @@ def _build_wall_obb(wall, sg, all_walls):
 def draw_room_selection(context):
     # Draws an orange semi-transparent floor fill + orange OBB wireframe for
     # each boundary wall of the currently selected room.
+    if not is_floorplan_mode_active(context):
+        return
     room_uuid = _selection.room_id
     if not room_uuid:
         return
@@ -66,9 +68,6 @@ def draw_room_selection(context):
         return
     obj = get_floorplan_obj_by_name(context, _selection.object_name)
     if obj is None or not is_floorplan_obj_visible(context, obj) or obj.name not in _graph_store:
-        return
-    active_obj = getattr(context, 'active_object', None)
-    if active_obj is None or active_obj.name != obj.name:
         return
     sg, rg, _ = _graph_store[obj.name]
     room = rg.get_room(room_uuid)

@@ -8,13 +8,15 @@ from gpu_extras.batch import batch_for_shader
 from mathutils import Vector
 
 from ..selection_state import _selection
-from ... import _graph_store, get_floorplan_obj_by_name, is_floorplan_obj_visible
+from ... import _graph_store, get_floorplan_obj_by_name, is_floorplan_mode_active, is_floorplan_obj_visible
 
 
 def draw_wall_selection(context):
     # Draws a semi-transparent orange OBB box over the currently selected wall.
     # Box is built directly from junction positions + wall.thickness — independent
     # of the mitered mesh geometry, so it is always accurate regardless of sync state.
+    if not is_floorplan_mode_active(context):
+        return
     wall_uuid = _selection.wall_id
     if not wall_uuid:
         return
@@ -22,9 +24,6 @@ def draw_wall_selection(context):
         return
     obj = get_floorplan_obj_by_name(context, _selection.object_name)
     if obj is None or not is_floorplan_obj_visible(context, obj) or obj.name not in _graph_store:
-        return
-    active_obj = getattr(context, 'active_object', None)
-    if active_obj is None or active_obj.name != obj.name:
         return
     sg, _rg, _ = _graph_store[obj.name]
     wall = sg.get_wall(wall_uuid)

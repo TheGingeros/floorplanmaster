@@ -47,12 +47,18 @@ _NAVIGATION_EVENT_TYPES = frozenset({
 def _draw_pencil_status(self, context):
     # Draw keyboard/mouse hints in the bottom status bar using Blender icons.
     if _pencil_state is None:
-        from .. import find_floorplan_obj
+        from .. import get_selected_floorplan_obj, is_floorplan_mode_active
 
-        if find_floorplan_obj(context) is None:
+        if get_selected_floorplan_obj(context) is None:
             return
 
         layout = self.layout
+        if not is_floorplan_mode_active(context):
+            layout.label(text="", icon='EVENT_SHIFT')
+            layout.label(text="", icon='EVENT_Q')
+            layout.label(text=" Enable FloorPlan Mode")
+            return
+
         layout.label(text="", icon='MOUSE_LMB')
         layout.label(text=" Select Wall / Room")
         return

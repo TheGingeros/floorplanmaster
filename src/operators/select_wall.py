@@ -172,15 +172,7 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
         from ..ui.properties import set_wall_props_updating, populate_opening_items
 
         settings = context.scene.floorplan
-        active_obj = find_floorplan_obj(context)
-        hit_obj = _raycast_floorplan_object(context, event.mouse_region_x, event.mouse_region_y)
-
-        if hit_obj is not None and (active_obj is None or hit_obj.name != active_obj.name):
-            _activate_floorplan_object(context, hit_obj)
-            _clear_semantic_selection_ui(context, settings)
-            return {'FINISHED'}
-
-        obj = active_obj
+        obj = find_floorplan_obj(context)
         if obj is None:
             return {'PASS_THROUGH'}
 
@@ -236,6 +228,58 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
         # Missed — clear selection and let Blender handle the click.
         _clear_semantic_selection_ui(context, settings)
         return {'PASS_THROUGH'}
+
+
+class FLOORPLAN_OT_toggle_mode(bpy.types.Operator):
+    bl_idname = "floorplan.toggle_mode"
+    bl_label = "Toggle FloorPlan Mode"
+    bl_description = "Enable or disable semantic FloorPlan mode for the active floor plan object"
+
+    @classmethod
+    def poll(cls, context):
+        from .. import get_selected_floorplan_obj, is_floorplan_mode_active
+        return is_floorplan_mode_active(context) or get_selected_floorplan_obj(context) is not None
+
+    def execute(self, context):
+        from .. import is_floorplan_mode_active, set_floorplan_mode_active, toggle_floorplan_mode
+
+        settings = context.scene.floorplan
+        if is_floorplan_mode_active(context):
+            set_floorplan_mode_active(context, False)
+        else:
+            toggle_floorplan_mode(context)
+        if not is_floorplan_mode_active(context):
+            _clear_semantic_selection_ui(context, settings)
+        context.area.tag_redraw()
+        return {'FINISHED'}
+
+
+def register_floorplan_mode_keymap():
+    # Shift+Q toggles semantic mode on the selected active FloorPlan object.
+    wm = bpy.context.window_manager
+    kc = wm.keyconfigs.addon
+    if kc is None:
+        return
+    km = kc.keymaps.new(name='Object Mode', space_type='EMPTY')
+    kmi = km.keymap_items.new(
+        "floorplan.toggle_mode",
+        type='Q',
+        value='PRESS',
+        shift=True,
+    )
+    return km, kmi
+
+
+def unregister_floorplan_mode_keymap():
+    wm = bpy.context.window_manager
+    kc = wm.keyconfigs.addon
+    if kc is None:
+        return
+    km = kc.keymaps.get('Object Mode')
+    if km:
+        to_remove = [kmi for kmi in km.keymap_items if kmi.idname == "floorplan.toggle_mode"]
+        for kmi in to_remove:
+            km.keymap_items.remove(kmi)
 
 
 def register_select_keymap():
