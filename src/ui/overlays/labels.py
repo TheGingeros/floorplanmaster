@@ -36,6 +36,13 @@ _WINDOW_COLOR = (0.78, 0.55, 1.0, 0.90)
 # Vertical line spacing for multi-line wall label (pixels).
 _LINE_SPACING = 14
 
+# Room labels should sit close to floor plane, not at mid-height.
+_ROOM_LABEL_Z_OFFSET = 0.08
+
+# Wall/opening center-collision avoidance in screen space.
+_CENTER_OPENING_THRESHOLD = 0.18
+_CENTER_COLLISION_SHIFT_PX = 18
+
 
 def _project(pos3d, region, rv3d):
     """Project a (x, y, z) world-space point to region pixel coords.
@@ -53,6 +60,21 @@ def _draw_text(text, px, py, font_size, color):
     blf.draw(_FONT_ID, text)
 
 
+def _is_opening_label_visible(opening, settings):
+    if opening.opening_type == 'DOOR':
+        return settings.show_door_labels
+    return settings.show_window_labels
+
+
+def _has_center_opening_label(wall, settings):
+    for opening in getattr(wall, "openings", []):
+        if not _is_opening_label_visible(opening, settings):
+            continue
+        if abs(opening.position - 0.5) <= _CENTER_OPENING_THRESHOLD:
+            return True
+    return False
+
+
 def _draw_room_labels(context, sg, rg, mapper, region, rv3d, settings):
     if not settings.show_room_labels:
         return
@@ -60,8 +82,8 @@ def _draw_room_labels(context, sg, rg, mapper, region, rv3d, settings):
         cx, cy = room.centroid
         if len(room.cycle) < 3:
             continue
-        mid_z = room.height * 0.5
-        pos = _project((cx, cy, mid_z), region, rv3d)
+        label_z = min(room.height * 0.25, _ROOM_LABEL_Z_OFFSET)
+        pos = _project((cx, cy, label_z), region, rv3d)
         if pos is None:
             continue
         label = room.name
@@ -92,8 +114,9 @@ def _draw_wall_labels(context, sg, rg, mapper, region, rv3d, settings):
         blf.size(_FONT_ID, _WALL_FONT_SIZE)
         w1, _ = blf.dimensions(_FONT_ID, line1)
         w2, _ = blf.dimensions(_FONT_ID, line2)
-        _draw_text(line1, pos.x - w1 * 0.5, pos.y + _LINE_SPACING * 0.5, _WALL_FONT_SIZE, _WALL_COLOR)
-        _draw_text(line2, pos.x - w2 * 0.5, pos.y - _LINE_SPACING * 0.5, _WALL_FONT_SIZE, _WALL_COLOR)
+        y_shift = _CENTER_COLLISION_SHIFT_PX if _has_center_opening_label(wall, settings) else 0.0
+        _draw_text(line1, pos.x - w1 * 0.5, pos.y + _LINE_SPACING * 0.5 + y_shift, _WALL_FONT_SIZE, _WALL_COLOR)
+        _draw_text(line2, pos.x - w2 * 0.5, pos.y - _LINE_SPACING * 0.5 + y_shift, _WALL_FONT_SIZE, _WALL_COLOR)
 
 
 def _draw_opening_labels(context, sg, rg, mapper, region, rv3d, settings):
@@ -133,7 +156,8 @@ def _draw_opening_labels(context, sg, rg, mapper, region, rv3d, settings):
                 font_size = _WINDOW_FONT_SIZE
             blf.size(_FONT_ID, font_size)
             w, _ = blf.dimensions(_FONT_ID, label)
-            _draw_text(label, pos.x - w * 0.5, pos.y - font_size * 0.5, font_size, color)
+            y_shift = -_CENTER_COLLISION_SHIFT_PX if abs(opening.position - 0.5) <= _CENTER_OPENING_THRESHOLD else 0.0
+            _draw_text(label, pos.x - w * 0.5, pos.y - font_size * 0.5 + y_shift, font_size, color)
 
 
 def draw_labels(context):
