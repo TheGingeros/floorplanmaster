@@ -413,7 +413,32 @@ class FloorPlanSettings(bpy.types.PropertyGroup):
         description="Show window opening edge highlights in viewport",
         default=True,
     )
-
+    # Viewport labels — master + per-type toggles.
+    show_labels: BoolProperty(
+        name="Labels",
+        description="Show room, wall and opening labels in the viewport",
+        default=True,
+    )
+    show_room_labels: BoolProperty(
+        name="Room Labels",
+        description="Show room name labels in the viewport",
+        default=True,
+    )
+    show_wall_labels: BoolProperty(
+        name="Wall Labels",
+        description="Show wall number and length labels in the viewport",
+        default=True,
+    )
+    show_door_labels: BoolProperty(
+        name="Door Labels",
+        description="Show door opening labels in the viewport",
+        default=True,
+    )
+    show_window_labels: BoolProperty(
+        name="Window Labels",
+        description="Show window opening labels in the viewport",
+        default=True,
+    )
     # Active wall selection — editable props populated by FLOORPLAN_OT_select_wall.
     # The selected element UUID lives in _selection (selection_state.py), not here.
     active_wall_thickness: FloatProperty(

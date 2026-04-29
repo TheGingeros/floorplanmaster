@@ -144,6 +144,7 @@ if _HAS_BPY:
     from .ui.overlays.wall_opening_highlight import draw_wall_opening_highlight
     from .ui.overlays.room_selection import draw_room_selection
     from .ui.overlays.active_floorplan_hint import draw_active_floorplan_hint
+    from .ui.overlays.labels import draw_labels
 
     from .operators import get_classes as get_operator_classes
     from .operators.pencil_tool import (
@@ -255,6 +256,7 @@ if _HAS_BPY:
         overlay_manager.register()
         overlay_manager.register_layer(draw_active_floorplan_hint, '2D')
         overlay_manager.register_layer(draw_wall_opening_highlight, '3D')
+        overlay_manager.register_layer(draw_labels, '2D')
         overlay_manager.register_layer(draw_wall_selection, '3D')
         overlay_manager.register_layer(draw_room_selection, '3D')
 

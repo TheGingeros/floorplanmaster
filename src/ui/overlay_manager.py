@@ -22,12 +22,23 @@
 # in their operator invoke() and unregistered in their _finish().
 
 import bpy
+import traceback
 
 _3d_layers = []  # POST_VIEW  callables: fn(context)
 _2d_layers = []  # POST_PIXEL callables: fn(context)
 
 _handle_3d = None
 _handle_2d = None
+_reported_failures = set()
+
+
+def _report_layer_failure(space, fn, exc):
+    key = (space, getattr(fn, "__module__", ""), getattr(fn, "__name__", repr(fn)))
+    if key in _reported_failures:
+        return
+    _reported_failures.add(key)
+    print(f"[FloorPlanMaster] Overlay layer failed ({space}): {key[1]}.{key[2]}: {exc}")
+    traceback.print_exc()
 
 
 def _dispatch_3d():
@@ -37,8 +48,8 @@ def _dispatch_3d():
     for fn in list(_3d_layers):
         try:
             fn(ctx)
-        except Exception:
-            pass
+        except Exception as exc:
+            _report_layer_failure('3D', fn, exc)
 
 
 def _dispatch_2d():
@@ -48,8 +59,8 @@ def _dispatch_2d():
     for fn in list(_2d_layers):
         try:
             fn(ctx)
-        except Exception:
-            pass
+        except Exception as exc:
+            _report_layer_failure('2D', fn, exc)
 
 
 def register_layer(fn, space='3D'):
@@ -90,6 +101,7 @@ def unregister():
     global _handle_3d, _handle_2d
     _3d_layers.clear()
     _2d_layers.clear()
+    _reported_failures.clear()
     if _handle_3d is not None:
         bpy.types.SpaceView3D.draw_handler_remove(_handle_3d, 'WINDOW')
         _handle_3d = None

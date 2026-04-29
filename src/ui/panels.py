@@ -398,3 +398,13 @@ class FLOORPLAN_PT_settings(bpy.types.Panel):
         toggles.prop(settings, "show_door_edge_highlights", text="", toggle=True, icon='MESH_PLANE')
         toggles.prop(settings, "show_window_edge_highlights", text="", toggle=True, icon='WINDOW')
         row.prop(settings, "show_wall_highlight", text="All Highlights", toggle=True, icon='SHADING_BBOX')
+
+        col.separator()
+        row = col.row(align=True)
+        label_toggles = row.row(align=True)
+        label_toggles.enabled = settings.show_labels
+        label_toggles.prop(settings, "show_room_labels", text="", toggle=True, icon='HOME')
+        label_toggles.prop(settings, "show_wall_labels", text="", toggle=True, icon='MOD_BUILD')
+        label_toggles.prop(settings, "show_door_labels", text="", toggle=True, icon='MESH_PLANE')
+        label_toggles.prop(settings, "show_window_labels", text="", toggle=True, icon='WINDOW')
+        row.prop(settings, "show_labels", text="All Labels", toggle=True, icon='SORTALPHA')
