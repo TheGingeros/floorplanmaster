@@ -18,6 +18,8 @@
 # When mode is OFF: keymap fires toggle_mode → enables mode → invokes the modal.
 # When mode is ON:  modal intercepts Shift+Q before the keymap → disables mode.
 
+import json
+
 import bpy
 
 from .select_wall import _pick_element, _clear_semantic_selection_ui
@@ -131,14 +133,34 @@ class FLOORPLAN_OT_floorplan_modal(bpy.types.Operator):
 
         # Own X inside semantic mode so Blender object deletion never fires.
         # If a wall is selected for the current FloorPlan object, reuse the
-        # existing remove-wall operator (and its confirm dialog). Otherwise,
-        # simply consume the key.
+        # existing remove-wall operator (and its confirm dialog). If no wall
+        # is selected, remove the selected room in the same way.
         if event.type == 'X' and event.value == 'PRESS':
             from .. import find_floorplan_obj
 
             obj = find_floorplan_obj(context)
             if obj is not None and _selection.has_wall_for_object(obj):
                 bpy.ops.floorplan.remove_selected_wall('INVOKE_DEFAULT')
+                return {'RUNNING_MODAL'}
+
+            if (
+                obj is not None
+                and _selection.has_room_for_object(obj)
+                and obj.name in context.scene.objects
+            ):
+                from .. import _graph_store, reset_graphs_for_obj
+
+                if obj.name not in _graph_store:
+                    reset_graphs_for_obj(obj)
+
+                _sg, rg, _mapper = _graph_store[obj.name]
+                room = rg.get_room(_selection.room_id)
+                if room is not None:
+                    bpy.ops.floorplan.remove_room(
+                        'INVOKE_DEFAULT',
+                        room_id=room.id,
+                        room_cycle_key=json.dumps(list(rg._cycle_key(room.cycle))),
+                    )
             return {'RUNNING_MODAL'}
 
         # All other events consumed to prevent accidental shortcuts.

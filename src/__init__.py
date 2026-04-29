@@ -40,6 +40,56 @@ _graph_store = {}
 # Semantic interaction mode state.
 # Empty string means the mode is disabled.
 _mode_object_name = ""
+# Cached VIEW_3D overlay outline state per space pointer while mode is active.
+_mode_restore_outline_selected = {}
+
+
+def _iter_view3d_spaces():
+    if not _HAS_BPY:
+        return
+    wm = getattr(bpy.context, 'window_manager', None)
+    if wm is None:
+        return
+    for window in wm.windows:
+        screen = getattr(window, 'screen', None)
+        if screen is None:
+            continue
+        for area in screen.areas:
+            if area.type != 'VIEW_3D':
+                continue
+            for space in area.spaces:
+                if space.type == 'VIEW_3D':
+                    yield space
+
+
+def _set_selected_outline_visible(visible):
+    global _mode_restore_outline_selected
+    if not _HAS_BPY:
+        return
+    if visible:
+        if not _mode_restore_outline_selected:
+            return
+        restore = dict(_mode_restore_outline_selected)
+        _mode_restore_outline_selected.clear()
+        for space in _iter_view3d_spaces():
+            key = space.as_pointer()
+            if key not in restore:
+                continue
+            try:
+                space.overlay.show_outline_selected = bool(restore[key])
+            except Exception:
+                pass
+        return
+
+    if _mode_restore_outline_selected:
+        return
+    for space in _iter_view3d_spaces():
+        key = space.as_pointer()
+        try:
+            _mode_restore_outline_selected[key] = bool(space.overlay.show_outline_selected)
+            space.overlay.show_outline_selected = False
+        except Exception:
+            pass
 
 
 def get_graphs(obj):
@@ -148,22 +198,31 @@ def find_floorplan_obj(context):
 
 def is_floorplan_mode_active(context):
     # True when semantic mode is enabled and its owner object still exists.
+    global _mode_object_name
     if not _mode_object_name:
         return False
-    return get_floorplan_obj_by_name(context, _mode_object_name) is not None
+    if get_floorplan_obj_by_name(context, _mode_object_name) is not None:
+        return True
+    # Mode owner vanished (delete/load/reload): restore viewport outline state.
+    _set_selected_outline_visible(True)
+    _mode_object_name = ""
+    return False
 
 
 def set_floorplan_mode_active(context, enabled):
     # Enable/disable semantic mode for the active+selected FloorPlan object.
     global _mode_object_name
     if not enabled:
+        _set_selected_outline_visible(True)
         _mode_object_name = ""
         return False
     obj = get_selected_floorplan_obj(context)
     if obj is None:
+        _set_selected_outline_visible(True)
         _mode_object_name = ""
         return False
     _mode_object_name = obj.name
+    _set_selected_outline_visible(False)
     return True
 
 
@@ -172,12 +231,15 @@ def toggle_floorplan_mode(context):
     global _mode_object_name
     obj = get_selected_floorplan_obj(context)
     if obj is None:
+        _set_selected_outline_visible(True)
         _mode_object_name = ""
         return False
     if _mode_object_name == obj.name:
+        _set_selected_outline_visible(True)
         _mode_object_name = ""
         return False
     _mode_object_name = obj.name
+    _set_selected_outline_visible(False)
     return True
 
 
@@ -312,6 +374,7 @@ if _HAS_BPY:
         _rebuild_graph_store()
 
     def unregister():
+        global _mode_object_name
         if _load_post_handler in bpy.app.handlers.load_post:
             bpy.app.handlers.load_post.remove(_load_post_handler)
         if _undo_post_handler in bpy.app.handlers.undo_post:
@@ -339,4 +402,6 @@ if _HAS_BPY:
         for cls in reversed(_addon_classes):
             bpy.utils.unregister_class(cls)
 
+        _set_selected_outline_visible(True)
+        _mode_object_name = ""
         clear_graph_store()
