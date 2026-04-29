@@ -8,6 +8,15 @@ from ..core.final_mesh_builder import build_final_mesh_from_graph
 from ..ui.selection_state import _selection
 
 
+def _resolve_finalize_floorplan_obj(context):
+    from .. import find_floorplan_obj, get_selected_floorplan_obj
+
+    obj = find_floorplan_obj(context)
+    if obj is not None:
+        return obj
+    return get_selected_floorplan_obj(context)
+
+
 def _strip_modifiers(obj):
     for mod in list(obj.modifiers):
         obj.modifiers.remove(mod)
@@ -143,8 +152,7 @@ class FLOORPLAN_OT_finalize(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        from .. import find_floorplan_obj
-        return find_floorplan_obj(context) is not None
+        return _resolve_finalize_floorplan_obj(context) is not None
 
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self, width=360)
@@ -158,9 +166,9 @@ class FLOORPLAN_OT_finalize(bpy.types.Operator):
         col.prop(self, "keep_original")
 
     def execute(self, context):
-        from .. import find_floorplan_obj, remove_graphs, reset_graphs_for_obj
+        from .. import remove_graphs, reset_graphs_for_obj
 
-        source_obj = find_floorplan_obj(context)
+        source_obj = _resolve_finalize_floorplan_obj(context)
         if source_obj is None:
             self.report({'ERROR'}, "No floor plan object found")
             return {'CANCELLED'}

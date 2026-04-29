@@ -230,58 +230,6 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
         return {'PASS_THROUGH'}
 
 
-class FLOORPLAN_OT_toggle_mode(bpy.types.Operator):
-    bl_idname = "floorplan.toggle_mode"
-    bl_label = "Toggle FloorPlan Mode"
-    bl_description = "Enable or disable semantic FloorPlan mode for the active floor plan object"
-
-    @classmethod
-    def poll(cls, context):
-        from .. import get_selected_floorplan_obj, is_floorplan_mode_active
-        return is_floorplan_mode_active(context) or get_selected_floorplan_obj(context) is not None
-
-    def execute(self, context):
-        from .. import is_floorplan_mode_active, set_floorplan_mode_active, toggle_floorplan_mode
-
-        settings = context.scene.floorplan
-        if is_floorplan_mode_active(context):
-            set_floorplan_mode_active(context, False)
-        else:
-            toggle_floorplan_mode(context)
-        if not is_floorplan_mode_active(context):
-            _clear_semantic_selection_ui(context, settings)
-        context.area.tag_redraw()
-        return {'FINISHED'}
-
-
-def register_floorplan_mode_keymap():
-    # Shift+Q toggles semantic mode on the selected active FloorPlan object.
-    wm = bpy.context.window_manager
-    kc = wm.keyconfigs.addon
-    if kc is None:
-        return
-    km = kc.keymaps.new(name='Object Mode', space_type='EMPTY')
-    kmi = km.keymap_items.new(
-        "floorplan.toggle_mode",
-        type='Q',
-        value='PRESS',
-        shift=True,
-    )
-    return km, kmi
-
-
-def unregister_floorplan_mode_keymap():
-    wm = bpy.context.window_manager
-    kc = wm.keyconfigs.addon
-    if kc is None:
-        return
-    km = kc.keymaps.get('Object Mode')
-    if km:
-        to_remove = [kmi for kmi in km.keymap_items if kmi.idname == "floorplan.toggle_mode"]
-        for kmi in to_remove:
-            km.keymap_items.remove(kmi)
-
-
 def register_select_keymap():
     # LMB in Object Mode — fires before Blender's own selection so we can
     # intercept wall clicks.  Returns PASS_THROUGH on miss so normal Blender

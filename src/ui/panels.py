@@ -8,6 +8,15 @@ import json
 from ..utils.constants import DEFAULT_DOOR_WIDTH, DEFAULT_WINDOW_WIDTH
 
 
+def _get_panel_floorplan_obj(context):
+    from .. import find_floorplan_obj, get_selected_floorplan_obj
+
+    obj = find_floorplan_obj(context)
+    if obj is not None:
+        return obj
+    return get_selected_floorplan_obj(context)
+
+
 def _sync_room_names_to_object(obj, rg):
     # Sync room names between RoomGraph and object custom properties.
     # Custom properties keyed by "room_name_{room.id}" enable inline prop() editing.
@@ -74,10 +83,9 @@ class FLOORPLAN_OT_toggle_room(bpy.types.Operator):
     room_id: bpy.props.StringProperty()
 
     def execute(self, context):
-        from .. import find_floorplan_obj
         from .selection_state import _selection
 
-        obj = find_floorplan_obj(context)
+        obj = _get_panel_floorplan_obj(context)
         if obj is None:
             return {'CANCELLED'}
         key = f"room_expanded_{self.room_id}"
@@ -308,9 +316,9 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        from .. import _graph_store, reset_graphs_for_obj, find_floorplan_obj, has_floorplan_obj
+        from .. import _graph_store, reset_graphs_for_obj, has_floorplan_obj
 
-        obj = find_floorplan_obj(context)
+        obj = _get_panel_floorplan_obj(context)
 
         if obj is None:
             if has_floorplan_obj(context):

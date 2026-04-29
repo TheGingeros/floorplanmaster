@@ -198,11 +198,9 @@ if _HAS_BPY:
         unregister_pencil_keymap,
         _draw_pencil_status,
     )
-    from .operators.select_wall import (
+    from .operators.floorplan_mode import (
         register_floorplan_mode_keymap,
-        register_select_keymap,
         unregister_floorplan_mode_keymap,
-        unregister_select_keymap,
     )
     from .operators.remove_wall import (
         register_remove_wall_keymap,
@@ -297,7 +295,6 @@ if _HAS_BPY:
         bpy.utils.register_tool(FLOORPLAN_WT_pencil)
         register_pencil_keymap()
         register_floorplan_mode_keymap()
-        register_select_keymap()
         register_remove_wall_keymap()
         bpy.types.STATUSBAR_HT_header.prepend(_draw_pencil_status)
 
@@ -329,7 +326,6 @@ if _HAS_BPY:
         bpy.types.STATUSBAR_HT_header.remove(_draw_pencil_status)
         unregister_pencil_keymap()
         unregister_floorplan_mode_keymap()
-        unregister_select_keymap()
         unregister_remove_wall_keymap()
         bpy.utils.unregister_tool(FLOORPLAN_WT_pencil)
 
