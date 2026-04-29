@@ -14,6 +14,42 @@ def _ensure_data(context):
             _bpy.app.timers.register(_pop, first_interval=0.0)
 
 
+# Room Properties — separate top-level panel (appears when a room is selected).
+
+class MOCKUP_PT_room_properties(bpy.types.Panel):
+    bl_label = "Selected Room"
+    bl_idname = "MOCKUP_PT_room_properties"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "FloorPlanMaster"
+    bl_order = 0
+
+    @classmethod
+    def poll(cls, context):
+        settings = context.scene.mockup_fp
+        return 0 <= settings.selected_room_index < len(settings.rooms)
+
+    def draw(self, context):
+        layout = self.layout
+        settings = context.scene.mockup_fp
+        room = settings.rooms[settings.selected_room_index]
+
+        root = layout.box()
+        root.prop(room, "room_name", text="Name")
+
+        col = root.column(align=True)
+        for label_text in (
+            f"Area: {room.area:.2f} m\u00b2",
+            f"Perimeter: {room.perimeter:.2f} m",
+            f"Walls: {room.wall_count}",
+        ):
+            row = col.row()
+            row.scale_y = 1.4
+            row.label(text=label_text)
+
+        root.prop(room, "height")
+
+
 # Wall Properties — separate top-level panel at the top of the tab.
 # Always visible in this mockup (no poll condition).
 
@@ -196,8 +232,24 @@ class MOCKUP_PT_settings(bpy.types.Panel):
         col.separator()
         col.prop(settings, "show_dimensions", icon='DRIVER_DISTANCE')
         col.prop(settings, "show_room_colors", icon='COLOR')
-        col.prop(settings, "show_room_labels", icon='SORTALPHA')
-        col.prop(settings, "show_wall_highlight", icon='SHADING_BBOX')
+
+        row = col.row(align=True)
+        toggles = row.row(align=True)
+        toggles.enabled = settings.show_wall_highlight
+        toggles.prop(settings, "show_wall_edge_highlights", text="", toggle=True, icon='MOD_BUILD')
+        toggles.prop(settings, "show_door_edge_highlights", text="", toggle=True, icon='MESH_PLANE')
+        toggles.prop(settings, "show_window_edge_highlights", text="", toggle=True, icon='WINDOW')
+        row.prop(settings, "show_wall_highlight", text="All Highlights", toggle=True, icon='SHADING_BBOX')
+
+        row = col.row(align=True)
+        label_toggles = row.row(align=True)
+        label_toggles.enabled = settings.show_labels
+        label_toggles.prop(settings, "show_room_labels", text="", toggle=True, icon='HOME')
+        label_toggles.prop(settings, "show_wall_labels", text="", toggle=True, icon='MOD_BUILD')
+        label_toggles.prop(settings, "show_door_labels", text="", toggle=True, icon='MESH_PLANE')
+        label_toggles.prop(settings, "show_window_labels", text="", toggle=True, icon='WINDOW')
+        row.prop(settings, "show_labels", text="All Labels", toggle=True, icon='SORTALPHA')
+
         col.prop(settings, "show_gizmos", icon='GIZMO')
 
 
@@ -205,6 +257,7 @@ class MOCKUP_PT_settings(bpy.types.Panel):
 
 def get_panel_classes():
     return [
+        MOCKUP_PT_room_properties,
         MOCKUP_PT_wall_properties,
         MOCKUP_PT_main,
         MOCKUP_PT_tools,

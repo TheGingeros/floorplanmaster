@@ -159,7 +159,9 @@ def _draw_dimensions():
     if not context or not getattr(context, 'scene', None):
         return
     settings = getattr(context.scene, 'mockup_fp', None)
-    if settings is None or not settings.show_dimensions:
+    if settings is None:
+        return
+    if not settings.show_dimensions and not settings.show_labels:
         return
 
     # Only draw inside the 3-D viewport window
@@ -177,38 +179,40 @@ def _draw_dimensions():
     unit = settings.display_unit
     font_id = 0
 
-    # Wall lengths — small blue text at edge midpoint
-    blf.size(font_id, 12)
-    blf.color(font_id, 0.25, 0.65, 1.0, 1.0)
-    for (a, b) in _DEMO_WALLS:
-        va, vb = Vector(a), Vector(b)
-        mid = (va + vb) * 0.5
-        pt2d = location_3d_to_region_2d(region, rv3d, mid)
-        if pt2d is None:
-            continue
-        label = _format_length((vb - va).length, unit)
-        w, _ = blf.dimensions(font_id, label)
-        blf.position(font_id, pt2d.x - w * 0.5, pt2d.y + 6, 0)
-        blf.draw(font_id, label)
+    # Wall lengths — small blue text at edge midpoint.
+    if settings.show_dimensions and settings.show_labels and settings.show_wall_labels:
+        blf.size(font_id, 12)
+        blf.color(font_id, 0.25, 0.65, 1.0, 1.0)
+        for (a, b) in _DEMO_WALLS:
+            va, vb = Vector(a), Vector(b)
+            mid = (va + vb) * 0.5
+            pt2d = location_3d_to_region_2d(region, rv3d, mid)
+            if pt2d is None:
+                continue
+            label = _format_length((vb - va).length, unit)
+            w, _ = blf.dimensions(font_id, label)
+            blf.position(font_id, pt2d.x - w * 0.5, pt2d.y + 6, 0)
+            blf.draw(font_id, label)
 
-    # Room name + area — centred at room centroid
-    blf.size(font_id, 14)
-    for room in _DEMO_ROOMS:
-        pt2d = location_3d_to_region_2d(region, rv3d, Vector((room["cx"], room["cy"], 0.0)))
-        if pt2d is None:
-            continue
-        name_label = room["name"]
-        area_label = f"{room['area']:.1f} m\u00b2"
+    # Room labels — centered at room centroid.
+    if settings.show_labels and settings.show_room_labels:
+        blf.size(font_id, 14)
+        for room in _DEMO_ROOMS:
+            pt2d = location_3d_to_region_2d(region, rv3d, Vector((room["cx"], room["cy"], 0.0)))
+            if pt2d is None:
+                continue
+            name_label = room["name"]
+            area_label = f"{room['area']:.1f} m\u00b2"
 
-        blf.color(font_id, 0.95, 0.95, 0.95, 0.95)
-        w, h = blf.dimensions(font_id, name_label)
-        blf.position(font_id, pt2d.x - w * 0.5, pt2d.y + 4, 0)
-        blf.draw(font_id, name_label)
+            blf.color(font_id, 0.95, 0.95, 0.95, 0.95)
+            w, h = blf.dimensions(font_id, name_label)
+            blf.position(font_id, pt2d.x - w * 0.5, pt2d.y + 4, 0)
+            blf.draw(font_id, name_label)
 
-        blf.color(font_id, 0.65, 0.90, 0.65, 0.90)
-        w2, h2 = blf.dimensions(font_id, area_label)
-        blf.position(font_id, pt2d.x - w2 * 0.5, pt2d.y - h2 - 4, 0)
-        blf.draw(font_id, area_label)
+            blf.color(font_id, 0.65, 0.90, 0.65, 0.90)
+            w2, h2 = blf.dimensions(font_id, area_label)
+            blf.position(font_id, pt2d.x - w2 * 0.5, pt2d.y - h2 - 4, 0)
+            blf.draw(font_id, area_label)
 
 
 def _draw_gizmos():
@@ -460,14 +464,49 @@ class MockupFloorPlanSettings(bpy.types.PropertyGroup):
         description="Show colored room fills in viewport",
         default=True,
     )
+    show_labels: BoolProperty(
+        name="Labels",
+        description="Show room, wall and opening labels in the viewport",
+        default=True,
+    )
     show_room_labels: BoolProperty(
         name="Room Labels",
         description="Show room names in viewport",
         default=True,
     )
+    show_wall_labels: BoolProperty(
+        name="Wall Labels",
+        description="Show wall number and length labels in viewport",
+        default=True,
+    )
+    show_door_labels: BoolProperty(
+        name="Door Labels",
+        description="Show door opening labels in viewport",
+        default=True,
+    )
+    show_window_labels: BoolProperty(
+        name="Window Labels",
+        description="Show window opening labels in viewport",
+        default=True,
+    )
     show_wall_highlight: BoolProperty(
-        name="Selection Highlight",
-        description="Show highlight on selected wall",
+        name="Highlights",
+        description="Show wall edges plus door/window edge highlights in viewport",
+        default=True,
+    )
+    show_wall_edge_highlights: BoolProperty(
+        name="Wall Highlights",
+        description="Show wall edge highlights in viewport",
+        default=True,
+    )
+    show_door_edge_highlights: BoolProperty(
+        name="Door Highlights",
+        description="Show door opening edge highlights in viewport",
+        default=True,
+    )
+    show_window_edge_highlights: BoolProperty(
+        name="Window Highlights",
+        description="Show window opening edge highlights in viewport",
         default=True,
     )
     show_gizmos: BoolProperty(
