@@ -116,7 +116,7 @@ def _build_junction_fill(bm, vcache, junction, sg, junctions_by_id):
     if h <= _EPS:
         return
 
-    N = len(corners)
+    # N = len(corners)
     top = [_get_or_add_vert(bm, vcache, cx, cy, h) for cx, cy in corners]
 
     # Top cap only — the walls' side surfaces already enclose the vertical
