@@ -2,7 +2,6 @@ import uuid
 
 from ..utils.math_helpers import polygon_area, polygon_centroid, polygon_perimeter, aspect_ratio
 from .validators import validate_room_area, validate_aspect_ratio, validate_room_vertex_count
-from .structural_graph import StructuralGraph
 
 
 # Room — node in the room graph (Layer 2)
