@@ -117,6 +117,90 @@ def _duplicate_object(source_obj, context):
     return dup
 
 
+def detach_floorplan_object(
+    context,
+    source_obj,
+    *,
+    keep_original=False,
+    cleanup_attributes=True,
+    assign_default_material=True,
+    apply_flat_shading=False,
+):
+    # Convert procedural FloorPlan object into a plain mesh object.
+    from .. import (
+        find_floorplan_obj,
+        is_floorplan_mode_active,
+        remove_graphs,
+        reset_graphs_for_obj,
+        set_floorplan_mode_active,
+    )
+    from ..ui.properties import set_room_props_updating, set_wall_props_updating
+
+    # If semantic mode owns this object, disable mode first.
+    if is_floorplan_mode_active(context):
+        mode_obj = find_floorplan_obj(context)
+        if mode_obj is not None and mode_obj.name == source_obj.name:
+            set_floorplan_mode_active(context, False)
+
+    # Rebuild from canonical graph state before baking mesh output.
+    sg, rg, _mapper = reset_graphs_for_obj(source_obj)
+
+    target_obj = _duplicate_object(source_obj, context) if keep_original else source_obj
+    baked_mesh = build_final_mesh_from_graph(
+        sg,
+        rg,
+        mesh_name=f"{target_obj.name}_BakedMesh",
+    )
+    old_mesh = target_obj.data
+    target_obj.data = baked_mesh
+
+    _strip_modifiers(target_obj)
+
+    context.view_layer.objects.active = target_obj
+    target_obj.select_set(True)
+    if target_obj is not source_obj:
+        source_obj.select_set(False)
+
+    _convert_all_corner_float2_attrs_to_uv(target_obj.data)
+    if assign_default_material:
+        _assign_default_material(target_obj.data)
+    if cleanup_attributes:
+        _cleanup_named_attributes(target_obj.data)
+
+    _remove_floorplan_identity(target_obj)
+
+    if not keep_original:
+        remove_graphs(source_obj)
+        _selection.deselect_all(context)
+
+        settings = context.scene.floorplan
+        set_wall_props_updating(True)
+        try:
+            settings.active_wall_thickness = 0.0
+            settings.active_wall_height = 0.0
+        finally:
+            set_wall_props_updating(False)
+
+        set_room_props_updating(True)
+        try:
+            settings.active_room_name = ""
+        finally:
+            set_room_props_updating(False)
+        settings.opening_items.clear()
+
+    if old_mesh is not None and old_mesh.users == 0:
+        bpy.data.meshes.remove(old_mesh)
+
+    target_obj.data.update()
+    if apply_flat_shading:
+        _set_faces_shade_flat(context, target_obj)
+
+    if context.area:
+        context.area.tag_redraw()
+
+    return target_obj
+
+
 class FLOORPLAN_OT_finalize(bpy.types.Operator):
     bl_idname = "floorplan.finalize"
     bl_label = "Bake"
@@ -166,65 +250,24 @@ class FLOORPLAN_OT_finalize(bpy.types.Operator):
         col.prop(self, "keep_original")
 
     def execute(self, context):
-        from .. import remove_graphs, reset_graphs_for_obj
+        from .. import reset_graphs_for_obj
 
         source_obj = _resolve_finalize_floorplan_obj(context)
         if source_obj is None:
             self.report({'ERROR'}, "No floor plan object found")
             return {'CANCELLED'}
 
-        # Always rebuild from persisted graph state so finalization is based on
-        # canonical Layer 1/2 data, not on current modifier/evaluated geometry.
-        sg, rg, _mapper = reset_graphs_for_obj(source_obj)
+        # Validate graph reconstruction before conversion.
+        reset_graphs_for_obj(source_obj)
 
-        target_obj = _duplicate_object(source_obj, context) if self.keep_original else source_obj
-
-        baked_mesh = build_final_mesh_from_graph(
-            sg,
-            rg,
-            mesh_name=f"{target_obj.name}_BakedMesh",
+        target_obj = detach_floorplan_object(
+            context,
+            source_obj,
+            keep_original=self.keep_original,
+            cleanup_attributes=self.cleanup_attributes,
+            assign_default_material=True,
+            apply_flat_shading=True,
         )
-        old_mesh = target_obj.data
-        target_obj.data = baked_mesh
-
-        _strip_modifiers(target_obj)
-
-        # Establish operator context for post-bake operators.
-        context.view_layer.objects.active = target_obj
-        target_obj.select_set(True)
-        if target_obj is not source_obj:
-            source_obj.select_set(False)
-
-        _convert_all_corner_float2_attrs_to_uv(target_obj.data)
-
-        # Current scope: always fallback to one default material.
-        _assign_default_material(target_obj.data)
-
-        if self.cleanup_attributes:
-            _cleanup_named_attributes(target_obj.data)
-
-        _remove_floorplan_identity(target_obj)
-
-        # Remove stale graph cache for destructive bake.
-        if not self.keep_original:
-            remove_graphs(source_obj)
-
-        # Keep UI state consistent with destructive conversion.
-        if not self.keep_original:
-            _selection.deselect_all(context)
-            context.scene.floorplan.opening_items.clear()
-            context.scene.floorplan.active_room_name = ""
-
-        # Cleanup unreferenced mesh datablock after replacement.
-        if old_mesh is not None and old_mesh.users == 0:
-            bpy.data.meshes.remove(old_mesh)
-
-        target_obj.data.update()
-
-        # Apply flat shading as the final post-process step.
-        _set_faces_shade_flat(context, target_obj)
-
-        context.area.tag_redraw()
 
         if self.keep_original:
             self.report({'INFO'}, f"Baked copy created: {target_obj.name}")

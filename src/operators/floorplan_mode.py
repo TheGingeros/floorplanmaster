@@ -131,6 +131,12 @@ class FLOORPLAN_OT_floorplan_modal(bpy.types.Operator):
             # Always consume — prevents Blender from deselecting the object.
             return {'RUNNING_MODAL'}
 
+        # Tab inside semantic mode follows the same warning+detach flow as
+        # Object Mode keymap interception.
+        if event.type == 'TAB' and event.value == 'PRESS':
+            bpy.ops.floorplan.edit_mode_with_detach('INVOKE_DEFAULT')
+            return {'RUNNING_MODAL'}
+
         # Own X inside semantic mode so Blender object deletion never fires.
         # If a wall is selected for the current FloorPlan object, reuse the
         # existing remove-wall operator (and its confirm dialog). If no wall
