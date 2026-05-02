@@ -447,7 +447,8 @@ def sync_graph_to_mesh(obj, sg, rg, id_mapper=None):
         id_mapper = IdMapper()
     syncer = AttributeSync(obj, sg, rg, id_mapper=id_mapper)
     syncer.full_sync()
-    _persist_face_maps(obj, syncer._wid_fidx, syncer._jid_fidx)
+    if hasattr(syncer, '_wid_fidx'):
+        _persist_face_maps(obj, syncer._wid_fidx, syncer._jid_fidx)
     _persist_graphs(obj, sg, rg, id_mapper)
 
     # Initialize room name custom properties for newly detected rooms.

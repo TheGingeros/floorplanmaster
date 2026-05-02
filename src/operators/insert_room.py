@@ -113,8 +113,7 @@ class FLOORPLAN_OT_insert_room(bpy.types.Operator):
                 # Wall may already exist — skip.
                 pass
 
-        # Sync L2 + L3.
-        rg.sync_from_structural_graph()
+        # Sync L3 (L2 sync happens inside sync_graph_to_mesh → _phase1_topology).
         sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
 
         # Re-apply modifier inputs after mesh rebuild so GN dimensions are correct.

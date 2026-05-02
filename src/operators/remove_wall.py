@@ -55,8 +55,7 @@ class FLOORPLAN_OT_remove_selected_wall(bpy.types.Operator):
             if len(sg.get_walls_for_junction(jid)) == 0:
                 sg.remove_junction(jid)
 
-        rg.sync_from_structural_graph()
-
+        # L2 sync happens inside sync_graph_to_mesh → _phase1_topology.
         sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
         ensure_gn_modifier(obj)
         persist_room_names(obj, rg)

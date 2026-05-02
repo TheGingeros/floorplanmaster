@@ -358,7 +358,7 @@ class FLOORPLAN_OT_remove_opening(bpy.types.Operator):
     opening_id: bpy.props.StringProperty(options={'HIDDEN'})
 
     def execute(self, context):
-        from .. import find_floorplan_obj, _graph_store, reset_graphs_for_obj
+        from .. import find_floorplan_obj, reset_graphs_for_obj
         from ..core.sync import sync_graph_to_mesh
         from ..geometry.gn_setup import ensure_gn_modifier
 
@@ -366,9 +366,7 @@ class FLOORPLAN_OT_remove_opening(bpy.types.Operator):
         if obj is None:
             return {'CANCELLED'}
 
-        if obj.name not in _graph_store:
-            reset_graphs_for_obj(obj)
-        sg, rg, mapper = _graph_store[obj.name]
+        sg, rg, mapper = reset_graphs_for_obj(obj)
 
         op_to_remove = sg.get_opening(self.opening_id)
         wall_uuid = op_to_remove.wall_id if op_to_remove else None
