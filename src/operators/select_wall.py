@@ -9,7 +9,7 @@ from bpy_extras import view3d_utils
 
 from mathutils import Vector
 
-from ..core.sync import _compute_wall_quad
+from ..core.junction_solver import compute_wall_quad as _compute_wall_quad
 from ..utils.math_helpers import point_in_polygon
 from ..ui.selection_state import _selection
 

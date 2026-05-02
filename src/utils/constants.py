@@ -30,3 +30,8 @@ OPENING_CUTTER_Z_OVERSHOOT = 0.01  # vertical overshoot to avoid coplanar faces
 
 # Snapping
 SNAP_JUNCTION_TOLERANCE = 15  # pixels
+
+# Wall join policy (Option B groundwork)
+DEFAULT_CONNECTION_GROUP = 1
+DEFAULT_JOIN_PRIORITY = 500   # 0..999, aligned with Archicad-style scale
+DEFAULT_JUNCTION_ORDER = 0

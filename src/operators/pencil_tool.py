@@ -11,7 +11,8 @@ from gpu_extras.batch import batch_for_shader
 from bpy_extras import view3d_utils
 from mathutils import Vector
 
-from ..core.sync import sync_graph_to_mesh, _compute_wall_quad
+from ..core.sync import sync_graph_to_mesh
+from ..core.junction_solver import compute_wall_quad as _compute_wall_quad
 from ..core.structural_graph import StructuralGraph
 from ..core.room_graph import RoomGraph
 from ..core.sync import IdMapper

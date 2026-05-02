@@ -17,6 +17,12 @@ import bmesh
 
 from .structural_graph import StructuralGraph, Opening
 from .room_graph import RoomGraph
+from .junction_solver import (
+    junction_entries as _js_junction_entries,
+    junction_polygon_corners as _js_junction_polygon_corners,
+    corner_at_junction as _js_corner_at_junction,
+    compute_wall_quad as _js_compute_wall_quad,
+)
 
 
 # UUID string -> stable integer ID for GPU-friendly named attributes.
@@ -72,172 +78,32 @@ def _wall_side_line(jx, jy, dx, dy, offset_x, offset_y):
 
 
 def _junction_entries(junction, junctions_by_id, sg):
-    # Build an angularly-sorted list of all walls at a junction.
-    # Each entry: (angle, wall, out_ux, out_uy, out_nx, out_ny, half_thickness)
-    # Angle is measured CCW from +X of the outgoing direction from junction.
-    jx, jy = junction.position
-    entries = []
-    for w in sg.get_walls_for_junction(junction.id):
-        other_jid = w.junction_end if w.junction_start == junction.id else w.junction_start
-        other_j = junctions_by_id.get(other_jid)
-        if other_j is None:
-            continue
-        odx = other_j.position[0] - jx
-        ody = other_j.position[1] - jy
-        L = math.sqrt(odx * odx + ody * ody)
-        if L < 1e-8:
-            continue
-        out_ux, out_uy = odx / L, ody / L
-        out_nx, out_ny = _perp(odx, ody)     # CCW (left) normal for outgoing direction
-        angle = math.atan2(out_uy, out_ux)
-        entries.append((angle, w, out_ux, out_uy, out_nx, out_ny, w.thickness / 2.0))
-    entries.sort(key=lambda e: e[0])
-    return entries
+    return _js_junction_entries(junction, junctions_by_id, sg)
 
 
 def _junction_polygon_corners(junction, junctions_by_id, sg):
-    # Compute the N-gon that fills the gap at a junction with N>=3 walls.
-    # Returns a list of (x, y) in CCW order, or [] when no fill is needed.
-    #
-    # Each corner is the intersection of two angularly-adjacent walls' inner
-    # side-lines: corner[i] = wall[i].left ∩ wall[i+1].right (CCW order).
-    # This matches exactly what _corner_at_junction produces for wall endpoints,
-    # so the polygon tiles seamlessly with the surrounding wall quads.
-    jx, jy = junction.position
-    entries = _junction_entries(junction, junctions_by_id, sg)
-
-    if len(entries) < 3:
-        return []
-
-    N = len(entries)
-    corners = []
-    for i in range(N):
-        cur = entries[i]
-        nxt = entries[(i + 1) % N]
-
-        cur_left_off  = ( cur[4] * cur[6],  cur[5] * cur[6])
-        nxt_right_off = (-nxt[4] * nxt[6], -nxt[5] * nxt[6])
-
-        p1 = (jx + cur_left_off[0],  jy + cur_left_off[1])
-        p2 = (jx + nxt_right_off[0], jy + nxt_right_off[1])
-
-        pt = _line_intersect(p1, (cur[2], cur[3]), p2, (nxt[2], nxt[3]))
-        if pt is None:
-            pt = p1   # parallel / collinear — boundary is a shared edge
-
-        corners.append(pt)
-
-    # Remove consecutive duplicates (collinear wall pair collapses a corner).
-    unique = []
-    for c in corners:
-        if unique and abs(c[0] - unique[-1][0]) < 1e-6 and abs(c[1] - unique[-1][1]) < 1e-6:
-            continue
-        unique.append(c)
-
-    return unique if len(unique) >= 3 else []
+    return _js_junction_polygon_corners(junction, junctions_by_id, sg)
 
 
 def _corner_at_junction(junction, target_wall, is_start, ux, uy, nx, ny, ht,
                          side_off, junctions_by_id, sg):
-    # Compute one corner of target_wall at the given junction using angular sort.
-    #
-    # The junction polygon is defined by intersecting adjacent walls' inner
-    # side-lines in CCW angular order.  For the target wall at index i:
-    #   left corner  = target's left side-line  ∩  CCW-next wall's right side-line
-    #   right corner = target's right side-line ∩  CCW-prev wall's left side-line
-    #
-    # This guarantees each corner is the meeting point of exactly the two walls
-    # that are angularly adjacent — works correctly for L, T, and X joints.
-    jx, jy = junction.position
-    raw = (jx + side_off[0], jy + side_off[1])
-    wall_dir = (ux, uy) if is_start else (-ux, -uy)
-
-    entries = _junction_entries(junction, junctions_by_id, sg)
-    N = len(entries)
-
-    if N < 2:
-        return raw  # free end — perpendicular cap
-
-    target_idx = next((i for i, e in enumerate(entries) if e[1].id == target_wall.id), None)
-    if target_idx is None:
-        return raw
-
-    # For a straight-through (degree 2, nearly anti-parallel) junction: avoid
-    # mitering.  Tiny angular errors after topology edits would create a visible
-    # bevel on what should be a straight wall segment.
-    if N == 2:
-        adj_e = entries[(target_idx + 1) % N]
-        dot = wall_dir[0] * adj_e[2] + wall_dir[1] * adj_e[3]
-        cross = wall_dir[0] * adj_e[3] - wall_dir[1] * adj_e[2]
-        if dot < -0.95 and abs(cross) < 0.05:
-            return raw
-
-    # is_left_side must be relative to the *outgoing* direction from the junction,
-    # not the wall's start→end direction.  When the junction is the wall's END,
-    # the outgoing direction is reversed, so left and right swap.
-    _on_own_left = (side_off[0] * nx + side_off[1] * ny) > 0
-    is_left_side = _on_own_left if is_start else not _on_own_left
-
-    if is_left_side:
-        # Left corner: intersect this wall's left side with the CCW-next wall's right side.
-        adj_e = entries[(target_idx + 1) % N]
-        adj_side_off = (-adj_e[4] * adj_e[6], -adj_e[5] * adj_e[6])  # right side of adj
-    else:
-        # Right corner: intersect this wall's right side with the CCW-prev wall's left side.
-        adj_e = entries[(target_idx - 1) % N]
-        adj_side_off = (adj_e[4] * adj_e[6], adj_e[5] * adj_e[6])    # left side of adj
-
-    p_this = raw
-    d_this = wall_dir
-    p_adj = (jx + adj_side_off[0], jy + adj_side_off[1])
-    d_adj = (adj_e[2], adj_e[3])
-
-    pt = _line_intersect(p_this, d_this, p_adj, d_adj)
-    if pt is None:
-        return raw  # parallel / collinear — perpendicular cap
-
-    t = (pt[0] - raw[0]) * wall_dir[0] + (pt[1] - raw[1]) * wall_dir[1]
-    miter_limit = 2.0 * max(ht, adj_e[6])
-    if abs(t) > miter_limit:
-        return raw
-
-    return pt
+    return _js_corner_at_junction(
+        junction,
+        target_wall,
+        is_start,
+        ux,
+        uy,
+        nx,
+        ny,
+        ht,
+        side_off,
+        junctions_by_id,
+        sg,
+    )
 
 
 def _compute_wall_quad(wall, junctions_by_id, sg):
-    # Returns (p0, p1, p2, p3) — the 4 2D corners of the wall outline, ordered
-    # as a quad going around the wall:
-    #   p0, p1 = left side (start -> end)
-    #   p3, p2 = right side (start -> end)   (quad winds CCW when viewed from above)
-    #
-    # Corners at junctions are computed by angular sort: each corner is the
-    # intersection of this wall's side-line with the angularly-adjacent
-    # neighbour's opposing side-line.  Free endpoints get a perpendicular cap.
-    j_start = junctions_by_id.get(wall.junction_start)
-    j_end = junctions_by_id.get(wall.junction_end)
-    if not (j_start and j_end):
-        return None
-
-    sx, sy = j_start.position
-    ex, ey = j_end.position
-    dx = ex - sx
-    dy = ey - sy
-    L = math.sqrt(dx * dx + dy * dy)
-    if L < 1e-8:
-        return None
-
-    ux, uy = dx / L, dy / L
-    nx, ny = _perp(dx, dy)
-    ht = wall.thickness / 2.0
-
-    left_off  = ( nx * ht,  ny * ht)
-    right_off = (-nx * ht, -ny * ht)
-
-    p0 = _corner_at_junction(j_start, wall, True,  ux, uy, nx, ny, ht, left_off,  junctions_by_id, sg)
-    p1 = _corner_at_junction(j_end,   wall, False, ux, uy, nx, ny, ht, left_off,  junctions_by_id, sg)
-    p2 = _corner_at_junction(j_end,   wall, False, ux, uy, nx, ny, ht, right_off, junctions_by_id, sg)
-    p3 = _corner_at_junction(j_start, wall, True,  ux, uy, nx, ny, ht, right_off, junctions_by_id, sg)
-    return (p0, p1, p2, p3)
+    return _js_compute_wall_quad(wall, junctions_by_id, sg)
 
 
 def _compute_opening_cutter_quad(opening, wall, junctions_by_id):
@@ -608,6 +474,7 @@ def sync_graph_to_mesh(obj, sg, rg, id_mapper=None):
         id_mapper = IdMapper()
     syncer = AttributeSync(obj, sg, rg, id_mapper=id_mapper)
     syncer.full_sync()
+    _persist_face_maps(obj, syncer._wid_fidx, syncer._jid_fidx)
     _persist_graphs(obj, sg, rg, id_mapper)
 
     # Initialize room name custom properties for newly detected rooms.
@@ -615,6 +482,102 @@ def sync_graph_to_mesh(obj, sg, rg, id_mapper=None):
         key = f"room_name_{room.id}"
         if key not in obj:
             obj[key] = room.name
+
+
+def sync_graph_to_mesh_local(
+    obj,
+    sg,
+    rg,
+    id_mapper=None,
+    dirty_wall_ids=None,
+    fallback_full_sync=True,
+):
+    # Incremental sync for wall property edits that do not change topology.
+    #
+    # Fast path (attribute-only, no bmesh rebuild):
+    #   Triggered when only wall HEIGHT changed for the dirty walls.
+    #   Reads cached face-index maps from obj["_floorplan_face_maps"] to
+    #   locate the wall face and adjacent junction-fill faces, then writes
+    #   new wall_height values directly on mesh.attributes.  O(dirty walls).
+    #
+    # Slow path (full sync fallback):
+    #   Triggered when THICKNESS changed (topology must be rebuilt) or when
+    #   no face-index cache is present.
+    if not dirty_wall_ids:
+        sync_graph_to_mesh(obj, sg, rg, id_mapper=id_mapper)
+        return
+
+    if id_mapper is None:
+        id_mapper = IdMapper()
+
+    mesh = obj.data
+    num_faces = len(mesh.polygons)
+    if num_faces == 0:
+        sync_graph_to_mesh(obj, sg, rg, id_mapper=id_mapper)
+        return
+
+    wid_face_map, jid_face_map = _read_face_maps(obj)
+    if wid_face_map is None:
+        sync_graph_to_mesh(obj, sg, rg, id_mapper=id_mapper)
+        return
+
+    wthick_attr = mesh.attributes.get("wall_thickness")
+    wheight_attr = mesh.attributes.get("wall_height")
+    if not (wthick_attr and wheight_attr):
+        sync_graph_to_mesh(obj, sg, rg, id_mapper=id_mapper)
+        return
+
+    height_only_updates = []  # list of (wall, fidx)
+
+    for wall_uuid in dirty_wall_ids:
+        wall = sg.get_wall(wall_uuid)
+        if wall is None:
+            if fallback_full_sync:
+                sync_graph_to_mesh(obj, sg, rg, id_mapper=id_mapper)
+            return
+
+        fidx = wid_face_map.get(wall_uuid)
+        if fidx is None or fidx >= num_faces:
+            # Wall not yet in mesh — full sync required.
+            sync_graph_to_mesh(obj, sg, rg, id_mapper=id_mapper)
+            return
+
+        old_thickness = wthick_attr.data[fidx].value
+        if abs(old_thickness - wall.thickness) > 1e-7:
+            # Thickness change alters quad geometry — topology must rebuild.
+            sync_graph_to_mesh(obj, sg, rg, id_mapper=id_mapper)
+            return
+
+        old_height = wheight_attr.data[fidx].value
+        if abs(old_height - wall.height) > 1e-7:
+            height_only_updates.append((wall, fidx))
+
+    if not height_only_updates:
+        return  # Graph and mesh already agree; nothing to write.
+
+    # Attribute-only pass: update wall_height on each dirty wall face.
+    for wall, fidx in height_only_updates:
+        wheight_attr.data[fidx].value = wall.height
+
+    # Keep junction-fill heights consistent with their neighbour walls.
+    # Junction fill height = min(height of all connected walls).
+    dirty_junction_ids = set()
+    for wall, _ in height_only_updates:
+        dirty_junction_ids.add(wall.junction_start)
+        dirty_junction_ids.add(wall.junction_end)
+
+    for jid in dirty_junction_ids:
+        jfidx = jid_face_map.get(jid)
+        if jfidx is None or jfidx >= num_faces:
+            continue
+        walls_here = sg.get_walls_for_junction(jid)
+        if not walls_here:
+            continue
+        wheight_attr.data[jfidx].value = min(w.height for w in walls_here)
+
+    mesh.update()
+    obj.update_tag()
+    _persist_graphs(obj, sg, rg, id_mapper)
 
 
 # Persistence: store graph data as JSON on the Blender object so that
@@ -633,6 +596,9 @@ def _persist_graphs(obj, sg, rg, id_mapper):
                 "end": w.junction_end,
                 "thickness": w.thickness,
                 "height": w.height,
+                "connection_group": w.connection_group,
+                "join_priority": w.join_priority,
+                "junction_order": w.junction_order,
                 "openings": [
                     {
                         "id": op.id,
@@ -650,6 +616,33 @@ def _persist_graphs(obj, sg, rg, id_mapper):
         "id_map": id_mapper._map if id_mapper else {},
     }
     obj["_floorplan_graphs"] = json.dumps(data)
+
+
+def _persist_face_maps(obj, wid_fidx, jid_fidx):
+    # Cache wall-UUID→face-index and junction-UUID→face-index mappings on the
+    # object so that local attribute-only syncs can update targeted faces
+    # without rebuilding the mesh.  Invalidated by the next full sync.
+    data = {
+        "walls": {str(wid): fidx for wid, fidx in wid_fidx.items()},
+        "junctions": {str(jid): fidx for jid, fidx in jid_fidx.items()},
+    }
+    obj["_floorplan_face_maps"] = json.dumps(data)
+
+
+def _read_face_maps(obj):
+    # Read back the maps written by _persist_face_maps.
+    # Returns (wall_uuid→fidx dict, junction_uuid→fidx dict) or (None, None).
+    raw = obj.get("_floorplan_face_maps")
+    if not raw:
+        return None, None
+    try:
+        data = json.loads(raw)
+        # JSON round-trip: values are int; keys are string UUIDs — correct.
+        walls = {k: int(v) for k, v in data.get("walls", {}).items()}
+        junctions = {k: int(v) for k, v in data.get("junctions", {}).items()}
+        return walls, junctions
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return None, None
 
 
 def reconstruct_graphs_from_mesh(obj):
@@ -670,6 +663,9 @@ def reconstruct_graphs_from_mesh(obj):
             wd["start"], wd["end"],
             thickness=wd["thickness"],
             height=wd["height"],
+            connection_group=wd.get("connection_group", 1),
+            join_priority=wd.get("join_priority", 500),
+            junction_order=wd.get("junction_order", 0),
             wall_id=wd["id"],
         )
         # Restore openings for this wall.

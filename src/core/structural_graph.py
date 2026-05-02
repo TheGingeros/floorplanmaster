@@ -2,7 +2,13 @@ import uuid
 
 import networkx as nx
 
-from ..utils.constants import DEFAULT_THICKNESS, DEFAULT_HEIGHT
+from ..utils.constants import (
+    DEFAULT_THICKNESS,
+    DEFAULT_HEIGHT,
+    DEFAULT_CONNECTION_GROUP,
+    DEFAULT_JOIN_PRIORITY,
+    DEFAULT_JUNCTION_ORDER,
+)
 from ..utils.math_helpers import edge_length, edge_angle, point_distance
 from .validators import (
     ValidationError,
@@ -43,6 +49,9 @@ class Wall:
         junction_end_id,
         thickness=DEFAULT_THICKNESS,
         height=DEFAULT_HEIGHT,
+        connection_group=DEFAULT_CONNECTION_GROUP,
+        join_priority=DEFAULT_JOIN_PRIORITY,
+        junction_order=DEFAULT_JUNCTION_ORDER,
         wall_id=None,
     ):
         self.id = wall_id or str(uuid.uuid4())
@@ -50,6 +59,10 @@ class Wall:
         self.junction_end = junction_end_id
         self.thickness = thickness
         self.height = height
+        # Option B groundwork: join policy metadata (currently passive).
+        self.connection_group = int(connection_group)
+        self.join_priority = int(join_priority)
+        self.junction_order = int(junction_order)
         self.openings = []  # list of Opening objects
 
     def __repr__(self):
@@ -181,6 +194,9 @@ class StructuralGraph:
         junction_end_id,
         thickness=DEFAULT_THICKNESS,
         height=DEFAULT_HEIGHT,
+        connection_group=DEFAULT_CONNECTION_GROUP,
+        join_priority=DEFAULT_JOIN_PRIORITY,
+        junction_order=DEFAULT_JUNCTION_ORDER,
         wall_id=None,
     ):
         if junction_start_id == junction_end_id:
@@ -199,6 +215,9 @@ class StructuralGraph:
         w = Wall(
             junction_start_id, junction_end_id,
             thickness=thickness, height=height,
+            connection_group=connection_group,
+            join_priority=join_priority,
+            junction_order=junction_order,
             wall_id=wall_id,
         )
         self._walls[w.id] = w
@@ -246,6 +265,12 @@ class StructuralGraph:
         if "height" in kwargs:
             validate_height(kwargs["height"])
             w.height = kwargs["height"]
+        if "connection_group" in kwargs:
+            w.connection_group = int(kwargs["connection_group"])
+        if "join_priority" in kwargs:
+            w.join_priority = int(kwargs["join_priority"])
+        if "junction_order" in kwargs:
+            w.junction_order = int(kwargs["junction_order"])
 
     # Opening CRUD
     def add_opening(

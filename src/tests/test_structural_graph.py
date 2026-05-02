@@ -143,6 +143,30 @@ class TestWallCRUD:
         assert w.thickness == 0.3
         assert w.height == 4.0
 
+    def test_add_wall_join_policy_defaults(self):
+        sg = StructuralGraph()
+        j1 = sg.add_junction((0, 0))
+        j2 = sg.add_junction((1, 0))
+        w = sg.add_wall(j1.id, j2.id)
+        assert w.connection_group == 1
+        assert w.join_priority == 500
+        assert w.junction_order == 0
+
+    def test_add_wall_join_policy_custom(self):
+        sg = StructuralGraph()
+        j1 = sg.add_junction((0, 0))
+        j2 = sg.add_junction((1, 0))
+        w = sg.add_wall(
+            j1.id,
+            j2.id,
+            connection_group=3,
+            join_priority=750,
+            junction_order=2,
+        )
+        assert w.connection_group == 3
+        assert w.join_priority == 750
+        assert w.junction_order == 2
+
     def test_self_loop_rejected(self):
         sg = StructuralGraph()
         j = sg.add_junction((0, 0))
@@ -242,6 +266,16 @@ class TestWallCRUD:
         w = sg.add_wall(j1.id, j2.id)
         with pytest.raises(ValidationError):
             sg.update_wall(w.id, thickness=0.0)
+
+    def test_update_wall_join_policy(self):
+        sg = StructuralGraph()
+        j1 = sg.add_junction((0, 0))
+        j2 = sg.add_junction((1, 0))
+        w = sg.add_wall(j1.id, j2.id)
+        sg.update_wall(w.id, connection_group=5, join_priority=650, junction_order=4)
+        assert w.connection_group == 5
+        assert w.join_priority == 650
+        assert w.junction_order == 4
 
 
 # Geometry queries

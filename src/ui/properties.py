@@ -5,13 +5,14 @@
 # set_wall_props_updating — expose the circular-update guard for operators.
 
 import bpy
+import time
 from bpy.props import (
     BoolProperty, CollectionProperty, EnumProperty,
     FloatProperty, StringProperty,
 )
 
 from .selection_state import _selection
-from ..core.sync import sync_graph_to_mesh
+from ..core.sync import sync_graph_to_mesh, sync_graph_to_mesh_local
 from ..utils.constants import (
     DEFAULT_DOOR_WIDTH, DEFAULT_WINDOW_WIDTH,
     DEFAULT_DOOR_HEIGHT, DEFAULT_WINDOW_HEIGHT,
@@ -23,6 +24,45 @@ from ..utils.constants import (
 _updating_wall_props = False
 _updating_opening_items = False
 _updating_room_props = False
+_pending_wall_sync_tokens = {}
+_WALL_SYNC_DEBOUNCE_SECONDS = 0.12
+
+
+def _schedule_debounced_wall_sync(obj_name: str, wall_uuid: str) -> None:
+    # Collapse rapid UI slider updates into a single sync pass.
+    key = (obj_name, wall_uuid)
+    token = time.monotonic()
+    _pending_wall_sync_tokens[key] = token
+
+    def _flush_wall_sync():
+        if _pending_wall_sync_tokens.get(key) != token:
+            return None
+
+        from .. import _graph_store
+
+        bundle = _graph_store.get(obj_name)
+        if bundle is None:
+            _pending_wall_sync_tokens.pop(key, None)
+            return None
+
+        obj = bpy.data.objects.get(obj_name)
+        if obj is None or not obj.get("is_floorplan"):
+            _pending_wall_sync_tokens.pop(key, None)
+            return None
+
+        sg, rg, mapper = bundle
+        sync_graph_to_mesh_local(
+            obj,
+            sg,
+            rg,
+            id_mapper=mapper,
+            dirty_wall_ids=[wall_uuid],
+            fallback_full_sync=True,
+        )
+        _pending_wall_sync_tokens.pop(key, None)
+        return None
+
+    bpy.app.timers.register(_flush_wall_sync, first_interval=_WALL_SYNC_DEBOUNCE_SECONDS)
 
 
 def set_wall_props_updating(val: bool) -> None:
@@ -100,7 +140,7 @@ def _on_wall_thickness_update(self, context):
         sg.update_wall(wall_uuid, thickness=new_val)
     except Exception:
         return
-    sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
+    _schedule_debounced_wall_sync(obj.name, wall_uuid)
 
 
 def _on_wall_height_update(self, context):
@@ -127,7 +167,7 @@ def _on_wall_height_update(self, context):
         sg.update_wall(wall_uuid, height=new_val)
     except Exception:
         return
-    sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
+    _schedule_debounced_wall_sync(obj.name, wall_uuid)
 
 
 def _on_opening_type_update(self, context):

@@ -6,7 +6,9 @@ import math
 import bpy
 import bmesh
 
-from .sync import _compute_wall_quad, _compute_room_inner_polygon, _junction_polygon_corners
+from .sync import _compute_room_inner_polygon
+from .junction_solver import compute_wall_quad as _compute_wall_quad
+from .junction_solver import junction_polygon_corners as _junction_polygon_corners
 
 
 _EPS = 1e-6
