@@ -16,6 +16,7 @@ from src.core.validators import (
     validate_opening_height,
     validate_opening_placement,
     validate_opening_sill,
+    validate_planar_wall_layout,
     E_THICKNESS_OUT_OF_RANGE,
     E_HEIGHT_OUT_OF_RANGE,
     E_ROOM_TOO_SMALL,
@@ -26,6 +27,7 @@ from src.core.validators import (
     E_OPENING_EXCEEDS_WALL,
     E_OPENING_WIDTH_OUT_OF_RANGE,
     E_OPENING_HEIGHT_OUT_OF_RANGE,
+    E_PLANARITY_VIOLATION,
 )
 
 
@@ -276,3 +278,107 @@ class TestValidateOpeningSill:
 
     def test_exact_fit(self):
         validate_opening_sill(1.0, 2.0, 3.0)  # 1.0 + 2.0 = 3.0 exactly
+
+
+class TestValidatePlanarWallLayout:
+    def test_non_adjacent_crossing_rejected(self):
+        segments = [
+            {
+                "wall_id": "w1",
+                "junction_start": "a",
+                "junction_end": "b",
+                "start": (0.0, 0.0),
+                "end": (2.0, 2.0),
+            },
+            {
+                "wall_id": "w2",
+                "junction_start": "c",
+                "junction_end": "d",
+                "start": (0.0, 2.0),
+                "end": (2.0, 0.0),
+            },
+        ]
+        with pytest.raises(ValidationError, match=E_PLANARITY_VIOLATION):
+            validate_planar_wall_layout(segments)
+
+    def test_non_adjacent_touching_rejected(self):
+        segments = [
+            {
+                "wall_id": "w1",
+                "junction_start": "a",
+                "junction_end": "b",
+                "start": (0.0, 0.0),
+                "end": (2.0, 0.0),
+            },
+            {
+                "wall_id": "w2",
+                "junction_start": "c",
+                "junction_end": "d",
+                "start": (2.0, 0.0),
+                "end": (3.0, 0.0),
+            },
+        ]
+        with pytest.raises(ValidationError, match=E_PLANARITY_VIOLATION):
+            validate_planar_wall_layout(segments)
+
+    def test_adjacent_shared_endpoint_allowed(self):
+        segments = [
+            {
+                "wall_id": "w1",
+                "junction_start": "a",
+                "junction_end": "b",
+                "start": (0.0, 0.0),
+                "end": (1.0, 0.0),
+            },
+            {
+                "wall_id": "w2",
+                "junction_start": "b",
+                "junction_end": "c",
+                "start": (1.0, 0.0),
+                "end": (1.0, 1.0),
+            },
+        ]
+        validate_planar_wall_layout(segments)
+
+    def test_non_intersecting_centerlines_but_thickness_overlap_rejected(self):
+        segments = [
+            {
+                "wall_id": "w1",
+                "junction_start": "a",
+                "junction_end": "b",
+                "start": (0.0, 0.0),
+                "end": (3.0, 0.0),
+                "thickness": 0.4,
+            },
+            {
+                "wall_id": "w2",
+                "junction_start": "c",
+                "junction_end": "d",
+                "start": (0.0, 0.3),
+                "end": (3.0, 0.3),
+                "thickness": 0.4,
+            },
+        ]
+        with pytest.raises(ValidationError, match=E_PLANARITY_VIOLATION):
+            validate_planar_wall_layout(segments)
+
+    def test_non_intersecting_with_sufficient_gap_allowed(self):
+        segments = [
+            {
+                "wall_id": "w1",
+                "junction_start": "a",
+                "junction_end": "b",
+                "start": (0.0, 0.0),
+                "end": (3.0, 0.0),
+                "thickness": 0.3,
+            },
+            {
+                "wall_id": "w2",
+                "junction_start": "c",
+                "junction_end": "d",
+                "start": (0.0, 0.5),
+                "end": (3.0, 0.5),
+                "thickness": 0.3,
+            },
+        ]
+        validate_planar_wall_layout(segments)

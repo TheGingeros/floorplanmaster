@@ -24,6 +24,7 @@ from .validators import (
     get_opening_free_spans,
     max_opening_width,
     max_opening_width_at_position,
+    validate_planar_wall_layout,
     E_WALL_DUPLICATE,
     E_WALL_SELF_LOOP,
     E_JUNCTION_DUPLICATE,
@@ -120,6 +121,26 @@ class StructuralGraph:
         # Canonical unordered pair.
         return tuple(sorted((jid_a, jid_b)))
 
+    def _wall_segments(self):
+        segments = []
+        for w in self._walls.values():
+            j1 = self._junctions.get(w.junction_start)
+            j2 = self._junctions.get(w.junction_end)
+            if j1 is None or j2 is None:
+                continue
+            segments.append({
+                "wall_id": w.id,
+                "junction_start": w.junction_start,
+                "junction_end": w.junction_end,
+                "start": j1.position,
+                "end": j2.position,
+                "thickness": w.thickness,
+            })
+        return segments
+
+    def _validate_planarity_constraints(self):
+        validate_planar_wall_layout(self._wall_segments())
+
     # Junction CRUD
     def add_junction(self, position, junction_id=None):
         pk = self._pos_key(position)
@@ -169,7 +190,7 @@ class StructuralGraph:
         results.sort(key=lambda t: t[1])
         return results
 
-    def move_junction(self, junction_id, new_position):
+    def move_junction(self, junction_id, new_position, validate=True):
         j = self._junctions.get(junction_id)
         if j is None:
             return
@@ -180,11 +201,24 @@ class StructuralGraph:
                 E_JUNCTION_DUPLICATE,
                 f"Another junction already at {new_position}",
             )
-        old_pk = self._pos_key(j.position)
+        old_position = j.position
+        old_pk = self._pos_key(old_position)
         self._pos_index.pop(old_pk, None)
         j.position = tuple(new_position)
         self._pos_index[new_pk] = junction_id
         self._graph.nodes[junction_id]["pos"] = j.position
+
+        try:
+            if validate:
+                self._validate_planarity_constraints()
+        except ValidationError:
+            # Roll back to previous position on failed geometric validation.
+            self._pos_index.pop(new_pk, None)
+            j.position = old_position
+            self._pos_index[old_pk] = junction_id
+            self._graph.nodes[junction_id]["pos"] = old_position
+            raise
+
         self._topology_dirty = True
 
     def move_junction_xy(self, junction_id, x, y):
@@ -224,8 +258,25 @@ class StructuralGraph:
         move_x = nx * offset_n
         move_y = ny * offset_n
 
-        self.move_junction(w.junction_start, (ax + move_x, ay + move_y))
-        self.move_junction(w.junction_end, (bx + move_x, by + move_y))
+        old_start = j_start.position
+        old_end = j_end.position
+
+        try:
+            self.move_junction(
+                w.junction_start,
+                (ax + move_x, ay + move_y),
+                validate=False,
+            )
+            self.move_junction(
+                w.junction_end,
+                (bx + move_x, by + move_y),
+                validate=False,
+            )
+            self._validate_planarity_constraints()
+        except ValidationError:
+            self.move_junction(w.junction_start, old_start, validate=False)
+            self.move_junction(w.junction_end, old_end, validate=False)
+            raise
 
     # Wall CRUD
     def add_wall(
@@ -262,6 +313,15 @@ class StructuralGraph:
         )
         self._walls[w.id] = w
         self._graph.add_edge(junction_start_id, junction_end_id, wall_id=w.id)
+
+        try:
+            self._validate_planarity_constraints()
+        except ValidationError:
+            if self._graph.has_edge(*ek):
+                self._graph.remove_edge(*ek)
+            del self._walls[w.id]
+            raise
+
         self._topology_dirty = True
         return w
 

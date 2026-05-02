@@ -12,6 +12,7 @@ from src.core.validators import (
     E_OPENING_EXCEEDS_WALL,
     E_OPENING_WIDTH_OUT_OF_RANGE,
     E_OPENING_HEIGHT_OUT_OF_RANGE,
+    E_PLANARITY_VIOLATION,
 )
 
 
@@ -142,6 +143,27 @@ class TestWallCRUD:
         w = sg.add_wall(j1.id, j2.id, thickness=0.3, height=4.0)
         assert w.thickness == 0.3
         assert w.height == 4.0
+
+    def test_add_crossing_wall_rejected(self):
+        sg = StructuralGraph()
+        j1 = sg.add_junction((0.0, 0.0))
+        j2 = sg.add_junction((2.0, 2.0))
+        j3 = sg.add_junction((0.0, 2.0))
+        j4 = sg.add_junction((2.0, 0.0))
+        sg.add_wall(j1.id, j2.id)
+        with pytest.raises(ValidationError, match=E_PLANARITY_VIOLATION):
+            sg.add_wall(j3.id, j4.id)
+
+    def test_add_parallel_wall_rejected_when_thickness_overlaps(self):
+        sg = StructuralGraph()
+        a = sg.add_junction((0.0, 0.0))
+        b = sg.add_junction((3.0, 0.0))
+        c = sg.add_junction((0.0, 0.2))
+        d = sg.add_junction((3.0, 0.2))
+        sg.add_wall(a.id, b.id, thickness=0.3)
+
+        with pytest.raises(ValidationError, match=E_PLANARITY_VIOLATION):
+            sg.add_wall(c.id, d.id, thickness=0.3)
 
     def test_add_wall_join_policy_defaults(self):
         sg = StructuralGraph()
@@ -315,6 +337,46 @@ class TestWallXYTransforms:
         assert shared == pytest.approx((2.0, 1.0))
         # Connected wall endpoint moved with the shared junction.
         assert sg.wall_length(w2.id) == pytest.approx((1.0 ** 2 + 1.0 ** 2) ** 0.5)
+
+    def test_move_junction_xy_rejects_crossing_and_rolls_back(self):
+        sg = StructuralGraph()
+        a = sg.add_junction((0.0, 0.0))
+        b = sg.add_junction((2.0, 0.0))
+        c = sg.add_junction((2.0, 2.0))
+        d = sg.add_junction((0.0, 2.0))
+        e = sg.add_junction((3.0, 1.0))
+        w1 = sg.add_wall(a.id, b.id)
+        _w2 = sg.add_wall(b.id, c.id)
+        _w3 = sg.add_wall(c.id, d.id)
+        _w4 = sg.add_wall(d.id, a.id)
+        _w5 = sg.add_wall(c.id, e.id)
+
+        # Moving B upward would make AB cross DC.
+        with pytest.raises(ValidationError, match=E_PLANARITY_VIOLATION):
+            sg.move_junction_xy(b.id, 2.0, 3.0)
+
+        assert sg.get_junction(b.id).position == pytest.approx((2.0, 0.0))
+        assert sg.wall_length(w1.id) == pytest.approx(2.0)
+
+    def test_slide_wall_normal_rejects_crossing_and_rolls_back(self):
+        sg = StructuralGraph()
+        a = sg.add_junction((0.0, 0.0))
+        b = sg.add_junction((2.0, 0.0))
+        c = sg.add_junction((0.0, 2.0))
+        d = sg.add_junction((2.0, 1.0))
+        w_ab = sg.add_wall(a.id, b.id)
+        # Non-adjacent wall that does not intersect AB initially.
+        _w_cd = sg.add_wall(c.id, d.id)
+
+        old_a = sg.get_junction(a.id).position
+        old_b = sg.get_junction(b.id).position
+
+        # Sliding AB to y=1.5 intersects wall CD at x=1.
+        with pytest.raises(ValidationError, match=E_PLANARITY_VIOLATION):
+            sg.slide_wall_normal(w_ab.id, target_mid_x=1.0, target_mid_y=1.5)
+
+        assert sg.get_junction(a.id).position == pytest.approx(old_a)
+        assert sg.get_junction(b.id).position == pytest.approx(old_b)
 
     def test_update_wall_invalid_thickness(self):
         sg = StructuralGraph()

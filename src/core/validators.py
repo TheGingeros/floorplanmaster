@@ -8,6 +8,7 @@ from ..utils.constants import (
     MIN_OPENING_HEIGHT,
     MIN_OPENING_CLEARANCE,
 )
+import math
 
 # Error codes
 E_WALL_TOO_SHORT = "E_WALL_TOO_SHORT"
@@ -24,6 +25,7 @@ E_OPENING_OVERLAP = "E_OPENING_OVERLAP"
 E_OPENING_EXCEEDS_WALL = "E_OPENING_EXCEEDS_WALL"
 E_OPENING_WIDTH_OUT_OF_RANGE = "E_OPENING_WIDTH_OUT_OF_RANGE"
 E_OPENING_HEIGHT_OUT_OF_RANGE = "E_OPENING_HEIGHT_OUT_OF_RANGE"
+E_PLANARITY_VIOLATION = "E_PLANARITY_VIOLATION"
 
 
 # Define own class for expection handling
@@ -312,3 +314,126 @@ def validate_opening_sill(sill_height, opening_height, wall_height):
             E_OPENING_EXCEEDS_WALL,
             f"Opening top ({sill_height + opening_height:.2f}) exceeds wall height ({wall_height:.2f})",
         )
+
+
+def _orient(a, b, c):
+    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+
+
+def _on_segment(a, b, p, eps=1e-9):
+    return (
+        min(a[0], b[0]) - eps <= p[0] <= max(a[0], b[0]) + eps
+        and min(a[1], b[1]) - eps <= p[1] <= max(a[1], b[1]) + eps
+    )
+
+
+def _segments_intersect(a, b, c, d, eps=1e-9):
+    o1 = _orient(a, b, c)
+    o2 = _orient(a, b, d)
+    o3 = _orient(c, d, a)
+    o4 = _orient(c, d, b)
+
+    # Proper intersection.
+    if (o1 > eps and o2 < -eps or o1 < -eps and o2 > eps) and (
+        o3 > eps and o4 < -eps or o3 < -eps and o4 > eps
+    ):
+        return True
+
+    # Collinear / touching cases.
+    if abs(o1) <= eps and _on_segment(a, b, c, eps):
+        return True
+    if abs(o2) <= eps and _on_segment(a, b, d, eps):
+        return True
+    if abs(o3) <= eps and _on_segment(c, d, a, eps):
+        return True
+    if abs(o4) <= eps and _on_segment(c, d, b, eps):
+        return True
+
+    return False
+
+
+def _point_segment_distance(p, a, b):
+    abx = b[0] - a[0]
+    aby = b[1] - a[1]
+    apx = p[0] - a[0]
+    apy = p[1] - a[1]
+    denom = abx * abx + aby * aby
+    if denom < 1e-12:
+        return math.hypot(apx, apy)
+    t = (apx * abx + apy * aby) / denom
+    if t <= 0.0:
+        return math.hypot(apx, apy)
+    if t >= 1.0:
+        return math.hypot(p[0] - b[0], p[1] - b[1])
+    projx = a[0] + t * abx
+    projy = a[1] + t * aby
+    return math.hypot(p[0] - projx, p[1] - projy)
+
+
+def _segment_distance(a, b, c, d):
+    if _segments_intersect(a, b, c, d):
+        return 0.0
+    return min(
+        _point_segment_distance(a, c, d),
+        _point_segment_distance(b, c, d),
+        _point_segment_distance(c, a, b),
+        _point_segment_distance(d, a, b),
+    )
+
+
+def validate_planar_wall_layout(wall_segments, min_wall_length=1e-6, eps=1e-9):
+    # Validate geometry-level planarity in 2D:
+    # - Every wall has non-zero usable length.
+    # - No pair of non-adjacent walls intersects or touches.
+    for seg in wall_segments:
+        a = seg["start"]
+        b = seg["end"]
+        length = math.hypot(b[0] - a[0], b[1] - a[1])
+        if length < min_wall_length:
+            raise ValidationError(
+                E_WALL_TOO_SHORT,
+                f"Wall {seg['wall_id'][:8]} is too short after edit",
+            )
+
+    count = len(wall_segments)
+    for i in range(count):
+        s1 = wall_segments[i]
+        a = s1["start"]
+        b = s1["end"]
+        shared_1 = {s1["junction_start"], s1["junction_end"]}
+
+        for j in range(i + 1, count):
+            s2 = wall_segments[j]
+            c = s2["start"]
+            d = s2["end"]
+            shared_2 = {s2["junction_start"], s2["junction_end"]}
+
+            # Adjacent walls may meet at a shared junction.
+            if shared_1 & shared_2:
+                continue
+
+            if _segments_intersect(a, b, c, d, eps=eps):
+                raise ValidationError(
+                    E_PLANARITY_VIOLATION,
+                    (
+                        f"Wall {s1['wall_id'][:8]} intersects wall "
+                        f"{s2['wall_id'][:8]}"
+                    ),
+                )
+
+            # Thickness-aware overlap check (offset footprint collision).
+            # Even if centerlines do not intersect, the actual wall bodies can
+            # still overlap when segment distance is less than combined half-thickness.
+            t1 = float(s1.get("thickness", 0.0))
+            t2 = float(s2.get("thickness", 0.0))
+            clearance = (t1 + t2) * 0.5
+            if clearance > 0.0:
+                dist = _segment_distance(a, b, c, d)
+                if dist <= clearance + eps:
+                    raise ValidationError(
+                        E_PLANARITY_VIOLATION,
+                        (
+                            f"Wall {s1['wall_id'][:8]} overlaps wall "
+                            f"{s2['wall_id'][:8]} (thickness collision)"
+                        ),
+                    )
