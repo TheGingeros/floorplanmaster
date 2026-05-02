@@ -254,8 +254,6 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
         sill = max(0.0, min(sill, wall.height - height))
 
         # Width: wall-level cap, independent of position.
-        inset_s = self.cached_inset_start
-        inset_e = self.cached_inset_end
         max_w = min(MAX_OPENING_WIDTH, sg.max_opening_width(wall_uuid))
         if max_w < MIN_OPENING_WIDTH:
             self.report({'ERROR'}, "Wall has no remaining span for another opening")
