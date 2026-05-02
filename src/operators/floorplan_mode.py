@@ -176,7 +176,11 @@ class FLOORPLAN_OT_floorplan_modal(bpy.types.Operator):
         # Inline selection logic so the real event coordinates (mouse_region_x/y)
         # are used directly — avoids coordinate loss from bpy.ops re-dispatch.
         from .. import find_floorplan_obj, _graph_store, reset_graphs_for_obj
-        from ..ui.properties import set_wall_props_updating, populate_opening_items
+        from ..ui.properties import (
+            populate_opening_items,
+            populate_active_wall_props,
+            clear_active_wall_props,
+        )
 
         settings = context.scene.floorplan
         obj = find_floorplan_obj(context)
@@ -201,12 +205,7 @@ class FLOORPLAN_OT_floorplan_modal(bpy.types.Operator):
                 _clear_semantic_selection_ui(context, settings)
                 return
             _selection.select_wall(wall_uuid, context, object_name=obj.name)
-            set_wall_props_updating(True)
-            try:
-                settings.active_wall_thickness = wall.thickness
-                settings.active_wall_height = wall.height
-            finally:
-                set_wall_props_updating(False)
+            populate_active_wall_props(settings, sg, wall_uuid)
             populate_opening_items(settings, sg, wall_uuid)
             context.area.tag_redraw()
             return
@@ -224,8 +223,7 @@ class FLOORPLAN_OT_floorplan_modal(bpy.types.Operator):
                 settings.active_room_name = room.name
             finally:
                 set_room_props_updating(False)
-            settings.active_wall_thickness = 0.0
-            settings.active_wall_height = 0.0
+            clear_active_wall_props(settings)
             settings.opening_items.clear()
             context.area.tag_redraw()
             return

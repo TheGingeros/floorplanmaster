@@ -187,6 +187,46 @@ class StructuralGraph:
         self._graph.nodes[junction_id]["pos"] = j.position
         self._topology_dirty = True
 
+    def move_junction_xy(self, junction_id, x, y):
+        # Absolute XY endpoint edit used by wall position UI sliders.
+        self.move_junction(junction_id, (float(x), float(y)))
+
+    def slide_wall_normal(self, wall_id, target_mid_x, target_mid_y):
+        # Parallel-slide the wall along its normal to the target midpoint.
+        # Tangential component is ignored by design.
+        w = self._walls.get(wall_id)
+        if w is None:
+            return
+        j_start = self._junctions.get(w.junction_start)
+        j_end = self._junctions.get(w.junction_end)
+        if j_start is None or j_end is None:
+            return
+
+        ax, ay = j_start.position
+        bx, by = j_end.position
+        dx = bx - ax
+        dy = by - ay
+        length = (dx * dx + dy * dy) ** 0.5
+        if length < 1e-9:
+            return
+
+        # Left normal of wall direction (start -> end).
+        nx = -dy / length
+        ny = dx / length
+
+        mid_x = (ax + bx) * 0.5
+        mid_y = (ay + by) * 0.5
+        delta_x = float(target_mid_x) - mid_x
+        delta_y = float(target_mid_y) - mid_y
+
+        # Project requested midpoint delta to normal-only translation.
+        offset_n = delta_x * nx + delta_y * ny
+        move_x = nx * offset_n
+        move_y = ny * offset_n
+
+        self.move_junction(w.junction_start, (ax + move_x, ay + move_y))
+        self.move_junction(w.junction_end, (bx + move_x, by + move_y))
+
     # Wall CRUD
     def add_wall(
         self,

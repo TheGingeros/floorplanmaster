@@ -206,6 +206,20 @@ class TestRoomPersistence:
 
         assert len(rg.get_all_rooms()) == 1
 
+    def test_room_metrics_recomputed_after_wall_normal_slide(self):
+        sg, rg, juncs = make_single_room()
+
+        wall = sg.get_wall_between(juncs[0].id, juncs[1].id)
+        assert wall is not None
+
+        # Slide the bottom wall upward by 1 m using midpoint edit.
+        sg.slide_wall_normal(wall.id, target_mid_x=1.5, target_mid_y=1.0)
+        rg.sync_from_structural_graph()
+
+        room = rg.get_all_rooms()[0]
+        assert room.area == pytest.approx(6.0)
+        assert room.perimeter == pytest.approx(10.0)
+
 
 # Adjacency
 

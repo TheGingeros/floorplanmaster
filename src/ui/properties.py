@@ -22,6 +22,7 @@ from ..utils.constants import (
 )
 
 _updating_wall_props = False
+_updating_wall_xy_props = False
 _updating_opening_items = False
 _updating_room_props = False
 _pending_wall_sync_tokens = {}
@@ -68,6 +69,11 @@ def _schedule_debounced_wall_sync(obj_name: str, wall_uuid: str) -> None:
 def set_wall_props_updating(val: bool) -> None:
     global _updating_wall_props
     _updating_wall_props = val
+
+
+def set_wall_xy_props_updating(val: bool) -> None:
+    global _updating_wall_xy_props
+    _updating_wall_xy_props = val
 
 
 def set_room_props_updating(val: bool) -> None:
@@ -168,6 +174,98 @@ def _on_wall_height_update(self, context):
     except Exception:
         return
     _schedule_debounced_wall_sync(obj.name, wall_uuid)
+
+
+def _sync_wall_xy_edit(self, context, edit_mode):
+    global _updating_wall_props, _updating_wall_xy_props
+    if _updating_wall_props or _updating_wall_xy_props:
+        return
+
+    from .. import find_floorplan_obj, _graph_store, reset_graphs_for_obj
+
+    wall_uuid = _selection.wall_id
+    if not wall_uuid:
+        return
+
+    obj = find_floorplan_obj(context)
+    if obj is None or not _selection.belongs_to_object(obj):
+        return
+
+    if obj.name not in _graph_store:
+        reset_graphs_for_obj(obj)
+    sg, rg, mapper = _graph_store[obj.name]
+    wall = sg.get_wall(wall_uuid)
+    if wall is None:
+        return
+
+    try:
+        if edit_mode == 'start':
+            sg.move_junction_xy(
+                wall.junction_start,
+                self.active_wall_start_x,
+                self.active_wall_start_y,
+            )
+        elif edit_mode == 'end':
+            sg.move_junction_xy(
+                wall.junction_end,
+                self.active_wall_end_x,
+                self.active_wall_end_y,
+            )
+        elif edit_mode == 'middle':
+            j_start = sg.get_junction(wall.junction_start)
+            j_end = sg.get_junction(wall.junction_end)
+            if j_start is None or j_end is None:
+                return
+            sx, sy = j_start.position
+            ex, ey = j_end.position
+            dx = ex - sx
+            dy = ey - sy
+            length = (dx * dx + dy * dy) ** 0.5
+            if length < 1e-9:
+                return
+            nx = -dy / length
+            ny = dx / length
+            mid_x = (sx + ex) * 0.5
+            mid_y = (sy + ey) * 0.5
+            current_n = mid_x * nx + mid_y * ny
+            target_n = self.active_wall_mid_normal
+            delta_n = target_n - current_n
+            sg.slide_wall_normal(
+                wall_uuid,
+                mid_x + nx * delta_n,
+                mid_y + ny * delta_n,
+            )
+        else:
+            return
+    except Exception:
+        return
+
+    rg.sync_from_structural_graph()
+    sync_graph_to_mesh(obj, sg, rg, id_mapper=mapper)
+    populate_active_wall_props(self, sg, wall_uuid)
+    populate_opening_items(self, sg, wall_uuid)
+    if context.area:
+        context.area.tag_redraw()
+
+
+def _on_wall_start_x_update(self, context):
+    _sync_wall_xy_edit(self, context, 'start')
+
+
+def _on_wall_start_y_update(self, context):
+    _sync_wall_xy_edit(self, context, 'start')
+
+
+def _on_wall_end_x_update(self, context):
+    _sync_wall_xy_edit(self, context, 'end')
+
+
+def _on_wall_end_y_update(self, context):
+    _sync_wall_xy_edit(self, context, 'end')
+
+
+def _on_wall_mid_normal_update(self, context):
+    _sync_wall_xy_edit(self, context, 'middle')
 
 
 def _on_opening_type_update(self, context):
@@ -501,6 +599,46 @@ class FloorPlanSettings(bpy.types.PropertyGroup):
         unit='LENGTH',
         update=_on_wall_height_update,
     )
+    active_wall_start_x: FloatProperty(
+        name="Start X",
+        description="Wall start junction X position (meters)",
+        default=0.0,
+        precision=3,
+        unit='LENGTH',
+        update=_on_wall_start_x_update,
+    )
+    active_wall_start_y: FloatProperty(
+        name="Start Y",
+        description="Wall start junction Y position (meters)",
+        default=0.0,
+        precision=3,
+        unit='LENGTH',
+        update=_on_wall_start_y_update,
+    )
+    active_wall_end_x: FloatProperty(
+        name="End X",
+        description="Wall end junction X position (meters)",
+        default=0.0,
+        precision=3,
+        unit='LENGTH',
+        update=_on_wall_end_x_update,
+    )
+    active_wall_end_y: FloatProperty(
+        name="End Y",
+        description="Wall end junction Y position (meters)",
+        default=0.0,
+        precision=3,
+        unit='LENGTH',
+        update=_on_wall_end_y_update,
+    )
+    active_wall_mid_normal: FloatProperty(
+        name="Middle (Normal)",
+        description="Wall midpoint position along wall normal (meters)",
+        default=0.0,
+        precision=3,
+        unit='LENGTH',
+        update=_on_wall_mid_normal_update,
+    )
     # Active room selection — name editable via the Selected Room panel.
     active_room_name: StringProperty(
         name="Name",
@@ -534,3 +672,56 @@ def populate_opening_items(settings, sg, wall_uuid):
         item.sill_height = op.sill_height
         item.position = op.position
     _updating_opening_items = False
+
+
+def populate_active_wall_props(settings, sg, wall_uuid):
+    wall = sg.get_wall(wall_uuid)
+    if wall is None:
+        return
+    j_start = sg.get_junction(wall.junction_start)
+    j_end = sg.get_junction(wall.junction_end)
+    if j_start is None or j_end is None:
+        return
+
+    set_wall_props_updating(True)
+    set_wall_xy_props_updating(True)
+    try:
+        settings.active_wall_thickness = wall.thickness
+        settings.active_wall_height = wall.height
+
+        sx, sy = j_start.position
+        ex, ey = j_end.position
+        dx = ex - sx
+        dy = ey - sy
+        length = (dx * dx + dy * dy) ** 0.5
+        mid_x = (sx + ex) * 0.5
+        mid_y = (sy + ey) * 0.5
+        mid_normal = 0.0
+        if length >= 1e-9:
+            nx = -dy / length
+            ny = dx / length
+            mid_normal = mid_x * nx + mid_y * ny
+        settings.active_wall_start_x = sx
+        settings.active_wall_start_y = sy
+        settings.active_wall_end_x = ex
+        settings.active_wall_end_y = ey
+        settings.active_wall_mid_normal = mid_normal
+    finally:
+        set_wall_xy_props_updating(False)
+        set_wall_props_updating(False)
+
+
+def clear_active_wall_props(settings):
+    set_wall_props_updating(True)
+    set_wall_xy_props_updating(True)
+    try:
+        settings.active_wall_thickness = 0.0
+        settings.active_wall_height = 0.0
+        settings.active_wall_start_x = 0.0
+        settings.active_wall_start_y = 0.0
+        settings.active_wall_end_x = 0.0
+        settings.active_wall_end_y = 0.0
+        settings.active_wall_mid_normal = 0.0
+    finally:
+        set_wall_xy_props_updating(False)
+        set_wall_props_updating(False)

@@ -35,16 +35,11 @@ def _raycast_floorplan_object(context, mx, my):
 
 
 def _clear_semantic_selection_ui(context, settings):
-    from ..ui.properties import set_room_props_updating, set_wall_props_updating
+    from ..ui.properties import set_room_props_updating, clear_active_wall_props
 
     _selection.deselect_all(context)
 
-    set_wall_props_updating(True)
-    try:
-        settings.active_wall_thickness = 0.0
-        settings.active_wall_height = 0.0
-    finally:
-        set_wall_props_updating(False)
+    clear_active_wall_props(settings)
 
     set_room_props_updating(True)
     try:
@@ -169,7 +164,7 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
 
     def invoke(self, context, event):
         from .. import find_floorplan_obj, _graph_store, reset_graphs_for_obj
-        from ..ui.properties import set_wall_props_updating, populate_opening_items
+        from ..ui.properties import populate_opening_items, populate_active_wall_props
 
         settings = context.scene.floorplan
         obj = find_floorplan_obj(context)
@@ -193,13 +188,8 @@ class FLOORPLAN_OT_select_wall(bpy.types.Operator):
                 return {'FINISHED'}
 
             _selection.select_wall(wall_uuid, context, object_name=obj.name)
-            # Populate editable props without triggering the sync callback.
-            set_wall_props_updating(True)
-            try:
-                settings.active_wall_thickness = wall.thickness
-                settings.active_wall_height = wall.height
-            finally:
-                set_wall_props_updating(False)
+            # Populate editable props without triggering sync callbacks.
+            populate_active_wall_props(settings, sg, wall_uuid)
 
             populate_opening_items(settings, sg, wall_uuid)
             context.area.tag_redraw()

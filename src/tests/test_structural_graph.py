@@ -259,6 +259,63 @@ class TestWallCRUD:
         assert w.thickness == 0.5
         assert w.height == 5.0
 
+
+class TestWallXYTransforms:
+    def test_move_junction_xy_changes_endpoint_position(self):
+        sg = StructuralGraph()
+        j1 = sg.add_junction((0.0, 0.0))
+        j2 = sg.add_junction((2.0, 0.0))
+        w = sg.add_wall(j1.id, j2.id)
+
+        sg.move_junction_xy(j1.id, 0.5, 1.25)
+
+        moved = sg.get_junction(j1.id)
+        assert moved.position == pytest.approx((0.5, 1.25))
+        assert sg.wall_length(w.id) == pytest.approx(((2.0 - 0.5) ** 2 + (0.0 - 1.25) ** 2) ** 0.5)
+
+    def test_slide_wall_normal_moves_both_endpoints_in_parallel(self):
+        sg = StructuralGraph()
+        j1 = sg.add_junction((0.0, 0.0))
+        j2 = sg.add_junction((2.0, 0.0))
+        w = sg.add_wall(j1.id, j2.id)
+
+        sg.slide_wall_normal(w.id, target_mid_x=1.0, target_mid_y=1.0)
+
+        p1 = sg.get_junction(j1.id).position
+        p2 = sg.get_junction(j2.id).position
+        assert p1 == pytest.approx((0.0, 1.0))
+        assert p2 == pytest.approx((2.0, 1.0))
+
+    def test_slide_wall_normal_ignores_tangential_component(self):
+        sg = StructuralGraph()
+        j1 = sg.add_junction((0.0, 0.0))
+        j2 = sg.add_junction((2.0, 0.0))
+        w = sg.add_wall(j1.id, j2.id)
+
+        # Requested midpoint delta = (+1, +1). For a horizontal wall,
+        # tangential +X is ignored and only +Y normal offset is applied.
+        sg.slide_wall_normal(w.id, target_mid_x=2.0, target_mid_y=1.0)
+
+        p1 = sg.get_junction(j1.id).position
+        p2 = sg.get_junction(j2.id).position
+        assert p1 == pytest.approx((0.0, 1.0))
+        assert p2 == pytest.approx((2.0, 1.0))
+
+    def test_slide_wall_normal_stretches_connected_wall_via_shared_junction(self):
+        sg = StructuralGraph()
+        j1 = sg.add_junction((0.0, 0.0))
+        j2 = sg.add_junction((2.0, 0.0))
+        j3 = sg.add_junction((3.0, 0.0))
+        w1 = sg.add_wall(j1.id, j2.id)
+        w2 = sg.add_wall(j2.id, j3.id)
+
+        sg.slide_wall_normal(w1.id, target_mid_x=1.0, target_mid_y=1.0)
+
+        shared = sg.get_junction(j2.id).position
+        assert shared == pytest.approx((2.0, 1.0))
+        # Connected wall endpoint moved with the shared junction.
+        assert sg.wall_length(w2.id) == pytest.approx((1.0 ** 2 + 1.0 ** 2) ** 0.5)
+
     def test_update_wall_invalid_thickness(self):
         sg = StructuralGraph()
         j1 = sg.add_junction((0, 0))

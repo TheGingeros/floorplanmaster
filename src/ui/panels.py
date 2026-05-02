@@ -210,7 +210,7 @@ class FLOORPLAN_OT_select_wall_from_room(bpy.types.Operator):
     def execute(self, context):
         from .. import _graph_store, find_floorplan_obj
         from .selection_state import _selection
-        from .properties import set_wall_props_updating, populate_opening_items
+        from .properties import populate_opening_items, populate_active_wall_props
 
         obj = find_floorplan_obj(context)
         if obj is None or obj.name not in _graph_store:
@@ -223,12 +223,7 @@ class FLOORPLAN_OT_select_wall_from_room(bpy.types.Operator):
 
         settings = context.scene.floorplan
         _selection.select_wall(self.wall_id, context, object_name=obj.name)
-        set_wall_props_updating(True)
-        try:
-            settings.active_wall_thickness = wall.thickness
-            settings.active_wall_height = wall.height
-        finally:
-            set_wall_props_updating(False)
+        populate_active_wall_props(settings, sg, self.wall_id)
         populate_opening_items(settings, sg, self.wall_id)
         context.area.tag_redraw()
         return {'FINISHED'}
@@ -256,6 +251,9 @@ class FLOORPLAN_PT_room_properties(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         settings = context.scene.floorplan
+        from .. import is_floorplan_mode_active
+
+        mode_active = is_floorplan_mode_active(context)
         root = layout.box()
 
         from .. import _graph_store, find_floorplan_obj
@@ -304,9 +302,10 @@ class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
         layout = self.layout
         settings = context.scene.floorplan
 
-        from .. import _graph_store, find_floorplan_obj
+        from .. import _graph_store, find_floorplan_obj, is_floorplan_mode_active
         from .selection_state import _selection
         obj = find_floorplan_obj(context)
+        mode_active = is_floorplan_mode_active(context)
 
         wall_uuid = _selection.wall_id
         wall_label = "Wall"
@@ -325,8 +324,29 @@ class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
         split.operator("floorplan.remove_selected_wall", text="", icon='X')
 
         col = root.column(align=True)
+        col.enabled = mode_active
         col.prop(settings, "active_wall_thickness")
         col.prop(settings, "active_wall_height")
+
+        pos_box = root.box()
+        pos_box.label(text="Position", icon='EMPTY_AXIS')
+
+        start_col = pos_box.column(align=True)
+        start_col.enabled = mode_active
+        start_col.label(text="Start")
+        start_col.prop(settings, "active_wall_start_x")
+        start_col.prop(settings, "active_wall_start_y")
+
+        end_col = pos_box.column(align=True)
+        end_col.enabled = mode_active
+        end_col.label(text="End")
+        end_col.prop(settings, "active_wall_end_x")
+        end_col.prop(settings, "active_wall_end_y")
+
+        mid_col = pos_box.column(align=True)
+        mid_col.enabled = mode_active
+        mid_col.label(text="Middle")
+        mid_col.prop(settings, "active_wall_mid_normal")
 
         root.separator()
         row = root.row(align=True)
@@ -583,6 +603,23 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
                         if mode_active and wall_selected:
                             details.prop(settings, "active_wall_thickness")
                             details.prop(settings, "active_wall_height")
+
+                            pos_box = details.box()
+                            pos_box.label(text="Position", icon='EMPTY_AXIS')
+
+                            start_col = pos_box.column(align=True)
+                            start_col.label(text="Start")
+                            start_col.prop(settings, "active_wall_start_x")
+                            start_col.prop(settings, "active_wall_start_y")
+
+                            end_col = pos_box.column(align=True)
+                            end_col.label(text="End")
+                            end_col.prop(settings, "active_wall_end_x")
+                            end_col.prop(settings, "active_wall_end_y")
+
+                            mid_col = pos_box.column(align=True)
+                            mid_col.label(text="Middle")
+                            mid_col.prop(settings, "active_wall_mid_normal")
                         else:
                             details.label(text=f"Thickness: {wall.thickness:.2f} m")
                             details.label(text=f"Height: {wall.height:.2f} m")
