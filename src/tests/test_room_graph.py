@@ -287,6 +287,29 @@ class TestRoomMetadata:
         assert room.name == "Kitchen"
 
 
+class TestRoomDefaultNumbering:
+    def test_default_name_uses_next_free_number(self):
+        _, rg, _ = make_two_rooms()
+        rooms = rg.get_all_rooms()
+        assert len(rooms) == 2
+
+        rooms[0].name = "Room 10"
+        rooms[1].name = "Office"
+        rg.recompute_default_room_counter()
+
+        candidate = rg._allocate_default_room_name()
+        assert candidate == "Room 11"
+
+    def test_counter_is_raised_by_existing_default_names(self):
+        _, rg, _ = make_single_room()
+        room = rg.get_all_rooms()[0]
+        room.name = "Room 7"
+        rg.recompute_default_room_counter()
+
+        candidate = rg._allocate_default_room_name()
+        assert candidate == "Room 8"
+
+
 class TestRoomDeletion:
     def test_delete_single_room_removes_all_walls(self):
         sg, rg, _ = make_single_room()

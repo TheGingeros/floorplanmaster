@@ -457,6 +457,10 @@ def sync_graph_to_mesh(obj, sg, rg, id_mapper=None):
         if key not in obj:
             obj[key] = room.name
 
+    # Keep names stable across graph reconstruction/reload, including default
+    # auto-numbered names that were never manually edited.
+    persist_room_names(obj, rg)
+
 
 def sync_graph_to_mesh_local(
     obj,
@@ -694,3 +698,4 @@ def restore_room_names(obj, rg):
         room_id = rg._cycle_room_map.get(cycle_key)
         if room_id:
             rg.set_room_name(room_id, name)
+    rg.recompute_default_room_counter()

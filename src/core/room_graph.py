@@ -1,4 +1,5 @@
 import uuid
+import re
 
 from ..utils.math_helpers import polygon_area, polygon_centroid, polygon_perimeter, aspect_ratio
 from .validators import validate_room_area, validate_aspect_ratio, validate_room_vertex_count
@@ -88,8 +89,7 @@ class RoomGraph:
                 continue
 
             room = Room(cycle)
-            room.name = f"Room {self._next_room_number}"
-            self._next_room_number += 1
+            room.name = self._allocate_default_room_name()
             room.area = area
             room.perimeter = polygon_perimeter(vertices)
             room.centroid = polygon_centroid(vertices)
@@ -115,6 +115,7 @@ class RoomGraph:
 
         # Rebuild adjacencies.
         self._rebuild_adjacencies()
+        self.recompute_default_room_counter()
 
     # Room queries
     def get_room(self, room_id):
@@ -199,7 +200,33 @@ class RoomGraph:
                 return True
         return False
 
+    def recompute_default_room_counter(self):
+        # Keep default-room numbering monotonic after restore/reconstruction.
+        max_num = 0
+        for room in self._rooms.values():
+            if not room.name:
+                continue
+            m = re.match(r"^Room\s+(\d+)$", str(room.name).strip())
+            if m:
+                max_num = max(max_num, int(m.group(1)))
+        self._next_room_number = max(self._next_room_number, max_num + 1, len(self._rooms) + 1)
+
     # Internal helpers
+    def _allocate_default_room_name(self):
+        used = set()
+        for room in self._rooms.values():
+            if not room.name:
+                continue
+            m = re.match(r"^Room\s+(\d+)$", str(room.name).strip())
+            if m:
+                used.add(int(m.group(1)))
+
+        n = max(1, self._next_room_number)
+        while n in used:
+            n += 1
+        self._next_room_number = n + 1
+        return f"Room {n}"
+
     @staticmethod
     def _cycle_key(cycle):
         # Canonical key for a cycle — rotation/direction independent.
