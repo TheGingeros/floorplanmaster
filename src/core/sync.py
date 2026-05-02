@@ -12,10 +12,10 @@
 
 import json
 import math
-import bpy
+# import bpy
 import bmesh
 
-from .structural_graph import StructuralGraph, Opening
+from .structural_graph import StructuralGraph
 from .room_graph import RoomGraph
 from .junction_solver import (
     junction_entries as _js_junction_entries,
@@ -71,35 +71,8 @@ def _line_intersect(p1, d1, p2, d2):
     return (p1[0] + t * d1[0], p1[1] + t * d1[1])
 
 
-def _wall_side_line(jx, jy, dx, dy, offset_x, offset_y):
-    # A side line of a wall: starts at junction shifted by offset, runs along (dx,dy).
-    p = (jx + offset_x, jy + offset_y)
-    return p, (dx, dy)
-
-
-def _junction_entries(junction, junctions_by_id, sg):
-    return _js_junction_entries(junction, junctions_by_id, sg)
-
-
 def _junction_polygon_corners(junction, junctions_by_id, sg):
     return _js_junction_polygon_corners(junction, junctions_by_id, sg)
-
-
-def _corner_at_junction(junction, target_wall, is_start, ux, uy, nx, ny, ht,
-                         side_off, junctions_by_id, sg):
-    return _js_corner_at_junction(
-        junction,
-        target_wall,
-        is_start,
-        ux,
-        uy,
-        nx,
-        ny,
-        ht,
-        side_off,
-        junctions_by_id,
-        sg,
-    )
 
 
 def _compute_wall_quad(wall, junctions_by_id, sg):
@@ -416,7 +389,7 @@ class AttributeSync:
             wthick_attr.data[fidx].value = w.thickness
 
         # Opening cutter faces — all faces of each box are tagged is_opening=1.
-        for oid, fidx_list in self._oid_fidx.items():
+        for _, fidx_list in self._oid_fidx.items():
             for fidx in fidx_list:
                 is_wall_attr.data[fidx].value = 0
                 is_opening_attr.data[fidx].value = 1
