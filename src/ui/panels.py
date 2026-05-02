@@ -176,6 +176,24 @@ class FLOORPLAN_OT_toggle_wall_openings(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class FLOORPLAN_OT_toggle_wall_position(bpy.types.Operator):
+    bl_idname = "floorplan.toggle_wall_position"
+    bl_label = ""
+    bl_description = "Expand or collapse wall position controls"
+    bl_options = {'INTERNAL'}
+
+    wall_id: bpy.props.StringProperty()
+
+    def execute(self, context):
+        obj = _get_panel_floorplan_obj(context)
+        if obj is None:
+            return {'CANCELLED'}
+        key = f"wall_position_expanded_{self.wall_id}"
+        obj[key] = 0 if bool(obj.get(key, 0)) else 1
+        context.area.tag_redraw()
+        return {'FINISHED'}
+
+
 class FLOORPLAN_OT_toggle_room_wall_opening(bpy.types.Operator):
     bl_idname = "floorplan.toggle_room_wall_opening"
     bl_label = ""
@@ -329,24 +347,34 @@ class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
         col.prop(settings, "active_wall_height")
 
         pos_box = root.box()
-        pos_box.label(text="Position", icon='EMPTY_AXIS')
+        pos_expanded = bool(obj.get(f"wall_position_expanded_{wall_uuid}", 0)) if obj is not None else False
+        pos_header = pos_box.row(align=True)
+        pos_toggle = pos_header.operator(
+            "floorplan.toggle_wall_position",
+            icon='TRIA_DOWN' if pos_expanded else 'TRIA_RIGHT',
+            text="",
+            emboss=False,
+        )
+        pos_toggle.wall_id = wall_uuid
+        pos_header.label(text="Position", icon='EMPTY_AXIS')
 
-        start_col = pos_box.column(align=True)
-        start_col.enabled = mode_active
-        start_col.label(text="Start")
-        start_col.prop(settings, "active_wall_start_x")
-        start_col.prop(settings, "active_wall_start_y")
+        if pos_expanded:
+            start_col = pos_box.column(align=True)
+            start_col.enabled = mode_active
+            start_col.label(text="Start")
+            start_col.prop(settings, "active_wall_start_x")
+            start_col.prop(settings, "active_wall_start_y")
 
-        end_col = pos_box.column(align=True)
-        end_col.enabled = mode_active
-        end_col.label(text="End")
-        end_col.prop(settings, "active_wall_end_x")
-        end_col.prop(settings, "active_wall_end_y")
+            end_col = pos_box.column(align=True)
+            end_col.enabled = mode_active
+            end_col.label(text="End")
+            end_col.prop(settings, "active_wall_end_x")
+            end_col.prop(settings, "active_wall_end_y")
 
-        mid_col = pos_box.column(align=True)
-        mid_col.enabled = mode_active
-        mid_col.label(text="Middle")
-        mid_col.prop(settings, "active_wall_mid_normal")
+            mid_col = pos_box.column(align=True)
+            mid_col.enabled = mode_active
+            mid_col.label(text="Middle")
+            mid_col.prop(settings, "active_wall_mid_normal")
 
         root.separator()
         row = root.row(align=True)
@@ -605,21 +633,31 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
                             details.prop(settings, "active_wall_height")
 
                             pos_box = details.box()
-                            pos_box.label(text="Position", icon='EMPTY_AXIS')
+                            pos_expanded = bool(obj.get(f"wall_position_expanded_{wall.id}", 0))
+                            pos_header = pos_box.row(align=True)
+                            pos_toggle = pos_header.operator(
+                                "floorplan.toggle_wall_position",
+                                icon='TRIA_DOWN' if pos_expanded else 'TRIA_RIGHT',
+                                text="",
+                                emboss=False,
+                            )
+                            pos_toggle.wall_id = wall.id
+                            pos_header.label(text="Position", icon='EMPTY_AXIS')
 
-                            start_col = pos_box.column(align=True)
-                            start_col.label(text="Start")
-                            start_col.prop(settings, "active_wall_start_x")
-                            start_col.prop(settings, "active_wall_start_y")
+                            if pos_expanded:
+                                start_col = pos_box.column(align=True)
+                                start_col.label(text="Start")
+                                start_col.prop(settings, "active_wall_start_x")
+                                start_col.prop(settings, "active_wall_start_y")
 
-                            end_col = pos_box.column(align=True)
-                            end_col.label(text="End")
-                            end_col.prop(settings, "active_wall_end_x")
-                            end_col.prop(settings, "active_wall_end_y")
+                                end_col = pos_box.column(align=True)
+                                end_col.label(text="End")
+                                end_col.prop(settings, "active_wall_end_x")
+                                end_col.prop(settings, "active_wall_end_y")
 
-                            mid_col = pos_box.column(align=True)
-                            mid_col.label(text="Middle")
-                            mid_col.prop(settings, "active_wall_mid_normal")
+                                mid_col = pos_box.column(align=True)
+                                mid_col.label(text="Middle")
+                                mid_col.prop(settings, "active_wall_mid_normal")
                         else:
                             details.label(text=f"Thickness: {wall.thickness:.2f} m")
                             details.label(text=f"Height: {wall.height:.2f} m")
