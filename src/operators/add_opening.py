@@ -18,6 +18,24 @@ from ..utils.constants import (
 )
 from ..ui.selection_state import _selection
 
+# Last-used parameter values per opening type.
+# Populated on successful execute() so the next invocation of the same type
+# starts with the values the user left off at in the previous F9 session.
+_last_params = {
+    'DOOR': {
+        'width': DEFAULT_DOOR_WIDTH,
+        'height': DEFAULT_DOOR_HEIGHT,
+        'sill_height': 0.0,
+        'position': 0.5,
+    },
+    'WINDOW': {
+        'width': DEFAULT_WINDOW_WIDTH,
+        'height': DEFAULT_WINDOW_HEIGHT,
+        'sill_height': DEFAULT_WINDOW_SILL,
+        'position': 0.5,
+    },
+}
+
 
 class FLOORPLAN_OT_add_opening(bpy.types.Operator):
     bl_idname = "floorplan.add_opening"
@@ -113,19 +131,16 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
     def check(self, context):
         changed = False
 
-        # Detect type switch and apply type-specific defaults.
+        # Detect type switch and restore last-used values for the new type.
         # Must happen here (not in execute()) so that Blender updates the
         # redo-panel UI sliders to the new values before re-executing.
         # execute() modifying self.* properties does NOT update the UI.
         if self.prev_type not in ('', self.opening_type):
-            if self.opening_type == 'WINDOW':
-                self.sill_height = DEFAULT_WINDOW_SILL
-                self.width = DEFAULT_WINDOW_WIDTH
-                self.height = DEFAULT_WINDOW_HEIGHT
-            else:
-                self.sill_height = 0.0
-                self.width = DEFAULT_DOOR_WIDTH
-                self.height = DEFAULT_DOOR_HEIGHT
+            saved = _last_params[self.opening_type]
+            self.width = saved['width']
+            self.height = saved['height']
+            self.sill_height = saved['sill_height']
+            self.position = saved['position']
             changed = True
         self.prev_type = self.opening_type
 
@@ -284,6 +299,15 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
         from .. import populate_opening_items
         populate_opening_items(context.scene.floorplan, sg, wall_uuid)
         context.area.tag_redraw()
+
+        # Persist the values that were actually used so the next invocation of
+        # the same type starts with these values.
+        _last_params[self.opening_type] = {
+            'width': width,
+            'height': height,
+            'sill_height': sill,
+            'position': position,
+        }
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -291,7 +315,6 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
 
         # Snapshot the target wall so redo always targets the same wall,
         # even if the user selects a different wall in between.
-        settings = context.scene.floorplan
         wall_uuid = _selection.wall_id
         self.target_wall_id = wall_uuid
         # Reset so a fresh invocation never inherits the UUID from a previous
@@ -299,19 +322,13 @@ class FLOORPLAN_OT_add_opening(bpy.types.Operator):
         # the next invocation for "Repeat Last" functionality).
         self.target_opening_id = ''
 
-        # Reset numeric params to type-specific defaults on every fresh invocation.
-        # Blender's REGISTER flag carries the last-used property values into the
-        # next invocation; without this reset the second opening would inherit
-        # whatever the user edited on the first one via the redo panel.
-        if self.opening_type == 'WINDOW':
-            self.width = DEFAULT_WINDOW_WIDTH
-            self.height = DEFAULT_WINDOW_HEIGHT
-            self.sill_height = DEFAULT_WINDOW_SILL
-        else:
-            self.width = DEFAULT_DOOR_WIDTH
-            self.height = DEFAULT_DOOR_HEIGHT
-            self.sill_height = 0.0
-        self.position = 0.5
+        # Restore last-used values for the current opening type so fresh
+        # invocations of the same type carry forward from where the user left off.
+        saved = _last_params[self.opening_type]
+        self.width = saved['width']
+        self.height = saved['height']
+        self.sill_height = saved['sill_height']
+        self.position = saved['position']
 
         # Cache wall dimensions and junction insets for check() clamping.
         obj = find_floorplan_obj(context)
