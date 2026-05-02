@@ -17,7 +17,6 @@ from ..core.structural_graph import StructuralGraph
 from ..core.room_graph import RoomGraph
 from ..core.sync import IdMapper
 from ..geometry.gn_setup import ensure_gn_modifier
-from ..utils.constants import SNAP_JUNCTION_TOLERANCE
 
 
 # Pencil Tool states
