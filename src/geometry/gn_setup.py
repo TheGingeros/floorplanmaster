@@ -2,7 +2,7 @@
 # Creates a GN modifier that reads the 2D base mesh (wall quad faces + room
 # faces with named attributes) and generates 3D wall geometry.
 #
-# Strategy (Option C, step 3.2): quad-polygon + extrude.
+# Strategy: quad-polygon + extrude.
 #   Phase 1 of Layer 3 sync computes the actual 2D wall outline polygon for
 #   each wall (4 verts with corner intersections resolved per junction) and
 #   stores it as a mesh face with is_wall=1.  Room centerline faces have
