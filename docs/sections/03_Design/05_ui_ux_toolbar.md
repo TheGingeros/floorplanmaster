@@ -23,13 +23,6 @@ Tooltip zobrazený při přejetí myší uvádí název nástroje, klávesovou z
 Dále se v levém horní rohu viewportu zobrazí slidery s možností nastavení tloušťky, šířky a připnutí stěny. Tento vzor je převzat z nativních nástrojů Blenderu, např. nástroje při sculptingu. Stejné možnosti jsou poté také zobrazeny v N panelu v sekci Active Tool - opět vzor převzat z nativního Blenderu.
 
 
-**Umístění nástroje Pencil Tool ve viewportu Blenderu:**
-![Umístění nástroje Pencil Tool ve viewportu Blenderu](../../assets/blender_ui_viewport_penciltool_annotated.png)
-
-
-**Nástroj Pencil Tool aktivován se svoji nabídkou:**
-![Náhled do aktivního nástroje Pencil Tool](../../assets/blender_ui_viewport_penciltool.png)
-
 **Náhled do nabídky nástroje Pencil Tool aktivní jak v horním rohu viewportu, tak v panelu Active Tool:**
 ![](../../assets/blender_ui_penciltool_topleft.png)
 ![](../../assets/blender_ui_penciltool_activetool.png)

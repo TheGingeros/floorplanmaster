@@ -656,29 +656,29 @@ Jádrem návrhu je architektura striktně oddělující matematickou logiku od v
 
 *Vrstva 3* (synchronizační most) přenáší data obou grafů do Blender mesh ve formě pojmenovaných atributů --- jednosměrně a vždy až po ustálení Vrstev 1 a 2. Na tyto atributy čekají Geometry Nodes @blender_dev, které generují 3D geometrii v reálném čase bez přímého zásahu Pythonu do geometrie scény. Synchronizační modul pracuje ve dvou fázích: fáze 1 udržuje topologii mesh v souladu s Vrstvou 1; fáze 2 zapisuje hodnotové atributy z Vrstev 1 a 2.
 
-=== Dynamika systému --- tok dat
+// === Dynamika systému --- tok dat
 
-Komunikace mezi vrstvami je striktně jednosměrná: Vrstva 1 → Vrstva 2 → Vrstva 3 → Geometry Nodes. Zpětný tok neexistuje --- Blender mesh je vždy odrazem aktuálního stavu grafů, nikoli jejich výchozím bodem. Toto jednosměrné uspořádání eliminuje cyklické přepočty a zaručuje konzistenci dat: žádná operace v Blenderu nemůže nepozorovaně změnit stav grafů. Přidání stěny spouští kompletní řetězec (Vrstva 1 → Vrstva 2 → Vrstva 3 fáze 1 → fáze 2 → GN reevaluace); parametrická změna spouští pouze fázi 2 sync, protože topologie mesh se nemění.
+// Komunikace mezi vrstvami je striktně jednosměrná: Vrstva 1 → Vrstva 2 → Vrstva 3 → Geometry Nodes. Zpětný tok neexistuje --- Blender mesh je vždy odrazem aktuálního stavu grafů, nikoli jejich výchozím bodem. Toto jednosměrné uspořádání eliminuje cyklické přepočty a zaručuje konzistenci dat: žádná operace v Blenderu nemůže nepozorovaně změnit stav grafů. Přidání stěny spouští kompletní řetězec (Vrstva 1 → Vrstva 2 → Vrstva 3 fáze 1 → fáze 2 → GN reevaluace); parametrická změna spouští pouze fázi 2 sync, protože topologie mesh se nemění. Následující diagramy zobrazují názorný tok dat v rámci návrhnutého modelu u častých uživatelských operacích:
 
-#figure(
-  image("/typst/assets/add_edge_diagram.png", width: 80%),
-  caption: [Tok dat: Přidání stěny],
-) <fig-toolbar>
+// #figure(
+//   image("/typst/assets/add_edge_diagram.png", width: 80%),
+//   caption: [Tok dat: Přidání stěny],
+// ) <fig-toolbar>
 
-#figure(
-  image("/typst/assets/add_room_diagram.png", width: 80%),
-  caption: [Tok dat: Přidání místnosti / uzavření cyklu],
-) <fig-toolbar>
+// #figure(
+//   image("/typst/assets/add_room_diagram.png", width: 80%),
+//   caption: [Tok dat: Přidání místnosti / uzavření cyklu],
+// ) <fig-toolbar>
 
-#figure(
-  image("/typst/assets/remove_edge_diagram.png", width: 80%),
-  caption: [Tok dat: Odstranění stěny],
-) <fig-toolbar>
+// #figure(
+//   image("/typst/assets/remove_edge_diagram.png", width: 80%),
+//   caption: [Tok dat: Odstranění stěny],
+// ) <fig-toolbar>
 
-#figure(
-  image("/typst/assets/change_attribute_diagram.png", width: 80%),
-  caption: [Tok dat: Změna atributu],
-) <fig-toolbar>
+// #figure(
+//   image("/typst/assets/change_attribute_diagram.png", width: 80%),
+//   caption: [Tok dat: Změna atributu],
+// ) <fig-toolbar>
 
 === Vzor MVC v kontextu Blenderu
 
@@ -703,8 +703,6 @@ Architektura vymezila, z jakých vrstev se systém skládá a jak tyto vrstvy ko
 
 === Vrstva 1: Strukturální graf
 
-Vrstva 1 je čistě matematická reprezentace půdorysu jako planárního 2D grafu. Uzly ($V_s$) jsou *junctions* --- místa setkání stěn, nesoucí dvourozměrnou polohu $(x, y)$ a unikátní identifikátor (UUID interně, celé číslo v serializaci). Hrany ($E_s$) jsou *stěny* --- osy stěn propojující dva uzly, nesoucí tloušťku, výšku, identifikátor materiálu a seznam otvorů. Planarita grafu garantuje, že se stěny v rámci podlaží nekříží --- tato podmínka je fyzikálně nutná pro smysluplnou půdorysnou dispozici a je vynucována validací před každým zápisem do grafu.
-
 Třída `StructuralGraph` (Vrstva 1) nabízí operace pro celý životní cyklus grafu: přidávání a odebírání junctions a stěn, vyhledávání junctions v blízkosti zadané polohy (pro snap-on-junction), získávání stěn napojených na daný junction, detekci minimálních cyklů (implementováno přes NetworkX @networkx) a validaci planarity. Výchozí hodnoty jsou `thickness = 0.2` m a `height = 3.0` m.
 
 #figure(
@@ -713,8 +711,6 @@ Třída `StructuralGraph` (Vrstva 1) nabízí operace pro celý životní cyklus
 ) <fig-toolbar>
 
 === Vrstva 2: Sémantický graf místností
-
-Vrstva 2 je duální graf odvozený z Vrstvy 1 algoritmem detekce minimálních cyklů. Uzly ($V_r$) jsou *místnosti* --- každá mapována na uzavřený cyklus ve Vrstvě 1, nesoucí perzistentní UUID, uživatelský název, vypočítanou plochu, obvod, centroid a výšku. Identita místnosti je stabilní přes geometrické změny: pokud uživatel změní tvar místnosti, ID a sémantická metadata (název, materiály) přetrvávají, dokud nedojde k úplnému rozpojení cyklu. Hrany ($E_r$) jsou *sousednosti* (Adjacency) --- sdílené stěny dvou místností, nesoucí typ propojení (uzavřená stěna, dveřní otvor, průchod).
 
 Třída `RoomGraph` spravuje kolekci místností a sousedností, poskytuje prostorové dotazy (sousedé místnosti, celková plocha dle typu, nalezení vnějších místností) a synchronizuje stav s Vrstvou 1 při každé topologické změně.
 
@@ -767,9 +763,9 @@ Všechny tři vrstvy jsou provázány jednosměrným asymetrickým tokem dat. Vr
   caption: [Dynamický pohled — sekvenční diagram],
 ) <fig-toolbar>
 
-=== Validační pravidla
+// === Validační pravidla
 
-Validace se aplikuje před zápisem dat do grafů a zabraňuje vzniku degenerované geometrie, která by způsobila vizuální artefakty nebo selhání algoritmů. Pro stěny platí: tloušťka $0{,}05 <= t <= 1{,}0$ m (tenčí stěny způsobují Z-fighting, tlustší nemají architektonický smysl), výška $1{,}0 <= h <= 10{,}0$ m, úhel napojení $0° < alpha <= 180°$. Pro místnosti: minimální plocha $> 1{,}0 m^2$ (menší prostory typicky indikují chybu v kreslení, ne reálnou místnost), poměr stran $0{,}1 <= "šířka"/"délka" <= 10{,}0$ a minimálně 3 hraniční vrcholy. Pro otvory: šířka je validována vůči délce stěny s odečtením inset zón u junctions (junction inset = polovina maximální tloušťky sousedních stěn), výška nesmí přesáhnout výšku stěny a cutter boxy nesmějí přesahovat pod Z = 0 (podmínka numerické stability EXACT Boolean solveru). Veškeré interní výpočty probíhají v metrech; převod jednotek se aplikuje výhradně na prezentační vrstvě při zobrazování v #gls("ui", long: false).
+// Validace se aplikuje před zápisem dat do grafů a zabraňuje vzniku degenerované geometrie, která by způsobila vizuální artefakty nebo selhání algoritmů. Pro stěny platí: tloušťka $0{,}05 <= t <= 1{,}0$ m (tenčí stěny způsobují Z-fighting, tlustší nemají architektonický smysl), výška $1{,}0 <= h <= 10{,}0$ m, úhel napojení $0° < alpha <= 180°$. Pro místnosti: minimální plocha $> 1{,}0 m^2$ (menší prostory typicky indikují chybu v kreslení, ne reálnou místnost), poměr stran $0{,}1 <= "šířka"/"délka" <= 10{,}0$ a minimálně 3 hraniční vrcholy. Pro otvory: šířka je validována vůči délce stěny s odečtením inset zón u junctions (junction inset = polovina maximální tloušťky sousedních stěn), výška nesmí přesáhnout výšku stěny a cutter boxy nesmějí přesahovat pod Z = 0 (podmínka numerické stability EXACT Boolean solveru). Veškeré interní výpočty probíhají v metrech; převod jednotek se aplikuje výhradně na prezentační vrstvě při zobrazování v #gls("ui", long: false).
 
 == Návrh funkcí
 
@@ -792,9 +788,9 @@ Operátor je řízen třestavovým automatem, který garantuje, že stěna nikdy
 
 Snapping má přesně danou prioritní hierarchii. Nejvyšší prioritu má *snap na existující junction* _(must-have)_ --- kurzor blíže než 15 pixelů od existujícího junctionu se přichytí na jeho přesné souřadnice. Nižší prioritu mají snap na osu, snap na mřížku a snap na úhel násobků 45° _(všechny should-have)_. Aktivní snap je vizuálně indikován žlutým kruhem u kurzoru; podržení Shift snap dočasně potlačí.
 
-==== Interakce s datovým modelem
+// ==== Interakce s datovým modelem
 
-Zápis do Vrstvy 1 nastane vždy až po potvrzení bodu, nikdy průběžně při pohybu myši. Potvrzení bodu vyvolá `L1.add_junction(x, y)` nebo reuse existujícího junctionu v toleranci. Potvrzení stěny vyvolá `L1.add_wall(j_start, j_end, thickness, height, material)`, spustí detekci cyklů a synchronizační cyklus Vrstvy 3 (fáze 1 + fáze 2). Vrácení posledního bodu vyvolá `L1.remove_wall(last_wall_id)` a odstraní osiřelé junctions. Přerušení sezení žádný zápis do dat neprovádí.
+// Zápis do Vrstvy 1 nastane vždy až po potvrzení bodu, nikdy průběžně při pohybu myši. Potvrzení bodu vyvolá `L1.add_junction(x, y)` nebo reuse existujícího junctionu v toleranci. Potvrzení stěny vyvolá `L1.add_wall(j_start, j_end, thickness, height, material)`, spustí detekci cyklů a synchronizační cyklus Vrstvy 3 (fáze 1 + fáze 2). Vrácení posledního bodu vyvolá `L1.remove_wall(last_wall_id)` a odstraní osiřelé junctions. Přerušení sezení žádný zápis do dat neprovádí.
 
 ==== Vizuální zpětná vazba (GPU overlay)
 
@@ -873,20 +869,30 @@ Toolbar je levý svislý panel ve 3D Viewportu, kde Blender soustřeďuje veške
 
 Alternativní přístupy byly zvažovány a zamítnuty: čistá klávesová zkratka bez Toolbaru nemá vizuální indikaci aktivního stavu a tlačítko výhradně v N-panelu porušuje Blender konvenci, která N-panel rezervuje pro parametry a nastavení, nikoli pro spouštění modálních nástrojů. Při aktivaci nástroje se v levém horním rohu viewportu a v sekci Active Tool v N-panelu zobrazí ovládací prvky pro tloušťku, výšku a příchycení stěny --- vzor přejatý z nativních sculpting nástrojů Blenderu.
 
-#figure(
-  image("../docs/assets/blender_ui_viewport_penciltool_annotated.png", width: 80%),
-  caption: [Umístění nástroje Pencil Tool v Toolbaru ve 3D Viewportu Blenderu],
-) <fig-toolbar>
-
 === Postranní panel (N-panel)
 
 N-panel (Sidebar) je standardním místem pro trvalé parametrické rozhraní architektonických addonů. Addon přidává záložku *FloorPlanMaster* se čtyřmi skládacími sekcemi. Toto členění přejímá vzor z Archipack @archipack, kde je panel rozdělen na sekci operátorů a sekci parametrů vybraného objektu.
 
 *Sekce Nástroje* sdružuje spouštěče akcí: tlačítko Pencil Tool (alternativa ke klávesové zkratce `D`), Vložit místnost (otevírá inline formulář s poli šířka, hloubka, výška, tloušťka) a Zapéct (spouští finalizační pop-over FP4 s volbami výstupu). Toto odlišení je záměrné: Blender konvencí je, že akce vkládající nové prvky patří do sekce Nástrojů, nikoli do sekcí modifikujících výběr.
 
+#figure(
+  image("../docs/assets/blender_ui_tools.png", width: 80%),
+  caption: [Návrh UI pro sekci Nástroje],
+) <fig-toolbar>
+
 *Sekce Místnosti* je přehledem uzlů Vrstvy 2: seznam všech místností s editovatelným názvem a průběžně aktualizovanou plochou. Kliknutím na položku dojde k výběru místnosti ve viewportu a rozbalení detailního pohledu přímo pod položkou (obvod, výška, počet stěn). Vzor odpovídá technice „list panel s automatickým výběrem", kterou Blender nativně používá pro vertex groups nebo shape keys.
 
+#figure(
+  image("../docs/assets/blender_ui_rooms.png", width: 80%),
+  caption: [Návrh UI pro sekci Místnosti],
+) <fig-toolbar>
+
 *Sekce Nastavení* obsahuje globální parametry scény uložené v `Scene PropertyGroup` (konzistentní s pravidlem persistence --- projektové hodnoty jsou součástí `.blend` souboru a přenositelné s projektem). Záměrně jsou sem zařazeny pouze parametry ovlivňující chování celého projektu --- nikoli parametry jednotlivých prvků.
+
+#figure(
+  image("../docs/assets/blender_ui_settings.png", width: 80%),
+  caption: [Návrh UI pro sekci Nastavení],
+) <fig-toolbar>
 
 #figure(
   table(

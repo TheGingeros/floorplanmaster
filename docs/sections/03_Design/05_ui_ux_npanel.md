@@ -2,9 +2,6 @@
 
 N-panel (Sidebar) ve 3D Viewportu je standardní místem, kam Blender addony umísťují trvalé parametrické rozhraní. Addon přidává záložku s názvem **FloorPlanMaster**, která sdružuje všechny ovládací prvky do jednoho přehledného místa dostupného stiskem `N`. Záložka je rozdělena do tří skládacích sekcí odpovídajících odlišným účelům: spouštění akcí (Nástroje), prohlížení a editace existujících prvků (Místnosti) a konfigurace globálních parametrů scény (Nastavení). Toto členění přejímá vzor z Archipack, kde je panel rovněž rozdělen na sekci operátorů a sekci parametrů vybraného objektu — při výběru prvku se jeho parametry automaticky zobrazí v příslušné části panelu bez nutnosti klikání na tlačítko Properties.
 
-![Lokace N panelu ve viewportu](../../assets/blender_ui_viewport_n_panel_annotated.png)
-![](../../assets/blender_ui_n_panel.png)
-
 ## Sekce Nástroje
 
 Sekce Nástroje obsahuje tlačítka operátorů — akce, které vždy pracují s 3D kurzorem nebo spouštějí modální smyčku, nikoli s výběrem stávajících prvků. Toto odlišení je záměrné: Blender konvencí je, že akce modifikující výběr patří do jiných sekcí nebo kontextové nabídky, zatímco akce vkládající nové prvky jsou dostupné nezávisle na výběru.
@@ -15,8 +12,7 @@ Sekce obsahuje:
 - **Vložit místnost(Insert Room)** — vloží pravoúhlou místnost se středem v pozici 3D kurzoru (FP2); výhodou oproti klávesové zkratce je, že uživatel vidí výchozí hodnoty a může je přepsat bez nutnosti pamatovat si přesnou klávesovou sekvenci; možnost upravit parametry místnosti později v rámci redo panelu v levém dolním rohu - nativní konvence Blenderu
 - **Zapéct(Bake)** — spustí finalizační pipeline (FP4); zobrazí pop-over dialog s volbami výstupu (organizace objektů ve scéně, přiřazení materiálů, zachování originálu)
 
-![Náhled to sekce Tools](../../assets/blender_ui_n_panel_tools.png)
-![Pop over dialog operátoru Bake](../../assets/blender_ui_n_panel_tools_bake.png)
+![Náhled to sekce Tools](../../assets/blender_ui_tools.png)
 
 ## Sekce Místnosti
 
@@ -37,9 +33,7 @@ Kliknutím na položku v seznamu dojde k:
 
 
 **Sekce místností:**  
-![Sekce místností](../../assets/blender_ui_n_panel_rooms.png)  
-**Detail rozbalené místnosti:**  
-![Detail místnísti](../../assets/blender_ui_n_panel_room_detail.png)
+![Sekce místností](../../assets/blender_ui_rooms.png)  
 ## Sekce Nastavení
 
 Sekce Nastavení obsahuje globální parametry scény uložené v `Scene PropertyGroup` (soulad s pravidlem persistence nastavení z kapitoly 3.1). Tyto parametry se aplikují na nově vytvářené prvky; existující prvky se nemodifikují, aby uživatel nepřišel o záměrně nastavené hodnoty. Dále je zde nastavení overlaye ve scéně. Uživatel může jednotlivé prvky překrytí zapínat nebo vypínat. Opět vzor převzatý z nativního Blenderu, konkrétně nabídky Viewport Overlays.
@@ -56,7 +50,7 @@ Sekce Nastavení obsahuje globální parametry scény uložené v `Scene Propert
 
 Záměrně jsou do Nastavení zařazeny pouze parametry ovlivňující chování celého projektu, nikoliv parametry jednotlivých prvků — ty patří do detailního pohledu místnosti nebo jsou dostupné přes gizmos. Některé prvky v rámci překrytí jsou schválně vypnuté, aby nového uživatele addon nepřehltil informacemi hned na začátku. 
 
-![](../../assets/blender_ui_n_panel_settings.png)
+![](../../assets/blender_ui_settings.png)
 
 ## Sekce aktuálně zvolené stěny
 
@@ -77,7 +71,7 @@ Sekce je záměrně na vršku všech sekcí z jednoho prostého důvodu, když j
 Otvory lze libovolně odebírat pomocí viditelného tlačítka X v rámci listu otvorů.
 
 **Sekce aktuálně vybrané stěny ve scéně:**  
-![Náhled do lokace sekce právě vybrané stěny](../../assets/blender_ui_n_panel_selectedwall_anotated.png)
-![Náhled detailu vybrané stěny](../../assets/blender_ui_n_panel_selected_wall.png)
-![List otvorů](../../assets/blender_ui_n_panel_openings.png)
-![Detail otvoru](../../assets/blender_ui_n_panel_openings_window.png)
+![Náhled do lokace sekce právě vybrané stěny](../../assets/blender_ui_selected_wall_properties.png)
+
+**Sekce aktuálně vybrané místnosti ve scéně:**  
+![Náhled do lokace sekce právě vybrané stěny](../../assets/blender_ui_selected_room_properties.png)
