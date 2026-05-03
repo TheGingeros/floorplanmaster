@@ -962,31 +962,31 @@ Návrh klávesových zkratek se řídí dvěma principy: zkratky musejí být ko
 
 // Všechny zkratky jsou registrovány s podmínkou kontextu (`bl_space_type = 'VIEW_3D'`). Klávesa `D` je registrována pouze pro Object Mode, kde Blender tuto klávesu nativně neobsazuje. Po dobu aktivity modálního operátoru jsou ostatní Blender zkratky blokovány --- s výjimkou navigačních vstupů (střední tlačítko myši, Numpad pohledy) a `RMB` ve stavu ČEKÁNÍ.
 
-=== Viewport UI
+// === Viewport UI
 
-Viewport #gls("ui", long: false) tvoří tři kategorie vizuálních prvků vykreslovaných přímo ve 3D Viewportu nad geometrií scény prostřednictvím #gls("gpu", long: false) overlay vrstev.
+// Viewport #gls("ui", long: false) tvoří tři kategorie vizuálních prvků vykreslovaných přímo ve 3D Viewportu nad geometrií scény prostřednictvím #gls("gpu", long: false) overlay vrstev.
 
-*#gls("hud", long: false) overlay (Pencil Tool aktivní)* --- text a grafika překrývající viewport po dobu aktivity Pencil Tool, vykreslované v `POST_PIXEL` režimu.
+// *#gls("hud", long: false) overlay (Pencil Tool aktivní)* --- text a grafika překrývající viewport po dobu aktivity Pencil Tool, vykreslované v `POST_PIXEL` režimu.
 
-*Kótovací overlay (FP7)* --- délky stěn jako text nad středem každé hrany. Text vykreslován přes modul #gls("blf", long: false) v `POST_PIXEL` handleru.
+// *Kótovací overlay (FP7)* --- délky stěn jako text nad středem každé hrany. Text vykreslován přes modul #gls("blf", long: false) v `POST_PIXEL` handleru.
 
 // *Barevné odlišení místností* --- průhledná barevná výplň uzavřených cyklů vykreslovaná v `POST_VIEW` režimu; každá místnost dostane automaticky odlišnou barvu. Výplň je poloprůhledná, aby nerušila viditelnost geometrie. Vzor přejat z ArchiCAD a Revit @revit, kde barevné kódování místností patří k základní orientaci v půdorysu.
 
-#figure(
-  table(
-    columns: (auto, auto, 2fr),
-    align: (left, left, left),
-    table.header(
-      [*Prvek*], [*Barva*], [*Sémantika*],
-    ),
-    [Potvrzené stěny], [Světle šedá], [Existující hmota --- neutrální],
-    [Preview stěna (FP1)], [Modrá], [Navrhovaný, nepotvrzený prvek],
-    [Snap indikátor], [Žlutá], [Aktivní přichycení --- příští klik se přichytí na tuto pozici],
-    [Vybraný prvek (stěna, místnost)], [Oranžová], [Blender konvence pro aktivní výběr],
-    [Chybová indikace], [Červená], [Neplatná operace --- Blender error state barva],
-  ),
-  caption: [Barevná sémantika overlay vrstvy v souladu s konvencemi nativních Blender nástrojů],
-) <tab-colors>
+// #figure(
+//   table(
+//     columns: (auto, auto, 2fr),
+//     align: (left, left, left),
+//     table.header(
+//       [*Prvek*], [*Barva*], [*Sémantika*],
+//     ),
+//     [Potvrzené stěny], [Světle šedá], [Existující hmota --- neutrální],
+//     [Preview stěna (FP1)], [Modrá], [Navrhovaný, nepotvrzený prvek],
+//     [Snap indikátor], [Žlutá], [Aktivní přichycení --- příští klik se přichytí na tuto pozici],
+//     [Vybraný prvek (stěna, místnost)], [Oranžová], [Blender konvence pro aktivní výběr],
+//     [Chybová indikace], [Červená], [Neplatná operace --- Blender error state barva],
+//   ),
+//   caption: [Barevná sémantika overlay vrstvy v souladu s konvencemi nativních Blender nástrojů],
+// ) <tab-colors>
 
 // *Gizmos (FP6)* --- interaktivní táhla zobrazující se při výběru prvku: manipulátor tloušťky (světle modrá obousměrná šipka kolmá na stěnu v rovině XY), manipulátor výšky (zelená svislá šipka na středu stěny) a manipulátor pohybu junctionu (žlutý kruh omezený na rovinu XY).
 
