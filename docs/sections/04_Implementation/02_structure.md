@@ -1,8 +1,6 @@
 # 4.2 Organizace modulů
 
-Složková struktura projektu není pouhým organizačním rozhodnutím — fyzicky vymáhá klíčovou architektonickou podmínku, na níž celý systém stojí: žádný modul nesmí záviset na modulech stojících nad ním v hierarchii a datové jádro systému nesmí mít přímou vazbu na Blender API. Porušení tohoto pravidla by nejen znemožnilo jednotkové testování, ale vedlo by k cyklickým závislostem, které jsou v Python interpretaci obtížně odhalitelné a způsobují nepředvídatelné chyby při načítání.
-
-Jádro systému — topologické grafy, validátory a matematické utility — tvoří základ, na němž vše ostatní stojí. Synchronizační vrstva přidává první závislost na Blender API: překládá výstupy grafů do formátu, kterému Blender rozumí. Operátory, panely a GN strom stojí na samém vrcholu — závisejí na všech nižších vrstvách, ale žádná nižší vrstva se na ně neodkazuje. Závislostní tok je striktně jednosměrný a cyklické závislosti jsou strukturálně vyloučeny.
+Struktura složek vymáhá jednosměrný závislostní tok: jádro systému (grafy, validátory, utility) nezávisí na Blender API, synchronizační vrstva přidává první vazbu na `bpy` a operátory s UI stojí na vrcholu hierarchie. Díky tomu lze jednotkové testy spouštět standardním pytestem bez přítomnosti Blenderu.
 
 ```
 src/
@@ -22,11 +20,11 @@ src/
 └── wheels/                  # bundlované .whl závislosti (networkx)
 ```
 
-## Závislosní pravidla
+<!-- ## Závislosní pravidla
 
 Závislosní pravidlo má přímý praktický důsledek: složka s jednotkovými testy importuje výhradně z čistého Python jádra a může být spuštěna standardním pytestem bez přítomnosti Blenderu. Testovatelnost tedy není vedlejším efektem dobrého návrhu, ale přímým důsledkem vymáhaného závislosního pravidla — porušení pravidla se projeví okamžitě jako selhání testů.
 
-Přenositelnost jádra do jiného kontextu — například do exportního skriptu nebo serverového výpočtu bez Blenderu — je pak přímým důsledkem téhož omezení. Oba moduly grafů ani matematické utility neobsahují nic, co by je vázalo na konkrétní hostitelské prostředí.
+Přenositelnost jádra do jiného kontextu — například do exportního skriptu nebo serverového výpočtu bez Blenderu — je pak přímým důsledkem téhož omezení. Oba moduly grafů ani matematické utility neobsahují nic, co by je vázalo na konkrétní hostitelské prostředí. -->
 
 ## Testování
 
