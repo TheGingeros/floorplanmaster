@@ -884,9 +884,9 @@ Architektura a funkce definují, co systém dělá. Tato sekce popisuje, jak už
 
 === Toolbar --- umístění nástroje tužka
 
-Toolbar je levý svislý panel ve 3D Viewportu, kde Blender soustřeďuje veškeré modální nástroje vyžadující trvalé zachytávání vstupu myši a klávesnice --- Knife Tool, Loop Cut, Poly Build a Draw. Konvencí Blenderu od verze 2.80 je, že nástroj ovládaný levým tlačítkem myši v kontinuálním modálním režimu patří do Toolbaru. Pencil Tool tuto podmínku splňuje: po aktivaci přebírá všechny vstupy a každé LMB kliknutí potvrzuje bod. Addon proto registruje Pencil Tool jako `WorkspaceTool` --- Blender jej automaticky zobrazí jako ikonové tlačítko v Toolbaru, vizuálně zvýrazní při aktivaci a zobrazí tooltip s názvem a klávesovou zkratkou.
+ Konvencí Blenderu je, že nástroj ovládaný levým tlačítkem myši v kontinuálním modálním režimu patří do Toolbaru. Pencil Tool tuto podmínku splňuje: po aktivaci přebírá všechny vstupy a každé LMB kliknutí potvrzuje bod. Addon proto registruje Pencil Tool jako `WorkspaceTool` --- Blender jej automaticky zobrazí jako ikonové tlačítko v Toolbaru, vizuálně zvýrazní při aktivaci a zobrazí tooltip s názvem a klávesovou zkratkou.
 
-Alternativní přístupy byly zvažovány a zamítnuty: čistá klávesová zkratka bez Toolbaru nemá vizuální indikaci aktivního stavu a tlačítko výhradně v N-panelu porušuje Blender konvenci, která N-panel rezervuje pro parametry a nastavení, nikoli pro spouštění modálních nástrojů. Při aktivaci nástroje se v levém horním rohu viewportu a v sekci Active Tool v N-panelu zobrazí ovládací prvky pro tloušťku, výšku a příchycení stěny --- vzor přejatý z nativních sculpting nástrojů Blenderu.
+Při aktivaci nástroje se v levém horním rohu viewportu a v sekci Active Tool v N-panelu zobrazí ovládací prvky pro tloušťku, výšku a příchycení stěny --- vzor přejatý z nativních sculpting nástrojů Blenderu.
 
 === Postranní panel (N-panel)
 
