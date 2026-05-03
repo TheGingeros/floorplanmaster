@@ -876,7 +876,7 @@ Addon definuje tři typy manipulátorů. *Manipulátor tloušťky stěny* (svět
 
 === FP7 --- Automatické kótování
 
-Kótovací overlay _(should-have)_ zobrazuje rozměry stěn a metriky místností průběžně ve 3D Viewportu bez nutnosti aktivovat speciální nástroj. Text je vykreslován jako `POST_PIXEL` overlay přes draw_handler registrovaný na `SpaceView3D` (@blender_api) --- zůstává čitelný nezávisle na úhlu kamery, protože pracuje v souřadnicích obrazovky. Data jsou čtena výhradně z Vrstev 1 a 2, nikoli z geometrie scény: délky stěn z Euklidovské vzdálenosti junction--junction, plochy a centroidy z uzlů Vrstvy 2. Středy hran a centroidy místností jsou transformovány do 2D souřadnic obrazovky pomocí `view3d_utils`. Viditelnost kótování přepíná globální přepínač v Nastavení (klávesa `T`).
+Kótovací overlay _(should-have)_ zobrazuje rozměry stěn a metriky místností průběžně ve 3D Viewportu bez nutnosti aktivovat speciální nástroj. Text je vykreslován jako `POST_PIXEL` overlay přes draw_handler registrovaný na `SpaceView3D` (@blender_api) --- zůstává čitelný nezávisle na úhlu kamery, protože pracuje v souřadnicích obrazovky. Data jsou čtena výhradně z Vrstev 1 a 2, nikoli z geometrie scény: délky stěn z Euklidovské vzdálenosti junction--junction, plochy a centroidy z uzlů Vrstvy 2. Viditelnost kótování přepíná globální přepínač v Nastavení (klávesa `T`).
 
 == Návrh uživatelského rozhraní
 
