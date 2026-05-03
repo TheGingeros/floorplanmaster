@@ -841,11 +841,11 @@ Toto vložení _(must-have)_ je alternativní vstupní metodou k Pencil Toolu: u
 
 === FP3 --- Detekce místností a metadata
 
-FP3 _(must-have)_ realizuje klíčovou vlastnost, která odlišuje FloorPlanMaster od obecného 3D modelování: místnosti nevznikají manuálně, ale jsou automatickým důsledkem topologie Vrstvy 1. Detekce cyklů je spuštěna automaticky po každé změně topologie Vrstvy 1 (*lazy strategie* --- přepočet probíhá jen tehdy, kdy je nezbytný, ne průběžně). Algoritmus využívá NetworkX @networkx pro detekci všech minimálních cyklů v planárním grafu. Každý nový cyklus spouští vznik nového uzlu `Room` ve Vrstvě 2 s perzistentním UUID; zánik cyklu odstraní příslušnou místnost; sloučení dvou cyklů (smazání dělící stěny) provede node fusion --- jeden uzel místnosti přežije a jeho metadata přetrvají.
+FP3 _(must-have)_ představuje klíčovou funkcionalitu, která odlišuje FloorPlanMaster od běžných nástrojů pro 3D modelování: místnosti nevznikají manuálním zadáváním, ale jako implicitní výsledek nakreslené dispozice. Jakmile stěny vytvoří uzavřený prostor, systém jej automaticky detekuje jako místnost. Přepočet neprobíhá kontinuálně, ale efektivně pouze ve chvíli, kdy je to skutečně nutné --- tedy po každé úpravě půdorysu. Odstraní-li uživatel dělicí stěnu mezi dvěma místnostmi, systém tyto prostory sloučí do jednoho a zachová přitom metadata původní místnosti.
 
-Pro každou místnost systém průběžně udržuje *plochu* (Gaussův vzorec pro polygon), *obvod* (součet délek hraničních stěn), *centroid* (průměr souřadnic vrcholů cyklu pro umístění kótovacího textu FP7) a *název* (uživatelem editovatelný řetězec). Metriky jsou serializovány do Vrstvy 3 jako pojmenované atributy na plochy.
+U každého prostoru systém průběžně eviduje jeho *plochu*, *obvod*, polohu středu (pro správné ukotvení textových popisků) a uživatelsky definovaný *název*.
 
-Perzistence dat využívá *rekonstrukci z Vrstvy 3*: base mesh uložený Blenderem automaticky obsahuje veškerou topologickou informaci v named attributes (`junction_id`, `wall_id`, `room_id` atd.), z nichž lze Vrstvy 1 a 2 plně obnovit. Jedinou výjimkou jsou uživatelské názvy místností, ukládané jako Blender Custom Property na objekt. I při absenci tohoto záznamu grafy fungují správně --- místnosti pouze ztratí uživatelská jména. Tento mechanismus zajišťuje správné obnovení stavu po Undo, reload souboru i reload addonu.
+Geometrie uložená v souboru modelu obsahuje veškerá potřebná data k tomu, aby systém při opětovném načtení projektu nebo po použití funkce Zpět kompletně zrekonstruoval aktuální stav dispozice. Uživatelské názvy místností se ukládají odděleně; pokud by z jakéhokoli důvodu chyběly, celková funkčnost logiky půdorysu zůstane zachována --- místnosti budou existovat i nadále, pouze se zobrazí bez svých pojmenování.
 
 === FP4 --- Finalizační nástroj
 
@@ -858,7 +858,7 @@ Finalizační nástroj _(must-have)_ provede nevratný převod parametrického m
 
 V dialogu uživatel volí: *organizaci výstupu* (jeden objekt / per místnost / separace stěny + podlahy + stropy), *přiřazení materiálů* (automaticky z metadat Vrstvy 2 nebo ponechat výchozí Blender materiál), *čistění atributů* (odstranit named attributes z výsledné sítě pro úsporu dat) a *zachovat originál* (duplikovat před finalizací vs. finalizovat přímo).
 
-Technicky finalizace pracuje přes vyhodnocený depsgraph (`evaluated_get(depsgraph)`): aplikace GN modifikátoru z vyhodnoceného stavu → konverze UV atributů z face-corner domény na standardní UV vrstvy (`MeshUVLoopLayer`, jinak je exportéry #gls("fbx", long: false) a glTF ignorují) → deduplikace materiálových slotů (Join Geometry v GN produkuje duplicitní sloty; identické materiály se sloučí, indexy polygonů přemapují, prázdné sloty odstraní).
+// Technicky finalizace pracuje přes vyhodnocený depsgraph (`evaluated_get(depsgraph)`): aplikace GN modifikátoru z vyhodnoceného stavu → konverze UV atributů z face-corner domény na standardní UV vrstvy (`MeshUVLoopLayer`, jinak je exportéry #gls("fbx", long: false) a glTF ignorují) → deduplikace materiálových slotů (Join Geometry v GN produkuje duplicitní sloty; identické materiály se sloučí, indexy polygonů přemapují, prázdné sloty odstraní).
 
 === FP5 --- Kontextová nabídka
 
