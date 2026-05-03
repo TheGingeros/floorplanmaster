@@ -1018,37 +1018,54 @@ Každý must-have prvek FP1--FP4 má jednoznačně přiřazenou návrhovou sekci
 
 #figure(
   table(
-    columns: (auto, 2fr, auto, auto),
+    columns: (1fr, 1.8fr, 1.5fr, 0.6fr),
     align: (left, left, left, center),
+    stroke: 0.5pt,
     table.header(
       [*Požadavek*], [*Navrhující sekce*], [*Datový model*], [*MVP*],
     ),
-    [FP1 --- modální kreslení], [FP1 --- stavový automat], [Junction, Wall (L1)], [✓],
-    [FP1 --- snap na junction], [FP1 --- snapping], [Junction.position (L1)], [✓],
-    [FP2 --- update stěny], [FP2 --- update mechanismus], [Wall.thickness/height (L1)], [✓],
-    [FP2 --- otvory GN Boolean], [FP2 --- otvory], [Wall.openings, L3 atributy], [✓],
-    [FP3 --- detekce místností], [FP3 --- detekce cyklů], [Room (L2) z cyklu (L1)], [✓],
-    [FP4 --- finalizace], [FP4 --- interakce s modelem], [L3 → statická mesh], [✓],
-    [FP5 --- kontextová nabídka], [FP5 --- raycast + akce], [L3 raycast → L1/L2], [---],
-    [FP6 --- manipulátory], [FP6 --- typy gizmos], [Wall.thickness/height, Junction.pos], [---],
-    [FP7 --- kótování], [FP7 --- datový pipeline], [L1 délky, L2 area + centroid], [---],
+    [FP1 --- modální\ kreslení], [FP1 --- stavový\ automat], [Junction, Wall (L1)], [✓],
+    [FP1 --- snap na\ junction], [FP1 --- snapping], [Junction.position (L1)], [✓],
+    [FP2 --- update stěny], [FP2 --- update\ mechanismus], [Wall.thickness/\ height (L1)], [✓],
+    [FP2 --- otvory\ GN Boolean], [FP2 --- otvory], [Wall.openings,\ L3 atributy], [✓],
+    [FP3 --- detekce\ místností], [FP3 --- detekce\ cyklů], [Room (L2) z\ cyklu (L1)], [✓],
+    [FP4 --- finalizace], [FP4 --- interakce\ s modelem], [L3 → statická mesh], [✓],
+    [FP5 --- kontextová\ nabídka], [FP5 --- raycast +\ akce], [L3 raycast →\ L1/L2], [---],
+    [FP6 --- manipulátory], [FP6 --- typy gizmos], [Wall.thickness/height,\ Junction.pos], [---],
+    [FP7 --- kótování], [FP7 --- datový\ pipeline], [L1 délky, L2 area\ + centroid], [---],
   ),
-  caption: [Matice pokrytí požadavků návrhovou dokumentací; ✓ = součást MVP, --- = odloženo za MVP],
+  caption: [Tabulka pokrytí požadavků návrhovou dokumentací; ✓ = součást MVP, --- = odloženo za MVP],
 ) <tab-coverage>
 
 Nefunkční požadavky jsou pokryty architekturálně. NP1 (Geometry Nodes jako backend, Python jako manažer) je zajištěn oddělením Vrstev 1--2 od Vrstvy 3. NP2 (výkon a nedestruktivnost) je zajištěn jednosměrným tokem dat a dvoufázovou synchronizací --- změna atributu nevyvolá detekci cyklů (pouze fáze 2). NP3 (použitelnost) je zajištěn výběrem klávesových zkratek a barevné sémantiky konzistentních s Blender konvencemi a validačními chybami hlášenými pop-overem.
 
 === Průchod scénáři použití
 
-Průchod scénáři ověřuje, že navržená architektura a funkce společně pokrývají celý uživatelský workflow. Must-have scénáře UC 1.1--3.2 jsou plně průchozí must-have prvky FP1--FP4.
+Průchod scénáři ověřuje, že navržená architektura a funkce společně pokrývají celý uživatelský workflow. Všechny scénáře (UC 1.1--3.2) jsou plně řešitelné must-have prvky (FP1--FP4).
 
-UC 1.2 (kreslení dispozice tužkou) je průchozí krok za krokem: aktivace Pencil Tool (FP1) → kreslení s snapem na existující junctiony (FP1) → uzavření cyklu spouští detekci místnosti (FP3) → výběr stěny a úprava parametrů v N-panelu (FP2) → update cyklus → GN reevaluace. UC 1.1 (hmotová studie z parametrů) je průchozí: zadání plochy a poměru stran v N-panelu → FP2 vytvoří čtyři stěny → Vrstva 2 vypočítá metriky (FP3) → opakování pro každou místnost stavebního programu. UC 2.2 (příprava pro rendering) a UC 3.2 (export herní úrovně) jsou průchozí díky FP2 (otvory s GN Boolean) a FP4 (finalizace s UV konverzí a deduplikací materiálů).
+- *UC 1.1 (hmotová studie z parametrů):* architekt zadá plochu a poměr stran → FP2 vytvoří čtyři stěny → Vrstva 2 vypočítá metriky (FP3) → opakování pro stavební program.
 
-Should-have scénáře UC 1.3 (kótování), UC 2.3 (kontextová editace) a UC 3.3 (manipulátory) nejsou průchozí v MVP --- závisejí na FP5--FP7, jejichž implementace je záměrně odložena. Datový základ (L1 délky, L2 plochy a centroidy) je však dostupný od MVP.
+- *UC 1.2 (kreslení dispozice tužkou):* aktivace Pencil Tool (FP1) → kreslení s snapem na existující junctiony (FP1) → uzavření cyklu spouští detekci místnosti (FP3) → úprava parametrů v N-panelu (FP2) → GN reevaluace.
 
-=== Analýza okrajových případů
+- *UC 2.1 (obkreslení 2D půdorysu):* vizualizátor vloží obrázek na pozadí → aktivuje Pencil Tool s snapem (FP1) → odklikává rohy podle obrázku → addon generuje stěny a detekuje místnosti (FP3) → nastavení tloušťky a výšky (FP2).
 
-Topologické edge cases jsou ošetřeny validací Vrstvy 1: stěna s nulovým rozpětím (start = end junction) je odmítnuta, duplicitní stěna mezi dvěma junctions je odmítnuta (prostý graf), posun junctionu vedoucí ke crossing edges spouští planaritní kontrolu. Sémantické edge cases jsou ošetřeny automatickou synchronizací: smazání dělící stěny provede node fusion (zachová ID místnosti), zánik posledního cyklu odstraní místnost, změna geometrie bez změny topologie přepočítá pouze metriky. Persistence edge cases jsou pokryty rekonstrukcí z named attributes: reload souboru bez Custom Property (poškozený soubor) rekonstruuje grafy funkčně --- místnosti ztratí uživatelská jména, ale jsou jinak plně funkční. Undo po přidání stěny obnoví mesh snapshot a rekonstrukce ze snapshottu vrátí konzistentní stav Vrstev 1 a 2.
+- *UC 2.2 (příprava pro rendering):* výběr stěny a přidání otvoru (FP2 — GN Boolean) → parametry otvoru v N-panelu → finalizace (FP4).
+
+- *UC 3.1 (level blockout):* game designer aktivuje Pencil Tool (FP1) → kreslí sérii navazujících místností (FP1, FP3) → uniformní výška v N-panelu (FP2).
+
+- *UC 3.2 (export herní úrovně):* přidání dveřních otvorů (FP2 — GN Boolean) → ověření ploch místností v N-panelu (FP3) → finalizace a export (FP4).
+
+Následující tři scénáře rozšiřují základní workflow o pokročilé funkce a nejsou součástí MVP scope. Jejich implementace je záměrně odložena za prvotní fázi projektu. Architektura je však již připravena jejich pojetí bez jakýchkoli změn Vrstev 1 a 2, a datový základ (geometrické metriky a identifikace prvků) je dostupný od MVP.
+
+- *UC 1.3 (kótování):* zapnutí kótovacího overlaye (FP7) — závisí na FP7, datový základ dostupný.
+
+- *UC 2.3 (kontextová editace):* RMB na prvek → dynamická nabídka (FP5) — závisí na FP5, datový základ dostupný.
+
+- *UC 3.3 (interaktivní manipulace):* gizmo pohybu junctionu (FP6) — závisí na FP6, datový základ dostupný.
+
+// === Analýza okrajových případů
+
+// Topologické edge cases jsou ošetřeny validací Vrstvy 1: stěna s nulovým rozpětím (start = end junction) je odmítnuta, duplicitní stěna mezi dvěma junctions je odmítnuta (prostý graf), posun junctionu vedoucí ke crossing edges spouští planaritní kontrolu. Sémantické edge cases jsou ošetřeny automatickou synchronizací: smazání dělící stěny provede node fusion (zachová ID místnosti), zánik posledního cyklu odstraní místnost, změna geometrie bez změny topologie přepočítá pouze metriky. Persistence edge cases jsou pokryty rekonstrukcí z named attributes: reload souboru bez Custom Property (poškozený soubor) rekonstruuje grafy funkčně --- místnosti ztratí uživatelská jména, ale jsou jinak plně funkční. Undo po přidání stěny obnoví mesh snapshot a rekonstrukce ze snapshottu vrátí konzistentní stav Vrstev 1 a 2.
 
 == Hodnocení návrhu uživatelského rozhraní
 
@@ -1058,7 +1075,7 @@ Kapitola 3.5 definovala návrh #gls("ui", long: false) addonu. Před zahájením
 
 Kontrola konzistence hodnotí, jak plynule addon zapadá do stávajícího Blender ekosystému a zda je vnitřně soudržný.
 
-*Vnější konzistence.* Pencil Tool je registrován jako WorkspaceTool v T-panelu, shodně s nativními modálními nástroji Knife Tool, Loop Cut a Poly Build --- addony umísťující modální nástroje mimo Toolbar (Archimesh @archimesh, Archipack @archipack) tak činí z historických důvodů předcházejících WorkspaceTool #gls("api", long: false). Klávesové zkratky respektují stávající Blender keymapping: LMB jako potvrzení (standard od v2.80), RMB jako kontextová nabídka (primární konvence), ESC pro zrušení modálního operátoru (identické s Knife Tool). Barevná sémantika přejímá konvence nativních nástrojů: oranžová pro výběr odpovídá standardnímu Blender theme, modrá pro nepotvrzené prvky odpovídá Loop Cut preview, žlutá pro snap odpovídá nativnímu Blender snap markeru. N-panel sekce Nástroje → Místnosti → Nastavení odpovídá logické hierarchii Blender Properties editoru (Tool → Item → View).
+*Vnější konzistence.* Pencil Tool je registrován jako WorkspaceTool v T-panelu, shodně s nativními modálními nástroji Knife Tool, Loop Cut a Poly Build --- addony umísťující modální nástroje mimo Toolbar (Archimesh @archimesh, Archipack @archipack) tak činí z historických důvodů předcházejících WorkspaceTool #gls("api", long: false). Klávesové zkratky respektují stávající Blender keymapping: LMB jako potvrzení, RMB jako kontextová nabídka, ESC pro zrušení modálního operátoru (identické s Knife Tool). Barevná sémantika přejímá konvence nativních nástrojů: oranžová pro výběr odpovídá standardnímu Blender theme, modrá pro nepotvrzené prvky odpovídá Loop Cut preview, žlutá pro snap odpovídá nativnímu Blender snap markeru. N-panel sekce Nástroje → Místnosti → Nastavení odpovídá logické hierarchii Blender Properties editoru (Tool → Item → View).
 
 *Vnitřní konzistence.* Každá klíčová akce je dosažitelná více cestami se shodným výsledkem: aktivace Pencil Tool přes `D`, tlačítko v N-panelu i klik na ikonu v Toolbaru vede do identického vstupního stavu FP1 automatu; přepnutí kótování přes `T`, přepínač v kontextovém menu i v Nastavení mění tentýž stav FP7 draw_handleru. Obousměrná synchronizace výběru (klik na místnost v N-panelu vybere ji ve viewportu a naopak) zabraňuje situaci, kde uživatel edituje jiný prvek než zvýrazněný.
 
@@ -1074,7 +1091,11 @@ Heuristické hodnocení porovnává návrh s třemi Nielsonovými heuristikami p
 
 === Kognitivní průchody
 
-Kognitivní průchod simuluje zkušenost nového uživatele při plnění konkrétního úkolu. Hodnotitel prochází každý krok a klade čtyři otázky: ví uživatel, jakou akci provést? Vidí ovládací prvek? Pokročil správným směrem? Je zpětná vazba správná? Zvoleny jsou dva reprezentativní scénáře.
+Kognitivní průchod simuluje zkušenost nového uživatele při plnění konkrétního úkolu. Hodnotitel prochází každý krok a klade čtyři otázky: ví uživatel, jakou akci provést? Vidí ovládací prvek? Pokročil správným směrem? Je zpětná vazba správná? 
+
+_Poznámka: Hodnocení je expertní průchod architektury; kvalitativní uživatelské testování neproběhlo a je doporučeno v implementační fázi._
+
+Zvoleny jsou dva reprezentativní scénáře:
 
 *UC 1.2 --- Kreslení dispozice tužkou.* Aktivace nástroje (krok 1) --- ikona tužky v Toolbaru s tooltipem je dohledatelná průzkumem Toolbaru nebo N-panelu; po aktivaci se ikona zvýrazní a HUD zobrazí stavovou zprávu se stavem ČEKÁNÍ --- zpětná vazba je správná. Umístění prvního bodu (krok 2) --- stavová zpráva říká „LMB: umístit první bod"; po kliknutí se preview linka táhne ke kurzoru a HUD přejde do stavu KRESLENÍ --- zpětná vazba potvrzuje přechod stavu. Uzavření místnosti (krok 3) --- snap indikátor u prvního junctionu signalizuje možnost uzavření; uzavření cyklu způsobí okamžité zobrazení barevné výplně plochy --- vizuální signál detekce místnosti bez technické hlášky. Identifikovaný potenciál rizika: uživatel nemusí vědět, že uzavření cyklu na první junction je podmínkou vzniku místnosti; snap indikátor a chybějící barevná výplň při neuzavření toto riziko zmírňují.
 
