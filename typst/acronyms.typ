@@ -97,6 +97,12 @@
     long: "Model-View-Controller",
   ),
   (
+    key: "mvp",
+    short: "MVP",
+    plural: "MVP",
+    long: "Minimum Viable Product",
+  ),
+  (
     key: "obj",
     short: "OBJ",
     plural: "OBJ",
