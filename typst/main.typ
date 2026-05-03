@@ -890,7 +890,7 @@ Při aktivaci nástroje se v levém horním rohu viewportu a v sekci Active Tool
 
 === Postranní panel (N-panel)
 
-N-panel (Sidebar) je standardním místem pro trvalé parametrické rozhraní architektonických addonů. Addon přidává záložku *FloorPlanMaster* se čtyřmi skládacími sekcemi. Toto členění přejímá vzor z Archipack @archipack, kde je panel rozdělen na sekci operátorů a sekci parametrů vybraného objektu.
+N-panel (Sidebar) je standardním místem pro trvalé rozhraní addonů. Addon přidává záložku *FloorPlanMaster* se čtyřmi skládacími sekcemi. Toto členění přejímá vzor z Archipack @archipack, kde je panel rozdělen na sekci operátorů a sekci parametrů vybraného objektu.
 
 *Sekce Nástroje* sdružuje spouštěče akcí: tlačítko Pencil Tool (alternativa ke klávesové zkratce `D`), Vložit místnost (otevírá inline formulář s poli šířka, hloubka, výška, tloušťka) a Zapéct (spouští finalizační pop-over FP4 s volbami výstupu). Toto odlišení je záměrné: Blender konvencí je, že akce vkládající nové prvky patří do sekce Nástrojů, nikoli do sekcí modifikujících výběr.
 
@@ -901,12 +901,14 @@ N-panel (Sidebar) je standardním místem pro trvalé parametrické rozhraní ar
 
 *Sekce Místnosti* je přehledem uzlů Vrstvy 2: seznam všech místností s editovatelným názvem a průběžně aktualizovanou plochou. Kliknutím na položku dojde k výběru místnosti ve viewportu a rozbalení detailního pohledu přímo pod položkou (obvod, výška, počet stěn). Vzor odpovídá technice „list panel s automatickým výběrem", kterou Blender nativně používá pro vertex groups nebo shape keys.
 
+Jako rozšiřující možností této sekce je přidat hiearchický list stěn dané místnosti pro přehlednou kontrolu uživatelem.
+
 #figure(
   image("../docs/assets/blender_ui_rooms.png", width: 80%),
   caption: [Návrh UI pro sekci Místnosti],
 ) <fig-toolbar>
 
-*Sekce Nastavení* obsahuje globální parametry scény uložené v `Scene PropertyGroup` (konzistentní s pravidlem persistence --- projektové hodnoty jsou součástí `.blend` souboru a přenositelné s projektem). Záměrně jsou sem zařazeny pouze parametry ovlivňující chování celého projektu --- nikoli parametry jednotlivých prvků.
+*Sekce Nastavení* obsahuje globální parametry scény uložené v `Scene PropertyGroup`. Záměrně jsou sem zařazeny pouze parametry ovlivňující chování celého projektu --- nikoli parametry jednotlivých prvků.
 
 #figure(
   image("../docs/assets/blender_ui_settings.png", width: 80%),
@@ -931,7 +933,9 @@ N-panel (Sidebar) je standardním místem pro trvalé parametrické rozhraní ar
   caption: [Přehled globálních nastavení v sekci Nastavení N-panelu s výchozími hodnotami],
 ) <tab-settings>
 
-*Sekce aktuálně vybrané stěny* je umístěna na vrcholu záložky a zobrazuje se výhradně tehdy, když je ve scéně vybrána stěna. Zobrazuje délku stěny (pouze pro čtení), editovatelnou tloušťku a výšku a seznam otvorů s možností přidání a odebrání. Detail každého otvoru poskytuje editaci názvu, typu (dveře/okno), šířky, výšky, výšky parapetu a relativní polohy na stěně.
+*Sekce aktuálně vybrané stěny* je umístěna na spodu záložky a zobrazuje se výhradně tehdy, když je ve scéně vybrána stěna. Zobrazuje délku stěny, editovatelnou tloušťku a výšku a seznam otvorů s možností přidání a odebrání. Detail každého otvoru poskytuje editaci názvu, typu (dveře/okno), šířky, výšky, výšky parapetu a relativní polohy na stěně.
+
+Možným rozšířením je přidání editace polohy stěny a jejích koncových bodů.
 
 === Klávesové zkratky
 
