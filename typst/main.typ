@@ -960,7 +960,7 @@ Návrh klávesových zkratek se řídí dvěma principy: zkratky musejí být ko
   caption: [Klávesové zkratky addonu s kontextem a zdůvodněním volby klávesy],
 ) <tab-shortcuts>
 
-Všechny zkratky jsou registrovány s podmínkou kontextu (`bl_space_type = 'VIEW_3D'`). Klávesa `D` je registrována pouze pro Object Mode, kde Blender tuto klávesu nativně neobsazuje. Po dobu aktivity modálního operátoru jsou ostatní Blender zkratky blokovány --- s výjimkou navigačních vstupů (střední tlačítko myši, Numpad pohledy) a `RMB` ve stavu ČEKÁNÍ.
+// Všechny zkratky jsou registrovány s podmínkou kontextu (`bl_space_type = 'VIEW_3D'`). Klávesa `D` je registrována pouze pro Object Mode, kde Blender tuto klávesu nativně neobsazuje. Po dobu aktivity modálního operátoru jsou ostatní Blender zkratky blokovány --- s výjimkou navigačních vstupů (střední tlačítko myši, Numpad pohledy) a `RMB` ve stavu ČEKÁNÍ.
 
 === Viewport UI
 
