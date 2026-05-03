@@ -964,13 +964,13 @@ Návrh klávesových zkratek se řídí dvěma principy: zkratky musejí být ko
 
 === Viewport UI
 
-Viewport #gls("ui", long: false) tvoří čtyři kategorie vizuálních prvků vykreslovaných přímo ve 3D Viewportu nad geometrií scény prostřednictvím #gls("gpu", long: false) overlay vrstev.
+Viewport #gls("ui", long: false) tvoří tři kategorie vizuálních prvků vykreslovaných přímo ve 3D Viewportu nad geometrií scény prostřednictvím #gls("gpu", long: false) overlay vrstev.
 
-*#gls("hud", long: false) overlay (Pencil Tool aktivní)* --- text a grafika překrývající viewport po dobu aktivity Pencil Tool, vykreslované v `POST_PIXEL` režimu (souřadnice obrazovky), takže zůstávají čitelné a stabilní nezávisle na zoomu. Ve stavu ČEKÁNÍ zobrazuje stavovou zprávu. Ve stavu KRESLENÍ zobrazuje délku navrhované stěny a úhel k poslednímu úseku. Vzor je přejat přímo z Blender Knife Tool. Nápověda kláves je zobrazena v dolní stavové liště Blenderu (`STATUSBAR_HT_header`) jako ikony kláves a tlačítek myši --- Blender standardní přístup zavedený nativními nástroji.
+*#gls("hud", long: false) overlay (Pencil Tool aktivní)* --- text a grafika překrývající viewport po dobu aktivity Pencil Tool, vykreslované v `POST_PIXEL` režimu.
 
-*Kótovací overlay (FP7)* --- délky stěn jako text nad středem každé hrany, plocha a název místnosti v centroidu každé místnosti. Data čtena z Vrstev 1 a 2; text vykreslován přes modul #gls("blf", long: false) v `POST_PIXEL` handleru. Přepínač viditelnosti v sekci Nastavení (klávesa `T`).
+*Kótovací overlay (FP7)* --- délky stěn jako text nad středem každé hrany. Text vykreslován přes modul #gls("blf", long: false) v `POST_PIXEL` handleru.
 
-*Barevné odlišení místností* --- průhledná barevná výplň uzavřených cyklů vykreslovaná v `POST_VIEW` režimu; každá místnost dostane automaticky odlišnou barvu. Výplň je poloprůhledná, aby nerušila viditelnost geometrie. Vzor přejat z ArchiCAD a Revit @revit, kde barevné kódování místností patří k základní orientaci v půdorysu.
+// *Barevné odlišení místností* --- průhledná barevná výplň uzavřených cyklů vykreslovaná v `POST_VIEW` režimu; každá místnost dostane automaticky odlišnou barvu. Výplň je poloprůhledná, aby nerušila viditelnost geometrie. Vzor přejat z ArchiCAD a Revit @revit, kde barevné kódování místností patří k základní orientaci v půdorysu.
 
 #figure(
   table(
@@ -988,11 +988,11 @@ Viewport #gls("ui", long: false) tvoří čtyři kategorie vizuálních prvků v
   caption: [Barevná sémantika overlay vrstvy v souladu s konvencemi nativních Blender nástrojů],
 ) <tab-colors>
 
-*Gizmos (FP6)* --- interaktivní táhla zobrazující se při výběru prvku: manipulátor tloušťky (světle modrá obousměrná šipka kolmá na stěnu v rovině XY), manipulátor výšky (zelená svislá šipka na středu stěny) a manipulátor pohybu junctionu (žlutý kruh omezený na rovinu XY).
+// *Gizmos (FP6)* --- interaktivní táhla zobrazující se při výběru prvku: manipulátor tloušťky (světle modrá obousměrná šipka kolmá na stěnu v rovině XY), manipulátor výšky (zelená svislá šipka na středu stěny) a manipulátor pohybu junctionu (žlutý kruh omezený na rovinu XY).
 
-=== Kontextová nabídka
+// === Kontextová nabídka
 
-Kontextová nabídka je vyvolána stiskem #gls("rmb", long: false) ve 3D Viewportu. Raycast identifikuje typ elementu a obsah nabídky se dynamicky přizpůsobuje: uživatel v každém kontextu vidí pouze relevantní akce, čímž se redukuje vizuální šum. Vzor kopíruje Archipack @archipack (RMB na objekt zobrazuje akce specifické pro typ architektonického prvku) a AutoCAD @autocad (RMB = kontextová nabídka závislá na výběru). Operace vyžadující textový vstup nebo výběr z enumu otevírají *pop-over dialog* u pozice kurzoru --- shodný vzor jako F9 Last Operator pop-over v nativním Blenderu; zavírá se kliknutím mimo bez nutnosti potvrzení.
+// Kontextová nabídka je vyvolána stiskem #gls("rmb", long: false) ve 3D Viewportu. Raycast identifikuje typ elementu a obsah nabídky se dynamicky přizpůsobuje: uživatel v každém kontextu vidí pouze relevantní akce, čímž se redukuje vizuální šum. Vzor kopíruje Archipack @archipack (RMB na objekt zobrazuje akce specifické pro typ architektonického prvku) a AutoCAD @autocad (RMB = kontextová nabídka závislá na výběru). Operace vyžadující textový vstup nebo výběr z enumu otevírají *pop-over dialog* u pozice kurzoru --- shodný vzor jako F9 Last Operator pop-over v nativním Blenderu; zavírá se kliknutím mimo bez nutnosti potvrzení.
 
 === FloorPlan kontext --- simulovaný pracovní mód
 
