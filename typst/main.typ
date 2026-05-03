@@ -606,6 +606,8 @@ Abychom získali čistou síť připravenou pro export, je nezbytné načíst vy
 
 Zvláštní pozornost vyžadují UV mapy a materiály. V prostředí Geometry Nodes jsou UV mapy ukládány pouze jako 2D vektory v rozích polygonů (v doméně Face Corner). Pokud by zůstaly v této podobě, exportéry do formátů FBX nebo glTF by je zcela ignorovaly. Po aplikaci procedurální geometrie je proto nezbytné tyto pojmenované atributy explicitně převést na standardní UV vrstvy. Další komplikace vzniká při slučování instancí – často totiž dochází ke kumulaci geometrií s odlišnými definicemi, čímž vznikají zbytečně duplicitní materiálové sloty. V herních enginech by tento stav vedl k nežádoucímu nárůstu vykreslovacích požadavků (draw calls). Závěrečná finalizace by proto měla zahrnovat důkladné čištění materiálů, při kterém nástroj zanalyzuje existující sloty, identifikuje duplikáty, pomocí modulu BMesh přemapuje indexy a následně odstraní veškeré prázdné a nadbytečné pozice.
 
+
+#pagebreak()
 = Návrh
 
 Tato kapitola převádí FloorPlanMaster do realizovatelného technického návrhu: vymezuje přesné hranice #gls("mvp", long: false), aby bylo jasné, které části (kreslení stěn, detekce místností, parametrické otvory, finalizace meshe) tvoří jádro první verze a které prvky zůstávají odloženy. Následně definuje třívrstvou architekturu, v níž strukturální graf drží topologii stěn a junctions, graf místností odvozuje semantiku uzavřených cyklů a synchronizační vrstva zapisuje data do pojmenovaných atributů meshe pro Geometry Nodes. Návrh dále konkretizuje datové entity a jejich vazby (Junction, Wall, Room, Adjacency), způsob propagace změn od uživatelské akce po přegenerování geometrie, pravidla práce operátorů a podobu rozhraní ve viewportu i panelech. Závěr kapitoly ověřuje konzistenci návrhu vůči scénářům použití a připravuje podklad pro implementaci bez doplňování chybějících rozhodnutí.
@@ -1105,5 +1107,7 @@ Zvoleny jsou dva reprezentativní scénáře:
 
 Hodnocení provedené třemi metodami neprokázalo žádné systémové nedostatky zabraňující zahájení implementace. Kontrola konzistence potvrdila soulad s Blender konvencemi na všech úrovních. Heuristické hodnocení dospělo u všech tří heuristik k pozitivnímu výsledku. Kognitivní průchody UC 1.2 a UC 1.1 identifikovaly dvě drobná rizika (nutnost uzavřít cyklus pro vznik místnosti; znalost pojmu 3D kurzor) a obě jsou zmírněna vizuálními mechanismy nebo jsou akceptovatelná pro cílovou skupinu se základní znalostí Blenderu.
 
+#pagebreak()
 = Implementace
+#pagebreak()
 = Testování
