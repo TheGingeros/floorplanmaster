@@ -5,3 +5,4 @@
 ## [4.3 Vrstvy](./sections/04_Implementation/03_layers.md)
 ## [4.4 Funkce](./sections/04_Implementation/04_features.md)
 ## [4.5 Uživatelské rozhraní](./sections/04_Implementation/05_ui.md)
+## [4.6 Současná omezení implementace](./sections/04_Implementation/06_limitations.md)
