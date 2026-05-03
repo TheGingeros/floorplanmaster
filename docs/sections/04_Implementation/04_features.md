@@ -26,7 +26,7 @@ Vložení místnosti umístí pravoúhlý půdorys na aktuální pozici 3D kurzo
 
 Jakmile Vrstva 2 detekuje novou uzavřenou smyčku stěn, vytvoří odpovídající objekt místnosti s automaticky vypočítanou plochou, obvodem a polohou centroidu. Uživatel může místnosti procházet v N-panelu, kde je zobrazen jejich seznam s klíčovými metrikami, a každou místnost přejmenovat. Přejmenování probíhá obousměrně: změna provedená v panelu se zapíše do grafu místností a zároveň se persistuje do Blender objektu tak, aby přežila rekonstrukci grafů po reloadu nebo Undo.
 
-Implementace pokrývá základní identifikaci, přejmenování a zobrazení klíčových metrik. Plná správa sémantických atributů místností ve smyslu celého návrhu — materiály, typy povrchů, hierarchie prostorů — tato verze addonu neimplementuje.
+Implementace pokrývá základní identifikaci, přejmenování a zobrazení klíčových metrik. Plná správa sémantických atributů místností ve smyslu celého návrhu — materiály, typy povrchů, hierarchie prostorů — tato verze addonu neimplementuje. Je ale připravena pro budoucí rozšíření a implementaci v dalších verzích.
 
 ## FP4 — Finalizace a bake
 
