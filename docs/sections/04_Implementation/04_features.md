@@ -2,11 +2,9 @@
 
 Funkce addonu jsou implementovány jako Blender operátory — spustitelné příkazy registrované u Blenderu a přiřazené klávesovým zkratkám nebo tlačítkům panelu. Každý operátor pracuje výhradně přes rozhraní datových vrstev a tvoří tak řídicí vrstvu (Controller) MVC architektury popsané v návrhu. Operátory nestojí na sobě navzájem — každý je samostatnou jednotkou, přistupující ke sdílené cache grafů a sdílenému stavu výběru přes definovaná rozhraní.
 
-## FP1 — Tužkový nástroj
+## FP1 — Nástroj tužka
 
-Tužkový nástroj je primárním způsobem kreslení stěn a je implementován jako modální operátor — druh Blender operátoru, který po spuštění nepředá řízení zpět okamžitě, ale drží kontrolu nad událostmi viewportu až do explicitního ukončení. Toto chování je pro interaktivní kreslení nezbytné; Blender je nativně podporuje pro právě tento typ scénáře.
-
-Operátor funguje jako stavový automat se dvěma stavy. V prvním čeká na určení výchozího bodu nové stěny; ve druhém táhne náhledovou linku od posledního potvrzeného vrcholu ke kurzoru a čeká na potvrzení dalšího bodu. Každé potvrzení vrcholu zapíše novou entitu do Vrstvy 1; stiskem klávesy pro zrušení posledního kroku je tato entita odstraněna a operátor se vrátí o jeden krok zpět. Ukončení sekvence — klávesou nebo uzavřením smyčky — spustí finální synchronizaci: Vrstva 3 zapíše výsledný mesh a Geometry Nodes generují 3D geometrii.
+Nástroj tužka je primárním způsobem kreslení stěn a je implementován jako modální operátor. Operátor funguje jako stavový automat se dvěma stavy. V prvním čeká na určení výchozího bodu nové stěny; ve druhém táhne náhledovou linku od posledního potvrzeného vrcholu ke kurzoru a čeká na potvrzení dalšího bodu. Každé potvrzení vrcholu zapíše novou entitu do Vrstvy 1; stiskem klávesy pro zrušení posledního kroku je tato entita odstraněna a operátor se vrátí o jeden krok zpět. Ukončení sekvence — klávesou nebo uzavřením smyčky — spustí finální synchronizaci: Vrstva 3 zapíše výsledný mesh a Geometry Nodes generují 3D geometrii.
 
 Tento návrh odhalil výkonnostní problém: pokud by se po každém potvrzeném vrcholu spustila plná synchronizace Vrstvy 3 (přepočet všech stěnových obrysů, zápis atributů, reevaluace GN modifikátoru), rostla by cena každého kliknutí lineárně s počtem stěn v grafu — celková cena za nakreslenou sekvenci W stěn by dosahovala O(W²). FloorPlanMaster tento problém řeší odsunutím synchronizace na konec celé kreslicí sekvence. Během kresby udržuje operátor pouze čistě Python výpočet aktuálních stěnových obrysů — bez jakékoliv závislosti na Blenderu — a zobrazuje je jako okamžitou vizuální odezvu ve viewportu. Celková cena klesla na O(W) za celou sezení, přičemž vizuální odezva zůstala okamžitá.
 
@@ -14,13 +12,15 @@ Při spuštění operátor zaregistruje své kreslicí funkce v centrálním ove
 
 ## FP2 — Výběr a parametrické úpravy
 
-Výběr stěn probíhá kliknutím myší ve viewportu. Správná identifikace zasažené stěny vyžaduje řešení, které funguje nezávisle na aktuálním pohledu kamery — tedy nejen z pohledu shora, ale i z libovolné šikmé perspektivy. Prostá projekce kliknuté pozice do roviny Z=0 a test vůči 2D obrysům stěn by pro šikmý perspektivní pohled selhala. Implementace proto projikuje všech šest ploch trojrozměrného tělesa každé stěny — spodní, horní a čtyři boky — do 2D souřadnic okna a testuje kliknutou pozici vůči těmto promítnutým polygonům. Výsledkem je přesný výběr bez ohledu na nastavení pohledu.
+Interaktivní editace běží v dedikovaném FloorPlan módu (Shift+Q), který je implementován jako modal controller nad viewportem. Tento režim přebírá ne-navigační události, chrání před nechtěnými globálními zkratkami a centralizuje klikací výběr stěn i místností. Výběr funguje nezávisle na pohledu kamery: implementace testuje klik vůči projekci šesti ploch 3D tělesa stěny (top, bottom, čtyři boky), takže funguje i v perspektivním pohledu.
 
-Výsledek výběru je zapsán do sdíleného stavu výběru a N-panel se okamžitě aktualizuje, aby zobrazil parametry vybrané stěny. Parametrické úpravy — tloušťka a výška — fungují přes mechanismus live update vlastností: Blender při každé změně hodnoty automaticky zavolá zaregistrovanou callback funkci, která provede validaci, zapíše změnu do Vrstvy 1 a spustí synchronizaci Vrstvy 3. Změna se projeví ve viewportu okamžitě, bez nutnosti potvrzovat. Aby programatické naplnění polí panelu hodnotami při výběru stěny nespustilo nechtěnou synchronizaci, chrání tento mechanismus příznak, jehož přítomnost callback funkce detekuje a přeskočí.
+Výsledek výběru se zapisuje do sdíleného SelectionState a N-panel okamžitě zobrazuje parametry vybrané entity. Parametrické úpravy stěn pokrývají nejen tloušťku a výšku, ale i polohu: samostatnou editaci obou koncových vrcholů (Start/End XY) a posun stěny po normále přes ovladač středu. Callbacky používají guard flagy proti cyklickým update voláním a pro rychlé tahání sliderů je nasazen debounced sync.
 
-Přidávání otvorů pracuje s dalšími omezujícími podmínkami: otvor nesmí přesáhnout délku stěny, nesmí zasahovat do oblasti překryvu spojů sousedních stěn a nesmí se překrývat s jiným existujícím otvorem. Dialogové okno průběžně koriguje zadávané hodnoty tak, aby geometricky neplatný stav nikdy nenastal — výška otvoru se nemění automaticky při zvyšování parapetu a poloha otvoru neovlivňuje jeho šířku. Každá hodnota je korigována nezávisle v rámci svého platného rozsahu.
+Synchronizační cesta pro editace stěn je optimalizovaná: změna pouze výšky se aplikuje lokálním přepisem atributů bez rebuildu topologie, zatímco změna tloušťky přepíná na plný přepočet. Uživatel tak dostává okamžitou odezvu i při kontinuální editaci.
 
-Vložení místnosti umístí pravoúhlý půdorys místnosti na aktuální polohu 3D kurzoru se zadanými rozměry jako plnohodnotnou transakci Vrstvy 1.
+Přidávání otvorů vynucuje geometrická omezení už při zadávání: otvor nesmí přesáhnout délku stěny, nesmí vstoupit do junction inset zón a nesmí se překrývat s jiným otvorem. Dialog průběžně clampuje hodnoty tak, aby nikdy nevznikl neplatný stav. Součástí FP2 jsou i destruktivní operace: odstranění vybrané stěny a odstranění místnosti při zachování sdílených stěn sousedních místností.
+
+Vložení místnosti umístí pravoúhlý půdorys na aktuální pozici 3D kurzoru se zadanými rozměry jako transakci Vrstvy 1.
 
 ## FP3 — Metadata místností
 
@@ -28,6 +28,12 @@ Jakmile Vrstva 2 detekuje novou uzavřenou smyčku stěn, vytvoří odpovídají
 
 Implementace pokrývá základní identifikaci, přejmenování a zobrazení klíčových metrik. Plná správa sémantických atributů místností ve smyslu celého návrhu — materiály, typy povrchů, hierarchie prostorů — tato verze addonu neimplementuje.
 
+## FP4 — Finalizace a bake
+
+FP4 je implementováno operátorem Bake, který převádí parametrický FloorPlan objekt na statický mesh připravený pro další práci nebo exportní pipeline Blenderu. Operátor před bake nejprve rekonstruuje grafy z autoritativního stavu objektu, potom vygeneruje finální geometrii přes specializovaný mesh builder a odstraní procedurální identitu objektu. Uživatel může zvolit nedestruktivní variantu (ponechat originál a vytvořit baked kopii) i destruktivní variantu.
+
+Finalizační krok zahrnuje i cleanup dat: převod corner float2 atributů na UV vrstvy, volitelné odstranění named attributes a přiřazení výchozího materiálu. Součástí implementace je také ochrana vstupu do Edit Mode: při pokusu o přechod do mesh editace se zobrazí varovný dialog s volbami Cancel, Bake nebo Lose Data, aby přechod ze sémantického modelu na běžný mesh byl vždy explicitní.
+
 ## Neimplementované funkce
 
-Operátory pro finalizaci a export (FP4), kontextové menu (FP5), 3D manipulátory (FP6) a automatické kótování (FP7) nebyly v rámci implementace realizovány. Architektura je navržena tak, aby je bylo možné doplnit jako samostatné operátory bez zásahu do datového jádra — jednosměrný závislostní tok tuto rozšiřitelnost přímo garantuje.
+V aktuální verzi zůstávají neimplementované kontextové menu (FP5), 3D manipulátory (FP6) a automatické kótování (FP7). Export jako samostatný cílový výstupní krok nad rámec bake workflow také není dokončen. Architektura je však navržena tak, aby šlo tyto části doplnit jako izolované operátory bez zásahu do datového jádra.
