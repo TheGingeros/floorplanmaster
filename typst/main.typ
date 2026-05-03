@@ -722,7 +722,7 @@ Architektura vymezila, z jakých vrstev se systém skládá a jak tyto vrstvy ko
 
 === Vrstva 1: Strukturální graf
 
-Třída `StructuralGraph` (Vrstva 1) nabízí operace pro celý životní cyklus grafu: přidávání a odebírání junctions a stěn, vyhledávání junctions v blízkosti zadané polohy (pro snap-on-junction), získávání stěn napojených na daný junction, detekci minimálních cyklů (implementováno přes NetworkX @networkx) a validaci planarity. Výchozí hodnoty jsou `thickness = 0.2` m a `height = 3.0` m.
+Třída `StructuralGraph` (Vrstva 1) nabízí operace pro celý životní cyklus grafu: přidávání a odebírání junctions a stěn, vyhledávání junctions v blízkosti zadané polohy (pro snap-on-junction), získávání stěn napojených na daný junction, detekci minimálních cyklů (implementováno přes NetworkX @networkx) a validaci planarity.
 
 #figure(
   image("/typst/assets/layer1_classdiagram.png", width: 55%),
@@ -792,11 +792,11 @@ Architektura a datový model definují statiku systému --- z čeho se skládá 
 
 === FP1 --- Nástroj tužka
 
-Pencil Tool _(must-have)_ je primárním vstupním rozhraním addonu --- modální operátor zachytávající vstupy myši a klávesnice a překládající je na operace nad Vrstvou 1. Veškerá logika kreslení probíhá ve 2D rovině XY; Z-souřadnice je ignorována.
+Pencil Tool je primárním vstupním rozhraním addonu --- modální operátor zachytávající vstupy myši a klávesnice a překládající je na operace nad Vrstvou 1. Veškerá logika kreslení probíhá ve 2D rovině XY; Z-souřadnice je ignorována.
 
 ==== Stavový automat
 
-Operátor je řízen třestavovým automatem, který garantuje, že stěna nikdy nevznikne bez platného počátečního bodu a nelze skončit v nekonzistentním stavu. Stav *NEAKTIVNÍ* --- nástroj je registrován, ale nepřijímá vstupy; jiné nástroje Blenderu fungují normálně. Stav *ČEKÁNÍ* --- nástroj aktivní, kurzor sleduje myš, žádný počáteční bod ještě nebyl umístěn; #gls("gpu", long: false) overlay zobrazuje existující geometrii a snap indikátory. Stav *KRESLENÍ* --- první junction byl umístěn; overlay v reálném čase kreslí náhled stěny od posledního bodu ke kurzoru a #gls("hud", long: false) zobrazuje délku a úhel navrhované stěny. Z obou aktivních stavů lze sezení buď *potvrdit* (všechny stěny sezení se synchronizují do meshe a zapíší do Undo stacku jedním krokem) nebo *přerušit* bez uložení (všechny stěny a junctions sezení se odstraní, mesh zůstane nezměněn). Zrušení aktuální čáry (přechod KRESLENÍ → ČEKÁNÍ) neodstraňuje dříve potvrzené stěny téže sezení.
+Operátor je řízen třístavovým automatem, který garantuje, že stěna nikdy nevznikne bez platného počátečního bodu a nelze skončit v nekonzistentním stavu. Stav *NEAKTIVNÍ* --- nástroj je registrován, ale nepřijímá vstupy; jiné nástroje Blenderu fungují normálně. Stav *ČEKÁNÍ* --- nástroj aktivní, kurzor sleduje myš, žádný počáteční bod ještě nebyl umístěn; #gls("gpu", long: false) overlay zobrazuje existující geometrii a snap indikátory. Stav *KRESLENÍ* --- první junction byl umístěn; overlay v reálném čase kreslí náhled stěny od posledního bodu ke kurzoru a #gls("hud", long: false) zobrazuje délku a úhel navrhované stěny. Z obou aktivních stavů lze sezení buď *potvrdit* (všechny stěny sezení se synchronizují do meshe a zapíší do Undo stacku jedním krokem) nebo *přerušit* bez uložení (všechny stěny a junctions sezení se odstraní, mesh zůstane nezměněn). Zrušení aktuální čáry (přechod KRESLENÍ → ČEKÁNÍ) neodstraňuje dříve potvrzené stěny téže sezení.
 
 #figure(
   image("/typst/assets/fp1_statediagram.png", width: 100%),
@@ -821,7 +821,7 @@ Preview stěny reprezentuje osu stěny, avšak fyzická stěna má tloušťku, k
 
 === FP2 --- Parametrické objekty a otvory
 
-FP2 _(must-have)_ definuje, jak se změna parametru stěny propíše do geometrie a jak jsou otvory svázány se stěnou tak, aby se pohybovaly spolu s ní.
+FP2 definuje, jak se změna parametru stěny propíše do geometrie a jak jsou otvory svázány se stěnou tak, aby se pohybovaly spolu s ní.
 
 ==== Parametry stěny a update mechanismus
 
@@ -829,15 +829,15 @@ Každá stěna ve Vrstvě 1 nese atributy `thickness`, `height` a `material_id`.
 
 ==== Otvory --- GN Mesh Boolean
 
-*Otvory* (dveře, okna) jsou závislé objekty vázané na konkrétní hranu Vrstvy 1. Python předá poziční data otvoru (střed, šířka, výška, výška parapetu) jako pojmenované atributy na přilehlé hrany Vrstvy 3; Geometry Nodes je čtou, sestaví cutter boxy jako watertight solid a node Mesh Boolean (DIFFERENCE, EXACT solver) díru dynamicky vyřízne. Cutter nesmí přesahovat pod Z = 0, protože EXACT Boolean solver je numericky nestabilní při práci s cuttery zasahujícími pod spodní plochu stěny.
+*Otvory* (dveře, okna) jsou svázány s konkrétní stěnou --- uchovávají svou polohu, šířku, výšku a výšku parapetu jako součást záznamu o stěně ve Vrstvě 1. Výřez otvoru v geometrii zajišťuje Geometry Nodes prostřednictvím operace Mesh Boolean: ze zadaných rozměrů sestaví tvar výřezu a ten od stěny odečte. Výsledek se aktualizuje automaticky při každé změně parametrů.
 
 ==== Vložení pravoúhlé místnosti z parametrů
 
-*Vložení pravoúhlé místnosti z parametrů* _(must-have)_ je alternativní vstupní metodou k Pencil Toolu: uživatel zadá šířku, hloubku, výšku a tloušťku stěn v N-panelu a addon vytvoří čtyři junctions a čtyři stěny se středem v poloze 3D kurzoru Blenderu. Výsledná místnost je datově nerozeznatelná od místnosti nakreslené tužkou --- všechny navazující operace (FP5, FP6, FP7) fungují identicky. V rámci MVP se místnost vkládá vždy jako samostatná izolovaná místnost bez sdílených junctions s existující sítí.
+Toto vložení _(must-have)_ je alternativní vstupní metodou k Pencil Toolu: uživatel zadá šířku, hloubku, výšku a tloušťku stěn v N-panelu a addon vytvoří čtyři junctions a čtyři stěny se středem v poloze 3D kurzoru Blenderu. Výsledná místnost je datově nerozeznatelná od místnosti nakreslené tužkou --- všechny navazující operace (FP5, FP6, FP7) fungují identicky. V rámci MVP se místnost vkládá vždy jako samostatná izolovaná místnost bez sdílených junctions s existující sítí. Rozšiřující možností _(should-have)_ této funkce, je zadání více parametrů pro vkládanou místností, např. počet stěn, jejich poměr nebo tvar místnosti. 
 
-==== Vazba otvorů na stěnu
+// ==== Vazba otvorů na stěnu
 
-Závislost otvoru na stěně je uložena ve Vrstvě 1 jako atribut hrany. Po posunu junctionu nebo změně délky stěny se relativní pozice otvoru $t in [0, 1]$ zachovává --- absolutní souřadnice se přepočítá automaticky z nové délky stěny; orientace otvoru se přepočítá z nového směrového vektoru stěny. Vrstva 3 fáze 2 serializuje nové poziční atributy a GN reevaluace posune otvor vizuálně.
+// Závislost otvoru na stěně je uložena ve Vrstvě 1 jako atribut hrany. Po posunu junctionu nebo změně délky stěny se relativní pozice otvoru $t in [0, 1]$ zachovává --- absolutní souřadnice se přepočítá automaticky z nové délky stěny; orientace otvoru se přepočítá z nového směrového vektoru stěny. Vrstva 3 fáze 2 serializuje nové poziční atributy a GN reevaluace posune otvor vizuálně.
 
 === FP3 --- Detekce místností a metadata
 
