@@ -114,7 +114,7 @@
   par[]
 }
 
-= Analýza
+= Analýza <chap-analysis>
 
 Blender je všestranný, ale pro architektonické skicování nevhodně vybavený nástroj — každá změna půdorysu se mění v destruktivní opravu vrcholů a přepočítávání otvorů, což narušuje plynulost návrhového procesu. Aby bylo možné FloorPlanMaster navrhnout správně, je nutné nejprve porozumět tomu, proč stávající řešení nestačí, kdo addon skutečně bude používat a co od něj v konkrétních situacích čeká. Tato analýza tedy postupně buduje obraz od problémové domény přes uživatele a jejich scénáře až ke strukturovaným požadavkům a výběru technologií, na nichž addon stojí.
 
@@ -608,7 +608,7 @@ Zvláštní pozornost vyžadují UV mapy a materiály. V prostředí Geometry No
 
 
 #pagebreak()
-= Návrh
+= Návrh <chap-design>
 
 Tato kapitola převádí FloorPlanMaster do realizovatelného technického návrhu: vymezuje přesné hranice #gls("mvp", long: false), aby bylo jasné, které části (kreslení stěn, detekce místností, parametrické otvory, finalizace meshe) tvoří jádro první verze a které prvky zůstávají odloženy. Následně definuje třívrstvou architekturu, v níž strukturální graf drží topologii stěn a junctions, graf místností odvozuje semantiku uzavřených cyklů a synchronizační vrstva zapisuje data do pojmenovaných atributů meshe pro Geometry Nodes. Návrh dále konkretizuje datové entity a jejich vazby (Junction, Wall, Room, Adjacency), způsob propagace změn od uživatelské akce po přegenerování geometrie, pravidla práce operátorů a podobu rozhraní ve viewportu i panelech. Závěr kapitoly ověřuje konzistenci návrhu vůči scénářům použití a připravuje podklad pro implementaci bez doplňování chybějících rozhodnutí.
 
@@ -661,7 +661,7 @@ V prostředí Blenderu existují i alternativní cesty, jak sémantiku řešit:
 
 Zvolená architektura tedy nepředpokládá, že ostatní varianty jsou "špatně"; pouze přesouvá optimalizační cíl od krátkodobé jednoduchosti k dlouhodobé konzistenci doménového modelu. Nevýhody zvoleného směru (synchronizační režie, potřeba explicitní perzistence a rekonstrukce) jsou přijaty záměrně, protože umožňují stabilní rozvoj funkcí nad stejným modelem dat i v dalších iteracích (více podlaží, nové typy prvků, exportní adaptéry) bez nutnosti měnit základní princip architektury.
 
-=== Třívrstvá hybridní architektura
+=== Třívrstvá hybridní architektura <sec-design-architecture>
 
 Jádrem návrhu je architektura, která striktně odděluje výpočetní logiku od vizualizace. Celý systém je postaven na třech specializovaných vrstvách: první dvě jsou implementovány výhradně v jazyce Python a zajišťují topologii a sémantiku půdorysu, zatímco třetí vrstva slouží jako jednosměrný most do vykreslovacího jádra programu Blender.
 
@@ -788,7 +788,7 @@ Všechny tři vrstvy jsou provázány jednosměrným asymetrickým tokem dat. Vr
 
 // Validace se aplikuje před zápisem dat do grafů a zabraňuje vzniku degenerované geometrie, která by způsobila vizuální artefakty nebo selhání algoritmů. Pro stěny platí: tloušťka $0{,}05 <= t <= 1{,}0$ m (tenčí stěny způsobují Z-fighting, tlustší nemají architektonický smysl), výška $1{,}0 <= h <= 10{,}0$ m, úhel napojení $0° < alpha <= 180°$. Pro místnosti: minimální plocha $> 1{,}0 m^2$ (menší prostory typicky indikují chybu v kreslení, ne reálnou místnost), poměr stran $0{,}1 <= "šířka"/"délka" <= 10{,}0$ a minimálně 3 hraniční vrcholy. Pro otvory: šířka je validována vůči délce stěny s odečtením inset zón u junctions (junction inset = polovina maximální tloušťky sousedních stěn), výška nesmí přesáhnout výšku stěny a cutter boxy nesmějí přesahovat pod Z = 0 (podmínka numerické stability EXACT Boolean solveru). Veškeré interní výpočty probíhají v metrech; převod jednotek se aplikuje výhradně na prezentační vrstvě při zobrazování v #gls("ui", long: false).
 
-== Návrh funkcí
+== Návrh funkcí <sec-design-functions>
 
 Architektura a datový model definují statiku systému --- z čeho se skládá a jaká data nese. Tato sekce popisuje dynamiku: jak systém reaguje na uživatelské akce v každé funkci FP1 až FP7. Každá funkce je označena prioritou (must-have / should-have) v souladu s MVP filtrem z kapitoly 3.1.
 
@@ -880,7 +880,7 @@ Addon definuje tři typy manipulátorů. *Manipulátor tloušťky stěny* (svět
 
 Kótovací overlay _(should-have)_ zobrazuje rozměry stěn a metriky místností průběžně ve 3D Viewportu bez nutnosti aktivovat speciální nástroj. Text je vykreslován jako `POST_PIXEL` overlay přes draw_handler registrovaný na `SpaceView3D` (@blender_api) --- zůstává čitelný nezávisle na úhlu kamery, protože pracuje v souřadnicích obrazovky. Data jsou čtena výhradně z Vrstev 1 a 2, nikoli z geometrie scény: délky stěn z Euklidovské vzdálenosti junction--junction, plochy a centroidy z uzlů Vrstvy 2. Viditelnost kótování přepíná globální přepínač v Nastavení (klávesa `T`).
 
-== Návrh uživatelského rozhraní
+== Návrh uživatelského rozhraní <sec-design-ui>
 
 Architektura a funkce definují, co systém dělá. Tato sekce popisuje, jak uživatel se systémem komunikuje --- kde jsou nástroje umístěny, jaká klávesová zkratka co spouští a jak viewport vizuálně reflektuje aktuální stav. Návrh #gls("ui", long: false) vychází z principu konzistence s ekosystémem Blenderu: každý prvek rozhraní kopíruje vzor, který uživatelé Blenderu již ovládají, aby minimalizoval náklady na učení. Současně musí návrh reflektovat omezení Blender Python #gls("api", long: false), zejména nemožnost přidat nativní pracovní mód, a dosáhnout ekvivalentního výsledku kompozicí dostupných mechanismů.
 
@@ -1109,5 +1109,169 @@ Hodnocení provedené třemi metodami neprokázalo žádné systémové nedostat
 
 #pagebreak()
 = Implementace
+
+Kapitola implementace navazuje přímo na výsledky analýzy v kapitole @chap-analysis a technický návrh z kapitoly @chap-design. Východiskem je #gls("mvp", long: false) rozsah a třívrstvá architektura definovaná v sekci @sec-design-architecture. Implementace zachovává stejný datový tok i rozdělení odpovědností: čisté Python jádro řeší topologii a sémantiku, synchronizační vrstva je most do Blenderu a vizualizaci zajišťuje #gls("gn", long: false) modifikátor a #gls("ui", long: false) vrstva.
+
+== Addon pro Blender
+
+FloorPlanMaster se integruje do Blenderu jako Python balíček spuštěný přímo uvnitř Blenderova interpretu. Tato integrace je výrazně hlubší než pouhé přidání funkce: addon sdílí s Blenderem stejný Python interpret, může registrovat vlastní typy, ovlivňovat chování viewportu a zachytávat události v reálném čase. Blender pro tuto formu integrace definuje kontraktní dvojici funkcí --- funkci pro aktivaci, která zaregistruje veškeré operátory, panely a draw handlery addonu, a funkci pro deaktivaci, která vše bez zbytků odregistruje. Životní cyklus addonu je tak plně řízen Blenderem; addon nezanechává žádné vedlejší efekty mimo dobu své aktivace.
+
+Propojení s Blenderem přináší specifickou vývojovou výzvu: kód závislý na Blender #gls("api", long: false) nelze testovat standardním pytestem spuštěným z terminálu, protože mimo Blender toto #gls("api", long: false) není k dispozici. FloorPlanMaster tuto výzvu řeší striktním rozlišením kódu závislého na Blender #gls("api", long: false) od čistého Pythonu. Celé datové jádro --- topologické grafy, validační funkce a matematické utility --- je implementováno bez jakékoliv přímé vazby na Blender. Integrační vrstva pak při startu addonu podmíněně ověří dostupnost Blender #gls("api", long: false); pokud je dostupné, zaregistruje operátory, panely a draw handlery; pokud ne --- například při spuštění testů z IDE --- registraci přeskočí a čisté Python jádro zůstane plně funkční a importovatelné.
+
+Algoritmy pro detekci cyklů v planárních grafech jsou postaveny nad knihovnou NetworkX --- Python balíčkem třetí strany, který Blender ve svém interpretu nenabízí. Pro distribuci jako Blender Extension (formát zavedený v Blenderu 4.2) je NetworkX přibalen jako archiv ve formátu Python wheel přímo do balíčku addonu. Python dokáže z takového archivu importovat moduly přímo bez rozbalení. Vstupní bod addonu proto po spuštění přidá složku s archivem do vyhledávací cesty interpretu --- NetworkX se stane dostupným bez jakéhokoliv zásahu uživatele.
+
+== Organizace modulů
+
+Struktura složek vymáhá jednosměrný závislostní tok: jádro systému (grafy, validátory, utility) nezávisí na Blender #gls("api", long: false), synchronizační vrstva přidává první vazbu na `bpy` a operátory s #gls("ui", long: false) stojí na vrcholu hierarchie. Díky tomu lze jednotkové testy spouštět standardním pytestem bez přítomnosti Blenderu.
+
+#block(breakable: false)[
+```text
+src/
+├── __init__.py              # addon entry point: register/unregister, graph store
+├── core/
+│   ├── structural_graph.py  # Vrstva 1 — junction, wall, opening, topologie
+│   ├── room_graph.py        # Vrstva 2 — room, adjacency, lazy synchronizace
+│   ├── sync.py              # Vrstva 3 — Python grafy → Blender mesh + atributy
+│   ├── final_mesh_builder.py
+│   ├── junction_solver.py
+│   └── validators.py        # sdílené validační funkce s chybovými kódy
+├── operators/               # Blender modální operátory (FP1–FP4)
+├── ui/                      # N-panel, overlay manager, selection state, properties
+├── geometry/                # Geometry Nodes tree builder
+├── utils/
+│   ├── constants.py         # výchozí hodnoty, validační limity, výčty
+│   └── math_helpers.py      # 2D geometrie, polygon area, centroid, aspect ratio
+├── tests/                   # pytest unit testy pro core/ a utils/
+└── wheels/                  # bundlované .whl závislosti (networkx)
+```
+]
+
+Složka s testy pokrývá celé čisté Python jádro: Vrstvu 1, Vrstvu 2, validátory a matematické utility. Každý testovací soubor ověřuje jak standardní scénáře, tak hraniční podmínky --- minimální a maximální hodnoty parametrů, duplicitní entity, topologicky neplatné grafy a výpočetně degenerované situace. Celkem je k dispozici přes 190 testovacích případů, přičemž všechny procházejí. Synchronizační vrstva a operátory nejsou pokryty automatickými testy, neboť vyžadují přítomnost Blenderu --- jejich správnost je ověřována manuálně přímo v prostředí Blenderu.
+
+== Vrstvy
+
+Třívrstvá architektura tvoří výpočetní jádro addonu. Porozumět jejímu fungování nejlépe umožňuje sledovat konkrétní událost: uživatel potvrdí nový vrchol v tužkovém nástroji a čeká, až se ve viewportu vytvoří nová stěna. Tato zdánlivě jednoduchá akce projde všemi třemi vrstvami a nakonec spustí reevaluaci #gls("gn", long: false) modifikátoru v C++ jádru Blenderu.
+
+=== Vrstva 1 --- Strukturální graf
+
+První vrstva přijme požadavek na přidání nového vrcholu a stěny a ještě než cokoliv zapíše do svého stavu, provede sadu validačních kontrol na vstupu: zda nová stěna není příliš krátká, zda na zadaných souřadnicích již neexistuje jiný vrchol, zda nevznikne duplicitní stěna. Pokud jakákoliv kontrola selže, vrstva požadavek odmítne a vrátí specifický chybový kód --- grafová struktura zůstane beze změny v platném stavu. Toto pravidlo platí pro všechny operace zápisu bez výjimky. Výsledkem je silný invariant --- datový model je v libovolném okamžiku topologicky správný a konzistenci není třeba ověřovat na více místech kódu.
+
+Pro efektivní vyhledávání blízkých vrcholů --- operaci klíčovou pro funkci přichycení v tužkovém nástroji --- udržuje Vrstva 1 prostorový index v podobě slovníku mapujícího zaokrouhlené souřadnice na identifikátor existujícího vrcholu. Dotaz na vrcholy v blízkosti dané polohy je tak operací v konstantním čase, nezávislou na celkovém počtu vrcholů v grafu.
+
+Každá entita --- vrchol i stěna --- dostane při vzniku universally unique identifier. UUID identifikuje entitu jednoznačně po celou dobu životnosti projektu, a to i přes uložení a načtení souboru. Tato stabilita identifikátorů je podmínkou správné funkce výběru ve viewportu, sledování příslušnosti otvorů k stěnám i fungování mapovače, který UUID překládá na kompaktní celá čísla pro komunikaci s Geometry Nodes.
+
+Planární embedding je reprezentace planárního grafu, která ke každému vrcholu ukládá cyklické pořadí jeho sousedů v rovině. Z tohoto pořadí lze algoritmicky odvodit hranice všech ohraničených oblastí --- tzv. faces planárního grafu --- aniž by bylo nutné provádět geometrické výpočty. Pro půdorys, jehož stěny tvoří planární graf, odpovídá každá ohraničená oblast právě jedné potenciální místnosti.
+
+Topologicky nejnáročnější operací Vrstvy 1 je detekce minimálních cyklů --- uzavřených stěnových smyček vymezujících potenciální místnosti. Implementace vychází z planárního embeddingu konstruovaného nad knihovnou NetworkX: nejprve jsou z grafu odstraněny listy, které součástí žádného cyklu být nemohou; poté se zkonstruuje planární embedding a z jeho hraniční struktury se extrahují všechny minimální ohraničené oblasti. Výsledkem je deterministická sada smyček. Výsledek je cachovaný a invaliduje se pouze při změně topologie --- průběžné dotazy na seznam cyklů se tak nemusejí přepočítávat při každém pohybu myši.
+
+=== Vrstva 2 --- Graf místností
+
+Vrstva 2 reaguje na dokončení operace ve Vrstvě 1 a synchronizuje svůj stav s aktuálním seznamem minimálních cyklů. Tato synchronizace je záměrně líná --- neprobíhá průběžně při každé dílčí změně, ale vždy až po dokončení celé uživatelské operace. Synchronizace porovná aktuální sadu cyklů s množinou stávajících místností na základě kanonického klíče každého cyklu --- setříděné množiny jeho hraničních stěn. Nové smyčky dostanou nové objekty místností; smyčky, které z topologie zmizely, jsou odstraněny spolu se svými metadaty; zachované smyčky zůstávají nedotčeny --- jejich jméno, typ a ostatní atributy jsou stabilní.
+
+Tato stabilita identit místností není vedlejším efektem, ale záměrným architektonickým rozhodnutím. Přidání nové, nesouvisející stěny na druhém konci půdorysu nesmí způsobit, že dříve pojmenovaná místnost ztratí svůj identifikátor nebo metadata. Destrukce identity místnosti nastane jedině tehdy, pokud se topologie její hraniční smyčky skutečně změní.
+
+Plocha, obvod a centroid každé místnosti jsou přepočítány ze souřadnic vrcholů příslušné smyčky při každé synchronizaci --- jsou odvozené veličiny, nikoliv primárně uložená data, a proto nikdy nemohou být zastaralé. Sousedství místností je detekováno analogicky: po každé synchronizaci jsou pro každou dvojici místností sdílejících alespoň jednu stěnu vytvořeny nebo aktualizovány záznamy sousedství.
+
+=== Vrstva 3 --- Synchronizace s Blenderem
+
+Vrstva 3 překládá Python datový model do formátu, jemuž Blender a Geometry Nodes rozumějí. Jejím výstupem je jeden Blender mesh objekt --- tzv. base mesh půdorysu --- nesoucí topologii i parametry ve formě pojmenovaných atributů čitelných přímo z #gls("gn", long: false) stromu.
+
+Plná synchronizace probíhá ve dvou fázích. V první fázi se mesh rekonstruuje od nuly: pro každou stěnu se vypočítá přesný čtyřúhelníkový obrys v rovině XY přes jádro v `junction_solver.py` (angular-sort nad stěnami v každém vrcholu), aby spoje fungovaly pro libovolné úhly bez mezer a přesahů. Na vrcholech se třemi a více stěnami se doplní výplňový polygon spoje a pro každý otvor se vytvoří šestistěnný cutter box. Současně se dopočte a vloží podlahový polygon místnosti po vnitřní hraně stěn.
+
+Ve druhé fázi se přes `mesh.attributes` zapíší per-face atributy: `is_wall`, `is_opening`, `wall_id`, `wall_height`, `wall_thickness`, `room_id`, `room_area` a `room_perimeter`. Tím je zaručeno, že hodnoty jsou ihned dostupné pro Geometry Nodes. Po zápisu se objekt pouze označí pro přepočet (`update_tag`) a reevaluace proběhne líně při redraw; synchronizace záměrně nevolá explicitní synchronní update depsgraphu.
+
+Vrstva 3 obsahuje i lokální synchronizaci pro editaci parametrů stěny. Pokud se mění pouze výška, přepíše se jen `wall_height` na známých indexech stěnových a junction-fill faces bez rebuildu topologie; změna tloušťky stále spouští plný sync. Pro tento režim se po každém plném syncu udržují mapy `wall UUID -> face index` a `junction UUID -> face index`.
+
+Kvůli Undo/Redo a addon reloadu je mesh primárním zdrojem dat. Python grafy i mapovač UUID se po každém syncu serializují do #gls("json", long: false) custom property objektu a při obnově se rekonstruují zpět; operátory tak mohou začít z konzistentního stavu i po návratu v historii nebo po znovunačtení addonu.
+
+=== Geometry Nodes --- generování 3D geometrie
+
+#gls("gn", long: false) modifikátor přebírá od Vrstvy 3 připravený base mesh a autonomně generuje finální trojrozměrnou geometrii. #gls("gn", long: false) strom je sestaven programaticky při první aktivaci addonu a nese interní číslo verze; při nesouladu verze se strom automaticky přebuduje.
+
+Tok zpracování uvnitř stromu běží ve třech krocích. Nejprve se oddělí stěnové faces (`is_wall == 1`) od zbytku. Ze zbytku se dále oddělí opening cutter faces (`is_opening == 1`) a zbývající část tvoří podlahy. Stěnové faces se extrudují podle per-face hodnoty `wall_height`. Cutter boxy se už v #gls("gn", long: false) neextrudují --- do stromu vstupují jako hotová 3D tělesa z Vrstvy 3 a operací Boolean Difference (EXACT) se odečtou od stěn. Výsledek se spojí s podlahovými plochami a pošle na výstup modifikátoru.
+
+Celé zpracování probíhá v C++ jádru Blenderu a je automaticky reevaluováno při každé změně base meshe nebo jeho atributů. Jakmile Vrstva 3 dokončí synchronizaci, Blender reevaluje #gls("gn", long: false) modifikátor bez explicitního volání --- tím vzniká reaktivní vizualizační smyčka popsaná v návrhu: Python strana aktualizuje data, vizualizaci zajistí Blender.
+
+== Funkce
+
+Funkce addonu jsou implementovány jako Blender operátory --- spustitelné příkazy registrované u Blenderu a přiřazené klávesovým zkratkám nebo tlačítkům panelu. Každý operátor pracuje výhradně přes rozhraní datových vrstev a tvoří tak řídicí vrstvu (Controller) #gls("mvc", long: false) architektury popsané v návrhu v sekci @sec-design-architecture. Operátory nestojí na sobě navzájem --- každý je samostatnou jednotkou, přistupující ke sdílené cache grafů a sdílenému stavu výběru přes definovaná rozhraní.
+
+=== FP1 --- Nástroj tužka
+
+Nástroj tužka je primárním způsobem kreslení stěn a je implementován jako modální operátor. Operátor funguje jako stavový automat se dvěma stavy. V prvním čeká na určení výchozího bodu nové stěny; ve druhém táhne náhledovou linku od posledního potvrzeného vrcholu ke kurzoru a čeká na potvrzení dalšího bodu. Každé potvrzení vrcholu zapíše novou entitu do Vrstvy 1; stiskem klávesy pro zrušení posledního kroku je tato entita odstraněna a operátor se vrátí o jeden krok zpět. Ukončení sekvence --- klávesou nebo uzavřením smyčky --- spustí finální synchronizaci: Vrstva 3 zapíše výsledný mesh a Geometry Nodes generují 3D geometrii.
+
+Tento návrh odhalil výkonnostní problém: pokud by se po každém potvrzeném vrcholu spustila plná synchronizace Vrstvy 3 (přepočet všech stěnových obrysů, zápis atributů, reevaluace #gls("gn", long: false) modifikátoru), rostla by cena každého kliknutí lineárně s počtem stěn v grafu --- celková cena za nakreslenou sekvenci $W$ stěn by dosahovala $O(W^2)$. FloorPlanMaster tento problém řeší odsunutím synchronizace na konec celé kreslicí sekvence. Během kresby udržuje operátor pouze čistě Python výpočet aktuálních stěnových obrysů --- bez jakékoliv závislosti na Blenderu --- a zobrazuje je jako okamžitou vizuální odezvu ve viewportu. Celková cena klesla na $O(W)$ za celou sezení, přičemž vizuální odezva zůstala okamžitá.
+
+Při spuštění operátor zaregistruje své kreslicí funkce v centrálním overlay manageru (viz sekci @sec-overlay-manager), uloží aktuální pohled kamery a přepne viewport do horní ortografické projekce. Po ukončení jsou kreslicí funkce odregistrovány a pohled je obnoven.
+
+=== FP2 --- Výběr a parametrické úpravy
+
+Interaktivní editace běží v dedikovaném FloorPlan módu (Shift+Q), který je implementován jako modal controller nad viewportem. Tento režim přebírá ne-navigační události, chrání před nechtěnými globálními zkratkami a centralizuje klikací výběr stěn i místností. Výběr funguje nezávisle na pohledu kamery: implementace testuje klik vůči projekci šesti ploch 3D tělesa stěny (top, bottom, čtyři boky), takže funguje i v perspektivním pohledu.
+
+Výsledek výběru se zapisuje do sdíleného `SelectionState` a N-panel okamžitě zobrazuje parametry vybrané entity. Parametrické úpravy stěn pokrývají nejen tloušťku a výšku, ale i polohu: samostatnou editaci obou koncových vrcholů (Start/End XY) a posun stěny po normále přes ovladač středu. Callbacky používají guard flagy proti cyklickým update voláním a pro rychlé tahání sliderů je nasazen debounced sync.
+
+Synchronizační cesta pro editace stěn je optimalizovaná: změna pouze výšky se aplikuje lokálním přepisem atributů bez rebuildu topologie, zatímco změna tloušťky přepíná na plný přepočet. Uživatel tak dostává okamžitou odezvu i při kontinuální editaci.
+
+Přidávání otvorů vynucuje geometrická omezení už při zadávání: otvor nesmí přesáhnout délku stěny, nesmí vstoupit do junction inset zón a nesmí se překrývat s jiným otvorem. Dialog průběžně clampuje hodnoty tak, aby nikdy nevznikl neplatný stav. Součástí FP2 jsou i destruktivní operace: odstranění vybrané stěny a odstranění místnosti při zachování sdílených stěn sousedních místností.
+
+Vložení místnosti umístí pravoúhlý půdorys na aktuální pozici 3D kurzoru se zadanými rozměry jako transakci Vrstvy 1.
+
+=== FP3 --- Metadata místností
+
+Jakmile Vrstva 2 detekuje novou uzavřenou smyčku stěn, vytvoří odpovídající objekt místnosti s automaticky vypočítanou plochou, obvodem a polohou centroidu. Uživatel může místnosti procházet v N-panelu, kde je zobrazen jejich seznam s klíčovými metrikami, a každou místnost přejmenovat. Přejmenování probíhá obousměrně: změna provedená v panelu se zapíše do grafu místností a zároveň se persistuje do Blender objektu tak, aby přežila rekonstrukci grafů po reloadu nebo Undo.
+
+Implementace pokrývá základní identifikaci, přejmenování a zobrazení klíčových metrik. Plná správa sémantických atributů místností ve smyslu celého návrhu --- materiály, typy povrchů, hierarchie prostorů --- tato verze addonu neimplementuje. Je ale připravena pro budoucí rozšíření a implementaci v dalších verzích.
+
+=== FP4 --- Finalizace a bake
+
+FP4 je implementováno operátorem Bake, který převádí parametrický FloorPlan objekt na statický mesh připravený pro další práci nebo exportní pipeline Blenderu. Operátor před bake nejprve rekonstruuje grafy z autoritativního stavu objektu, potom vygeneruje finální geometrii přes specializovaný mesh builder a odstraní procedurální identitu objektu. Uživatel může zvolit nedestruktivní variantu (ponechat originál a vytvořit baked kopii) i destruktivní variantu.
+
+Finalizační krok zahrnuje i cleanup dat: převod corner float2 atributů na #gls("uv", long: false) vrstvy, volitelné odstranění named attributes a přiřazení výchozího materiálu. Součástí implementace je také ochrana vstupu do Edit Mode: při pokusu o přechod do mesh editace se zobrazí varovný dialog s volbami Cancel, Bake nebo Lose Data, aby přechod ze sémantického modelu na běžný mesh byl vždy explicitní.
+
+=== Neimplementované funkce
+
+V aktuální verzi zůstávají neimplementované kontextové menu (FP5), 3D manipulátory (FP6) a automatické kótování (FP7). Export jako samostatný cílový výstupní krok nad rámec bake workflow také není dokončen. Architektura je však navržena tak, aby šlo tyto části doplnit jako izolované operátory bez zásahu do datového jádra.
+
+== Uživatelské rozhraní <sec-impl-ui>
+
+Architektura #gls("ui", long: false) --- N-panel jako centrum interakce, overlay manager jako centrální dispatcher #gls("gpu", long: false) vizualizace vzorem Mediátor a sdílený stav výběru jako modulová proměnná bez vazby na Blender vlastnosti --- byla realizována dle návrhu v sekcích @sec-design-ui. Tato kapitola popisuje implementační rozhodnutí a rozšíření, která vznikla nad rámec návrhu.
+
+=== N-panel
+
+Stav rozbalení záznamu místnosti v N-panelu je persistován přímo jako custom property na FloorPlan objektu (`room_expanded_{room_id}`). Alternativami byly modul-level slovník (smazán při addon reloadu) nebo `Scene PropertyGroup` (sdílená přes všechny FloorPlan objekty). Objekt jako nosič stavu je správná volba: stav rozbalení je atribut konkrétní instance, přežije reload souboru a je automaticky součástí undo stacku.
+
+=== Overlay manager <sec-overlay-manager>
+
+Implementace přidává odolnostní chování vůči chybám v jednotlivých vrstvách, které návrh neřešil: `_report_layer_failure()` odchytí výjimku z libovolné overlay vrstvy, vypíše podrobnou hlášku do konzole a zaeviduje klíč chyby do sady `_reported_failures`. Opakovaně selhávající vrstva nevypíše log na každý frame, ale pouze jednou, čímž se zabrání zahlcení konzole při runtime chybě.
+
+Oproti obecnému popisu overlay vrstev v návrhu bylo implementováno pět konkrétních vrstev:
+
+- `wall_selection.py` a `room_selection.py` --- interakční zvýraznění vybrané stěny oranžovým OBB boxem a vybrané místnosti; dle návrhu
+- `labels.py` --- textové popisky místností (název + plocha v centroidu) ve viewportu; dle návrhu
+- `wall_opening_highlight.py` --- pasivní vrstva, vždy viditelná pro každý viditelný FloorPlan objekt bez ohledu na výběr; kreslí hrany všech stěnových boxů černě a hrany otvorů barevně dle typu (dveře azurově, okna fialově); vrstva nebyla explicitně navržena --- vznikla z potřeby vizuálně odlišit otvory ve scéně nezávisle na výběru, aby byl půdorys čitelný i mimo aktivní sémantický mód
+- `active_floorplan_hint.py` --- textový hint v levém dolním rohu viewportu zobrazující název aktivního FloorPlan objektu; vrstva nebyla v návrhu; přidána pro orientaci v scénách s více FloorPlan objekty
+
+=== Sdílený stav výběru
+
+`SelectionState` byl rozšířen o dvě pole, která návrh neobsahoval.
+
+Pole `object_name` uchovává název FloorPlan objektu, ke kterému aktuální výběr patří. Bez tohoto pole by overlay vrstvy a `poll()` funkcí panelů nemohly rozlišit, zda vybraná stěna patří aktivnímu, či jinému FloorPlan objektu --- ve scéně s více FloorPlan objekty by se pak zobrazovaly vlastnosti stěny z jiného objektu, než na který uživatel kliká. Metody `belongs_to_object(obj)`, `has_wall_for_object(obj)` a `has_room_for_object(obj)` centralizují tuto kontrolu tak, aby ji volající kód nemusel reimplementovat.
+
+Pole `room_viewport_selected` rozlišuje, zda místnost byla vybrána kliknutím ve viewportu (`True`) nebo pouze rozbalením záznamu v N-panelu (`False`). `poll()` top-panelu vlastností místnosti tuto hodnotu čte a zobrazí top-panel pouze při kliknutí ve viewportu, aby při procházení seznamu místností v N-panelu panel samovolně neposouvalo a nerušilo práci.
+
+== Současná omezení implementace
+
+Implementace addonu pokrývá rozsah definovaný v návrhu jako #gls("mvp", long: false). Řada funkčních oblastí zůstala záměrně mimo tento rozsah --- buď z důvodu prioritizace základní kreslicí a editační pipeline, nebo proto, že jejich správná realizace vyžaduje koordinaci více vrstev architektury a přidání nad rámec #gls("mvp", long: false) by ohrozilo stabilitu jádra.
+
+*Transformace FloorPlan objektu.* Implementace předpokládá, že FloorPlan objekt leží v počátku souřadnicového systému světa s identitní rotací a jednotkovým měřítkem. Pokud uživatel přesune objekt klávesou G nebo jej otočí klávesou R, Blender posune nebo otočí vizuální reprezentaci objektu, ale při příští synchronizaci Vrstvy 3 jsou vrcholy meshe přepsány z L1 souřadnic, které transformaci neznají --- geometrie se vizuálně vrátí do původní lokální polohy. Architektura na tuto funkci připravena je: přidání transformace spočívá v jedné systematické změně v `sync.py` --- při zápisu vrcholů do bmesh se každá L1 souřadnice transformuje inverzí `obj.matrix_world`. Žádná strukturální změna datového modelu není potřeba.
+
+*Duplikování FloorPlan objektu.* Příkaz Shift+D vytvoří nový Blender objekt se zkopírovanými custom properties včetně serializovaného #gls("json", long: false) grafu. Po aktualizaci depsgraphu addon detekuje nový objekt a rekonstruuje pro něj nezávislé Python grafy. Tím však přežijí identické UUID pro všechny junctions, stěny, otvory a místnosti --- v `_graph_store` existují dva nezávislé grafy se shodným UUID prostorem, což může způsobit neočekávané chování. Navíc Blender do explicitního unlinkování sdílí mezi oběma objekty datový blok meshe: synchronizace jednoho objektu přepíše mesh, který vidí oba. Podpora duplikování vyžaduje dvě doimplementace: generování nových UUID při rekonstrukci grafu z kopírovaného #gls("json", long: false) a vynucené odlinkování datového bloku meshe ihned po detekci duplikátu.
+
+*Přejmenování FloorPlan objektu.* `_graph_store` je slovník klíčovaný řetězcovým jménem objektu. Přejmenování objektu (F2) změní `obj.name` v Blenderu, ale addon nemá registrovaný handler pro událost přejmenování --- `_graph_store` stále obsahuje grafy pod starým klíčem a sémantický mód se tiše přeruší. Oprava je lokalizovaná: buď přejít na klíčování podle stabilnějšího identifikátoru, nebo registrovat `bpy.app.handlers.depsgraph_update_post` handler, který detekuje rozdíl a přeindexuje příslušný záznam.
+
+*Paralelní práce s více FloorPlan objekty.* `_mode_object_name` je jednoduché module-level stringové pole --- v sémantickém módu může být nejvýše jeden FloorPlan objekt najednou. Tato vlastnost je záměrná: v rámci #gls("mvp", long: false) priority bylo zvoleno jednoduché a robustní řešení pro jednoobjektový scénář. Addon ale v ostatních ohledech s existencí více FloorPlan objektů ve scéně počítá --- `_graph_store` udržuje grafy pro všechny z nich a pasivní overlay vrstva `wall_opening_highlight.py` kreslí stěny a otvory každého viditelného FloorPlan objektu bez ohledu na to, který je aktivní.
+
+*Persistence stavu módu a výběru.* Po načtení souboru je sémantický mód vždy vypnutý a výběr prázdný --- `_mode_object_name` a `SelectionState` jsou module-level proměnné mimo Blender undo stack a nejsou serializovány do `.blend` souboru. Jde o záměrné bezpečné výchozí chování: po restartu Blenderu nebo načtení souboru začíná uživatel v neutrálním stavu a musí mód aktivovat explicitně (Shift+Q). Geometrie, grafy a veškerá topologická data jsou perzistovaná přes #gls("json", long: false) custom property `_floorplan_graphs` a jsou korektně rekonstruována.
+
 #pagebreak()
 = Testování
