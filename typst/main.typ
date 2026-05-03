@@ -862,7 +862,7 @@ V dialogu uživatel volí: *organizaci výstupu* (jeden objekt / per místnost /
 
 === FP5 --- Kontextová nabídka
 
-Kontextová nabídka _(should-have)_ poskytuje rychlý přístup k méně frekventovaným operacím (přejmenování, smazání, rozdělení stěny) bez nutnosti hledat je v panelech. Vyvolává se stiskem #gls("rmb", long: false) ve 3D Viewportu --- primární Blender konvence od verze 2.80.
+Kontextová nabídka _(should-have)_ poskytuje rychlý přístup k méně frekventovaným operacím (přejmenování, smazání, rozdělení stěny) bez nutnosti hledat je v panelech. Vyvolává se stiskem #gls("rmb", long: false) ve 3D Viewportu --- zaběhlá Blender konvence.
 
 Klíčovým mechanismem je *raycast*: addon vrhne paprsek z pozice kurzoru přes Vrstvu 3 (Blender mesh s named attributes) a identifikuje typ elementu. Plocha → místnost; hrana → stěna; vrchol → junction; prázdný prostor → globální akce. Obsah nabídky se dynamicky přizpůsobuje kontextu: uživatel vidí vždy jen akce relevantní pro kliknutý prvek, nikoli celý katalog operátorů addonu.
 
