@@ -1105,16 +1105,16 @@ Zvoleny jsou dva reprezentativní scénáře:
 
 === Závěr hodnocení
 
-Hodnocení provedené třemi metodami neprokázalo žádné systémové nedostatky zabraňující zahájení implementace. Kontrola konzistence potvrdila soulad s Blender konvencemi na všech úrovních. Heuristické hodnocení dospělo u všech tří heuristik k pozitivnímu výsledku. Kognitivní průchody UC 1.2 a UC 1.1 identifikovaly dvě drobná rizika (nutnost uzavřít cyklus pro vznik místnosti; znalost pojmu 3D kurzor) a obě jsou zmírněna vizuálními mechanismy nebo jsou akceptovatelná pro cílovou skupinu se základní znalostí Blenderu.
+Hodnocení provedené třemi metodami neprokázalo žádné systémové nedostatky zabraňující zahájení implementace. Kontrola konzistence potvrdila soulad s Blender konvencemi na všech úrovních. Heuristické hodnocení dospělo u všech tří heuristik k pozitivnímu výsledku. Kognitivní průchody UC 1.2 a UC 1.1 identifikovaly dvě drobná rizika (nutnost uzavřít cyklus pro vznik místnosti; znalost pojmu 3D kurzor) a obě jsou zmírněna vizuálními mechanismy nebo jsou akceptovatelná pro cílovou skupinu se základní znalostí programu Blender.
 
 #pagebreak()
 = Implementace
 
-Kapitola implementace navazuje přímo na výsledky analýzy v kapitole @chap-analysis a technický návrh z kapitoly @chap-design. Východiskem je #gls("mvp", long: false) rozsah a třívrstvá architektura definovaná v sekci @sec-design-architecture. Implementace zachovává stejný datový tok i rozdělení odpovědností: čisté Python jádro řeší topologii a sémantiku, synchronizační vrstva je most do Blenderu a vizualizaci zajišťuje #gls("gn", long: false) modifikátor a #gls("ui", long: false) vrstva.
+Kapitola implementace navazuje přímo na výsledky analýzy v kapitole @chap-analysis a technický návrh z kapitoly @chap-design. Východiskem je #gls("mvp", long: false) rozsah a třívrstvá architektura definovaná v sekci @sec-design-architecture. Implementace zachovává stejný datový tok i rozdělení odpovědností: čisté Python jádro řeší topologii a sémantiku, synchronizační vrstva je most do programu Blender a vizualizaci zajišťuje #gls("gn", long: false) modifikátor a #gls("ui", long: false) vrstva.
 
 == Addon pro Blender
 
-FloorPlanMaster se integruje do Blenderu jako Python balíček spuštěný přímo uvnitř Blenderova interpretu. Tato integrace je výrazně hlubší než pouhé přidání funkce: addon sdílí s Blenderem stejný Python interpret, může registrovat vlastní typy, ovlivňovat chování viewportu a zachytávat události v reálném čase. Blender pro tuto formu integrace definuje kontraktní dvojici funkcí --- funkci pro aktivaci, která zaregistruje veškeré operátory, panely a draw handlery addonu, a funkci pro deaktivaci, která vše bez zbytků odregistruje. Životní cyklus addonu je tak plně řízen Blenderem; addon nezanechává žádné vedlejší efekty mimo dobu své aktivace.
+FloorPlanMaster se integruje do programu Blender jako Python balíček spuštěný přímo uvnitř Blender interpretu. Tato integrace je výrazně hlubší než pouhé přidání funkce: addon sdílí se softwarem stejný Python interpret, může registrovat vlastní typy, ovlivňovat chování viewportu a zachytávat události v reálném čase. Blender pro tuto formu integrace definuje kontraktní dvojici funkcí --- funkci pro aktivaci, která zaregistruje veškeré operátory, panely a draw handlery addonu, a funkci pro deaktivaci, která vše bez zbytků odregistruje. Životní cyklus addonu je tak plně řízen systémem programu; addon nezanechává žádné vedlejší efekty mimo dobu své aktivace.
 
 Propojení s Blenderem přináší specifickou vývojovou výzvu: kód závislý na Blender #gls("api", long: false) nelze testovat standardním pytestem spuštěným z terminálu, protože mimo Blender toto #gls("api", long: false) není k dispozici. FloorPlanMaster tuto výzvu řeší striktním rozlišením kódu závislého na Blender #gls("api", long: false) od čistého Pythonu. Celé datové jádro --- topologické grafy, validační funkce a matematické utility --- je implementováno bez jakékoliv přímé vazby na Blender. Integrační vrstva pak při startu addonu podmíněně ověří dostupnost Blender #gls("api", long: false); pokud je dostupné, zaregistruje operátory, panely a draw handlery; pokud ne --- například při spuštění testů z IDE --- registraci přeskočí a čisté Python jádro zůstane plně funkční a importovatelné.
 
@@ -1127,26 +1127,24 @@ Struktura složek vymáhá jednosměrný závislostní tok: jádro systému (gra
 #block(breakable: false)[
 ```text
 src/
-├── __init__.py              # addon entry point: register/unregister, graph store
+├── __init__.py              # addon entry point
 ├── core/
-│   ├── structural_graph.py  # Vrstva 1 — junction, wall, opening, topologie
-│   ├── room_graph.py        # Vrstva 2 — room, adjacency, lazy synchronizace
-│   ├── sync.py              # Vrstva 3 — Python grafy → Blender mesh + atributy
+│   ├── structural_graph.py  # Vrstva 1 — junction, wall topologie
+│   ├── room_graph.py        # Vrstva 2 — room, synchronizace
+│   ├── sync.py              # Vrstva 3 — Python grafy → Blender mesh
 │   ├── final_mesh_builder.py
 │   ├── junction_solver.py
-│   └── validators.py        # sdílené validační funkce s chybovými kódy
+│   └── validators.py        # sdílené funkce s chybovými kódy
 ├── operators/               # Blender modální operátory (FP1–FP4)
-├── ui/                      # N-panel, overlay manager, selection state, properties
+├── ui/                      # N-panel, overlay, properties
 ├── geometry/                # Geometry Nodes tree builder
 ├── utils/
-│   ├── constants.py         # výchozí hodnoty, validační limity, výčty
-│   └── math_helpers.py      # 2D geometrie, polygon area, centroid, aspect ratio
+│   ├── constants.py         # výchozí hodnoty, validační limity
+│   └── math_helpers.py      # 2D geometrie, polygon area, centroid
 ├── tests/                   # pytest unit testy pro core/ a utils/
 └── wheels/                  # bundlované .whl závislosti (networkx)
 ```
 ]
-
-Složka s testy pokrývá celé čisté Python jádro: Vrstvu 1, Vrstvu 2, validátory a matematické utility. Každý testovací soubor ověřuje jak standardní scénáře, tak hraniční podmínky --- minimální a maximální hodnoty parametrů, duplicitní entity, topologicky neplatné grafy a výpočetně degenerované situace. Celkem je k dispozici přes 190 testovacích případů, přičemž všechny procházejí. Synchronizační vrstva a operátory nejsou pokryty automatickými testy, neboť vyžadují přítomnost Blenderu --- jejich správnost je ověřována manuálně přímo v prostředí Blenderu.
 
 == Vrstvy
 
@@ -1154,15 +1152,17 @@ Třívrstvá architektura tvoří výpočetní jádro addonu. Porozumět jejímu
 
 === Vrstva 1 --- Strukturální graf
 
-První vrstva přijme požadavek na přidání nového vrcholu a stěny a ještě než cokoliv zapíše do svého stavu, provede sadu validačních kontrol na vstupu: zda nová stěna není příliš krátká, zda na zadaných souřadnicích již neexistuje jiný vrchol, zda nevznikne duplicitní stěna. Pokud jakákoliv kontrola selže, vrstva požadavek odmítne a vrátí specifický chybový kód --- grafová struktura zůstane beze změny v platném stavu. Toto pravidlo platí pro všechny operace zápisu bez výjimky. Výsledkem je silný invariant --- datový model je v libovolném okamžiku topologicky správný a konzistenci není třeba ověřovat na více místech kódu.
+První vrstva přijme požadavek na přidání nového vrcholu a stěny a ještě než cokoliv zapíše do svého stavu, provede sadu validačních kontrol na vstupu: zda nová stěna není příliš krátká, zda na zadaných souřadnicích již neexistuje jiný vrchol, zda nevznikne duplicitní stěna. Pokud jakákoliv kontrola selže, vrstva požadavek odmítne a vrátí specifický chybový kód --- grafová struktura zůstane beze změny v platném stavu. Toto pravidlo platí pro všechny operace zápisu. Výsledkem je silný invariant --- datový model je v libovolném okamžiku topologicky správný a konzistenci není třeba ověřovat na více místech kódu.
 
 Pro efektivní vyhledávání blízkých vrcholů --- operaci klíčovou pro funkci přichycení v tužkovém nástroji --- udržuje Vrstva 1 prostorový index v podobě slovníku mapujícího zaokrouhlené souřadnice na identifikátor existujícího vrcholu. Dotaz na vrcholy v blízkosti dané polohy je tak operací v konstantním čase, nezávislou na celkovém počtu vrcholů v grafu.
 
 Každá entita --- vrchol i stěna --- dostane při vzniku universally unique identifier. UUID identifikuje entitu jednoznačně po celou dobu životnosti projektu, a to i přes uložení a načtení souboru. Tato stabilita identifikátorů je podmínkou správné funkce výběru ve viewportu, sledování příslušnosti otvorů k stěnám i fungování mapovače, který UUID překládá na kompaktní celá čísla pro komunikaci s Geometry Nodes.
 
+Topologicky nejnáročnější operací Vrstvy 1 je detekce minimálních cyklů --- uzavřených stěnových smyček vymezujících potenciální místnosti. Implementace vychází z planárního embeddingu konstruovaného nad knihovnou NetworkX.
+
 Planární embedding je reprezentace planárního grafu, která ke každému vrcholu ukládá cyklické pořadí jeho sousedů v rovině. Z tohoto pořadí lze algoritmicky odvodit hranice všech ohraničených oblastí --- tzv. faces planárního grafu --- aniž by bylo nutné provádět geometrické výpočty. Pro půdorys, jehož stěny tvoří planární graf, odpovídá každá ohraničená oblast právě jedné potenciální místnosti.
 
-Topologicky nejnáročnější operací Vrstvy 1 je detekce minimálních cyklů --- uzavřených stěnových smyček vymezujících potenciální místnosti. Implementace vychází z planárního embeddingu konstruovaného nad knihovnou NetworkX: nejprve jsou z grafu odstraněny listy, které součástí žádného cyklu být nemohou; poté se zkonstruuje planární embedding a z jeho hraniční struktury se extrahují všechny minimální ohraničené oblasti. Výsledkem je deterministická sada smyček. Výsledek je cachovaný a invaliduje se pouze při změně topologie --- průběžné dotazy na seznam cyklů se tak nemusejí přepočítávat při každém pohybu myši.
+Nejprve jsou z grafu odstraněny listy, které součástí žádného cyklu být nemohou; poté se zkonstruuje planární embedding a z jeho hraniční struktury se extrahují všechny minimální ohraničené oblasti. Výsledkem je deterministická sada smyček. Výsledek je cachovaný a invaliduje se pouze při změně topologie --- průběžné dotazy na seznam cyklů se tak nemusejí přepočítávat při každém pohybu myši.
 
 === Vrstva 2 --- Graf místností
 
@@ -1275,3 +1275,4 @@ Implementace addonu pokrývá rozsah definovaný v návrhu jako #gls("mvp", long
 
 #pagebreak()
 = Testování
+// Složka s testy pokrývá celé čisté Python jádro: Vrstvu 1, Vrstvu 2, validátory a matematické utility. Každý testovací soubor ověřuje jak standardní scénáře, tak hraniční podmínky --- minimální a maximální hodnoty parametrů, duplicitní entity, topologicky neplatné grafy a výpočetně degenerované situace. Celkem je k dispozici přes 190 testovacích případů, přičemž všechny procházejí. Synchronizační vrstva a operátory nejsou pokryty automatickými testy, neboť vyžadují přítomnost Blenderu --- jejich správnost je ověřována manuálně přímo v prostředí Blenderu.
