@@ -121,6 +121,17 @@ def _get_floorplan_obj(context):
     return _create_floorplan_obj(context)
 
 
+def _get_existing_pencil_obj(context):
+    # Pencil drawing can continue an existing floor plan either when semantic
+    # mode owns the object or when the object is simply selected in Object Mode.
+    from .. import find_floorplan_obj, get_selected_floorplan_obj
+
+    obj = find_floorplan_obj(context)
+    if obj is not None:
+        return obj
+    return get_selected_floorplan_obj(context)
+
+
 class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
     bl_idname = "floorplan.pencil_tool"
     bl_label = "FloorPlan Pencil Tool"
@@ -140,15 +151,14 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
         self._snapped_junction = None
         self._placed_walls = []
         self._placed_junctions = []
-        self._wall_lines_existing = []
         self._wall_tris_new = []
         self._floor_tris_new = []
         self._junction_positions = []
 
         # Use existing floor plan object data if present; otherwise keep the
         # drawing session purely in-memory and create the object on confirm.
-        from .. import find_floorplan_obj, reset_graphs_for_obj
-        self._obj = find_floorplan_obj(context)
+        from .. import reset_graphs_for_obj
+        self._obj = _get_existing_pencil_obj(context)
         if self._obj is not None:
             # Make the existing Floor Plan object active for semantic editing.
             context.view_layer.objects.active = self._obj
@@ -569,13 +579,11 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
 
     def _rebuild_wall_batch(self):
         # Recompute GPU overlay data from L1 — pure Python, no bpy.
-        # Existing walls (already have mesh geometry): black centerlines at Z=0.
         # New walls (this session, no mesh yet): blue 3D filled tris.
         # All junctions: yellow dot markers (projected to 2D in POST_PIXEL).
         walls = self._sg.get_all_walls()
         junctions_by_id = {j.id: j for j in self._sg.get_all_junctions()}
         new_ids = set(self._placed_walls)
-        lines_existing = []
         tris_new = []
         eps = _GPU_PREVIEW_EXPAND
         for w in walls:
@@ -583,13 +591,7 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
             je = junctions_by_id.get(w.junction_end)
             if js is None or je is None:
                 continue
-            if w.id not in new_ids:
-                # Black centerline — two endpoints at Z=0.
-                lines_existing += [
-                    (js.position[0], js.position[1], 0.0),
-                    (je.position[0], je.position[1], 0.0),
-                ]
-            else:
+            if w.id in new_ids:
                 # Full 3D box preview for newly drawn walls.
                 quad = _compute_wall_quad(w, junctions_by_id, self._sg)
                 if not quad:
@@ -609,7 +611,6 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
                 for i in range(4):
                     j = (i + 1) % 4
                     tris_new += [b[i], b[j], t[j], b[i], t[j], t[i]]
-        self._wall_lines_existing = lines_existing
         self._wall_tris_new = tris_new
         self._junction_positions = [j.position for j in junctions_by_id.values()]
         self._floor_tris_new = self._detect_new_floors(junctions_by_id, new_ids)
@@ -682,21 +683,11 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
 
     def _draw_committed_walls_3d(self):
         # Draw GPU overlay geometry in POST_VIEW (world space).
-        # Existing walls: thin black centerlines, depth_test disabled so they
-        # are always visible through the committed mesh geometry.
         # New walls: blue semi-transparent 3D boxes (no mesh yet).
-        if not self._wall_lines_existing and not self._wall_tris_new:
+        if not self._wall_tris_new:
             return
         shader = gpu.shader.from_builtin('UNIFORM_COLOR')
         shader.bind()
-        if self._wall_lines_existing:
-            gpu.state.depth_test_set('NONE')
-            gpu.state.line_width_set(1.5)
-            batch = batch_for_shader(shader, 'LINES', {"pos": self._wall_lines_existing})
-            shader.uniform_float("color", (0.0, 0.0, 0.0, 1.0))
-            batch.draw(shader)
-            gpu.state.line_width_set(1.0)
-            gpu.state.depth_test_set('NONE')
         if self._wall_tris_new:
             gpu.state.blend_set('ALPHA')
             gpu.state.depth_test_set('LESS_EQUAL')
@@ -710,13 +701,16 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
 
     def _draw_junctions_2d(self, context, region, rv3d):
         # Draw all junctions as small filled yellow circles in screen space.
-        if not self._junction_positions:
+        positions = self._junction_positions
+        if not positions and self._sg is not None:
+            positions = [j.position for j in self._sg.get_all_junctions()]
+        if not positions:
             return
         import math
         segments = 16
         radius = 5.0  # pixels
         tris = []
-        for pos in self._junction_positions:
+        for pos in positions:
             p2d = view3d_utils.location_3d_to_region_2d(
                 region, rv3d, Vector((pos[0], pos[1], 0.0))
             )
