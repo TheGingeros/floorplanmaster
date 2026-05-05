@@ -313,21 +313,14 @@ def _build_wall_geometry(
         # In inner mode faces must point INTO the opening (toward opposite jamb /
         # down for head / down for sill).  Outer mode relies on recalc_face_normals
         # so initial orientation there doesn't matter.
-        if include_outer_faces:
-            jn_t1 = (-ux, -uy, 0.0)
-            jn_t2 = (ux, uy, 0.0)
-            sill_n = (0.0, 0.0, 1.0)
-        else:
-            jn_t1 = (ux, uy, 0.0)
-            jn_t2 = (-ux, -uy, 0.0)
-            sill_n = (0.0, 0.0, -1.0)
-        _add_face_oriented(bm, [l1b, r1b, r1t, l1t], jn_t1)
-        _add_face_oriented(bm, [r2b, l2b, l2t, r2t], jn_t2)
+        # Jamb normals always face INTO the opening passage (toward the opposite jamb).
+        _add_face_oriented(bm, [l1b, r1b, r1t, l1t], (ux, uy, 0.0))
+        _add_face_oriented(bm, [r2b, l2b, l2t, r2t], (-ux, -uy, 0.0))
         _add_face_oriented(bm, [l1t, l2t, r2t, r1t], (0.0, 0.0, -1.0))
 
-        # Window sill only (doors stay open to floor).
+        # Window sill only (doors stay open to floor). Sill faces up into opening.
         if z1 > _EPS:
-            _add_face_oriented(bm, [r1b, r2b, l2b, l1b], sill_n)
+            _add_face_oriented(bm, [r1b, r2b, l2b, l1b], (0.0, 0.0, 1.0))
 
 
 def _room_ceiling_height(room, sg, junctions_by_id):
@@ -349,7 +342,7 @@ def _room_ceiling_height(room, sg, junctions_by_id):
     return float(room.height)
 
 
-def _build_room_surfaces(bm, vcache, room, sg, junctions_by_id, include_ceiling, include_outer_faces=True):
+def _build_room_surfaces(bm, vcache, room, sg, junctions_by_id, include_ceiling):
     poly = _compute_room_inner_polygon(room, sg, junctions_by_id)
     if poly is None:
         poly = []
@@ -372,10 +365,8 @@ def _build_room_surfaces(bm, vcache, room, sg, junctions_by_id, include_ceiling,
         z = _room_ceiling_height(room, sg, junctions_by_id)
         if z > _EPS:
             ceil = [_get_or_add_vert(bm, vcache, x, y, z) for x, y in poly]
-            # In inner mode ceiling faces down into the room; outer mode uses
-            # recalc_face_normals to fix orientation for the closed shell.
-            ceil_n = (0.0, 0.0, 1.0) if include_outer_faces else (0.0, 0.0, -1.0)
-            _add_face_oriented(bm, ceil, ceil_n)
+            # Ceiling always faces down into the room.
+            _add_face_oriented(bm, ceil, (0.0, 0.0, -1.0))
 
 
 def build_final_mesh_from_graph(
@@ -409,7 +400,7 @@ def build_final_mesh_from_graph(
             _build_junction_fill(bm, vcache, junction, sg, junctions_by_id)
 
     for room in rg.get_all_rooms():
-        _build_room_surfaces(bm, vcache, room, sg, junctions_by_id, include_ceiling, include_outer_faces)
+        _build_room_surfaces(bm, vcache, room, sg, junctions_by_id, include_ceiling)
 
     bm.verts.ensure_lookup_table()
     bm.edges.ensure_lookup_table()
@@ -424,13 +415,8 @@ def build_final_mesh_from_graph(
     if loose_verts:
         bmesh.ops.delete(bm, geom=loose_verts, context='VERTS')
 
-    if include_outer_faces and bm.faces:
-        # Full outer shell is a closed manifold — safe to auto-recalculate.
-        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-    # Inner-only mode: face winding is set per-face during construction via
-    # _add_face_oriented (out_left/out_right for wall sides, (0,0,1) for floors).
-    # No post-processing — a global centroid or recalc would flip dividing-wall
-    # faces that legitimately point in opposite directions toward adjacent rooms.
+    # Face winding is set at construction time via _add_face_oriented.
+    # No post-processing — all normals already face into the space they bound.
 
     bm.normal_update()
 
