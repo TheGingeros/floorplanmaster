@@ -150,7 +150,7 @@ def clear_graph_store():
 
 
 def is_floorplan_obj(obj):
-    return obj is not None and bool(obj.get("is_floorplan"))
+    return obj is not None and obj.library is None and bool(obj.get("is_floorplan"))
 
 
 def has_floorplan_obj(context):
