@@ -58,24 +58,10 @@ def _assign_default_material(mesh):
         poly.material_index = 0
 
 
-def _set_faces_shade_flat(context, obj):
-    # Keep this as the literal last step of finalization. Do not restore the
-    # previous selection/mode afterwards — the user-verified manual workflow
-    # operates on the baked object left active in Object Mode.
-    view_layer = context.view_layer
-    for selected in context.selected_objects:
-        if selected != obj:
-            selected.select_set(False)
-    view_layer.objects.active = obj
-    obj.select_set(True)
-
-    if obj.mode != 'OBJECT':
-        bpy.ops.object.mode_set(mode='OBJECT')
-
-    bpy.ops.object.editmode_toggle()
-    bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.mesh.faces_shade_flat()
-    bpy.ops.object.editmode_toggle()
+def _set_faces_shade_flat(mesh):
+    for poly in mesh.polygons:
+        poly.use_smooth = False
+    mesh.update()
 
 
 def _cleanup_named_attributes(mesh):
@@ -197,7 +183,7 @@ def detach_floorplan_object(
 
     target_obj.data.update()
     if apply_flat_shading:
-        _set_faces_shade_flat(context, target_obj)
+        _set_faces_shade_flat(target_obj.data)
 
     if context.area:
         context.area.tag_redraw()
@@ -250,9 +236,12 @@ class FLOORPLAN_OT_finalize(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return _resolve_finalize_floorplan_obj(context) is not None
+        return context.scene is not None
 
     def invoke(self, context, event):
+        if _resolve_finalize_floorplan_obj(context) is None:
+            self.report({'ERROR'}, "No floor plan object found")
+            return {'CANCELLED'}
         return context.window_manager.invoke_props_dialog(self, width=360)
 
     def draw(self, context):
