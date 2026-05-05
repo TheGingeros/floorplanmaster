@@ -102,6 +102,48 @@ def _inside_any_opening(t, z, openings):
     return False
 
 
+def _wall_interior_sides(sg, rg, junctions_by_id):
+    # Map wall_id -> set of interior sides: {'L'}, {'R'}, or {'L', 'R'}.
+    # Side is evaluated against each wall's canonical start->end direction.
+    sides = {}
+    for room in rg.get_all_rooms():
+        cx, cy = room.centroid
+        cycle = room.cycle
+        n = len(cycle)
+        if n < 2:
+            continue
+
+        for i in range(n):
+            jid_a = cycle[i]
+            jid_b = cycle[(i + 1) % n]
+            wall = sg.get_wall_between(jid_a, jid_b)
+            if wall is None:
+                continue
+
+            j_start = junctions_by_id.get(wall.junction_start)
+            j_end = junctions_by_id.get(wall.junction_end)
+            if j_start is None or j_end is None:
+                continue
+
+            sx, sy = j_start.position
+            ex, ey = j_end.position
+            dx = ex - sx
+            dy = ey - sy
+            L = math.sqrt(dx * dx + dy * dy)
+            if L < _EPS:
+                continue
+
+            # Left normal of canonical start->end wall direction.
+            nx, ny = -dy / L, dx / L
+            signed = (cx - sx) * nx + (cy - sy) * ny
+            side = "L" if signed >= 0.0 else "R"
+
+            wall_sides = sides.setdefault(wall.id, set())
+            wall_sides.add(side)
+
+    return sides
+
+
 def _build_junction_fill(bm, vcache, junction, sg, junctions_by_id):
     # Emit a prism that fills the junction gap for T and X joints.
     # Bottom face is omitted (floor mesh covers Z=0); top cap seals the ceiling.
@@ -125,7 +167,15 @@ def _build_junction_fill(bm, vcache, junction, sg, junctions_by_id):
     _add_face_safe(bm, top)
 
 
-def _build_wall_geometry(bm, vcache, wall, sg, junctions_by_id):
+def _build_wall_geometry(
+    bm,
+    vcache,
+    wall,
+    sg,
+    junctions_by_id,
+    interior_sides,
+    include_outer_faces,
+):
     quad = _compute_wall_quad(wall, junctions_by_id, sg)
     if quad is None:
         return
@@ -177,7 +227,19 @@ def _build_wall_geometry(bm, vcache, wall, sg, junctions_by_id):
         return (r0x + ux * t, r0y + uy * t)
 
     # Left and right wall surfaces with analytic opening cutouts.
+    draw_left = True
+    draw_right = True
+    if not include_outer_faces:
+        if interior_sides:
+            draw_left = "L" in interior_sides
+            draw_right = "R" in interior_sides
+
     for side, ts, te in (("L", tl0, tl1), ("R", tr0, tr1)):
+        if side == "L" and not draw_left:
+            continue
+        if side == "R" and not draw_right:
+            continue
+
         tvals = _segment_breaks(ts, te, openings)
         zvals = _z_breaks(h, openings)
         for i in range(len(tvals) - 1):
@@ -207,26 +269,28 @@ def _build_wall_geometry(bm, vcache, wall, sg, junctions_by_id):
                 else:
                     _add_face_oriented(bm, [v10, v00, v01, v11], out_right)
 
-    # Top face (bottom omitted intentionally; floor mesh covers ground plane).
-    v0t = _get_or_add_vert(bm, vcache, p0[0], p0[1], h)
-    v1t = _get_or_add_vert(bm, vcache, p1[0], p1[1], h)
-    v2t = _get_or_add_vert(bm, vcache, p2[0], p2[1], h)
-    v3t = _get_or_add_vert(bm, vcache, p3[0], p3[1], h)
-    _add_face_oriented(bm, [v0t, v1t, v2t, v3t], (0.0, 0.0, 1.0))
+    # Top wall connector faces are kept only in full outer-shell output.
+    if include_outer_faces:
+        v0t = _get_or_add_vert(bm, vcache, p0[0], p0[1], h)
+        v1t = _get_or_add_vert(bm, vcache, p1[0], p1[1], h)
+        v2t = _get_or_add_vert(bm, vcache, p2[0], p2[1], h)
+        v3t = _get_or_add_vert(bm, vcache, p3[0], p3[1], h)
+        _add_face_oriented(bm, [v0t, v1t, v2t, v3t], (0.0, 0.0, 1.0))
 
     # End caps only on free endpoints. Connected junctions would create
     # interior polygons at joints if capped per-wall.
     start_neighbors = [w for w in sg.get_walls_for_junction(wall.junction_start) if w.id != wall.id]
     end_neighbors = [w for w in sg.get_walls_for_junction(wall.junction_end) if w.id != wall.id]
 
-    v0b = _get_or_add_vert(bm, vcache, p0[0], p0[1], 0.0)
-    v1b = _get_or_add_vert(bm, vcache, p1[0], p1[1], 0.0)
-    v2b = _get_or_add_vert(bm, vcache, p2[0], p2[1], 0.0)
-    v3b = _get_or_add_vert(bm, vcache, p3[0], p3[1], 0.0)
-    if not start_neighbors:
-        _add_face_oriented(bm, [v0b, v3b, v3t, v0t], (-ux, -uy, 0.0))
-    if not end_neighbors:
-        _add_face_oriented(bm, [v2b, v1b, v1t, v2t], (ux, uy, 0.0))
+    if include_outer_faces:
+        v0b = _get_or_add_vert(bm, vcache, p0[0], p0[1], 0.0)
+        v1b = _get_or_add_vert(bm, vcache, p1[0], p1[1], 0.0)
+        v2b = _get_or_add_vert(bm, vcache, p2[0], p2[1], 0.0)
+        v3b = _get_or_add_vert(bm, vcache, p3[0], p3[1], 0.0)
+        if not start_neighbors:
+            _add_face_oriented(bm, [v0b, v3b, v3t, v0t], (-ux, -uy, 0.0))
+        if not end_neighbors:
+            _add_face_oriented(bm, [v2b, v1b, v1t, v2t], (ux, uy, 0.0))
 
     # Opening reveal faces (jambs/head/sill).
     for t1, t2, z1, z2 in openings:
@@ -246,16 +310,46 @@ def _build_wall_geometry(bm, vcache, wall, sg, junctions_by_id):
         r2t = _get_or_add_vert(bm, vcache, rx2, ry2, z2)
 
         # Jamb at opening start/end and head.
-        _add_face_oriented(bm, [l1b, r1b, r1t, l1t], (-ux, -uy, 0.0))
-        _add_face_oriented(bm, [r2b, l2b, l2t, r2t], (ux, uy, 0.0))
+        # In inner mode faces must point INTO the opening (toward opposite jamb /
+        # down for head / down for sill).  Outer mode relies on recalc_face_normals
+        # so initial orientation there doesn't matter.
+        if include_outer_faces:
+            jn_t1 = (-ux, -uy, 0.0)
+            jn_t2 = (ux, uy, 0.0)
+            sill_n = (0.0, 0.0, 1.0)
+        else:
+            jn_t1 = (ux, uy, 0.0)
+            jn_t2 = (-ux, -uy, 0.0)
+            sill_n = (0.0, 0.0, -1.0)
+        _add_face_oriented(bm, [l1b, r1b, r1t, l1t], jn_t1)
+        _add_face_oriented(bm, [r2b, l2b, l2t, r2t], jn_t2)
         _add_face_oriented(bm, [l1t, l2t, r2t, r1t], (0.0, 0.0, -1.0))
 
         # Window sill only (doors stay open to floor).
         if z1 > _EPS:
-            _add_face_oriented(bm, [r1b, r2b, l2b, l1b], (0.0, 0.0, 1.0))
+            _add_face_oriented(bm, [r1b, r2b, l2b, l1b], sill_n)
 
 
-def _build_room_surfaces(bm, vcache, room, sg, junctions_by_id):
+def _room_ceiling_height(room, sg, junctions_by_id):
+    # Ceiling must fit under all boundary walls, especially for mixed heights.
+    min_h = None
+    n = len(room.cycle)
+    for i in range(n):
+        jid_a = room.cycle[i]
+        jid_b = room.cycle[(i + 1) % n]
+        wall = sg.get_wall_between(jid_a, jid_b)
+        if wall is None:
+            continue
+        h = float(wall.height)
+        if min_h is None or h < min_h:
+            min_h = h
+
+    if min_h is not None:
+        return min_h
+    return float(room.height)
+
+
+def _build_room_surfaces(bm, vcache, room, sg, junctions_by_id, include_ceiling, include_outer_faces=True):
     poly = _compute_room_inner_polygon(room, sg, junctions_by_id)
     if poly is None:
         poly = []
@@ -274,23 +368,48 @@ def _build_room_surfaces(bm, vcache, room, sg, junctions_by_id):
     floor = [_get_or_add_vert(bm, vcache, x, y, 0.0) for x, y in poly]
     _add_face_oriented(bm, floor, (0.0, 0.0, 1.0))
 
+    if include_ceiling:
+        z = _room_ceiling_height(room, sg, junctions_by_id)
+        if z > _EPS:
+            ceil = [_get_or_add_vert(bm, vcache, x, y, z) for x, y in poly]
+            # In inner mode ceiling faces down into the room; outer mode uses
+            # recalc_face_normals to fix orientation for the closed shell.
+            ceil_n = (0.0, 0.0, 1.0) if include_outer_faces else (0.0, 0.0, -1.0)
+            _add_face_oriented(bm, ceil, ceil_n)
 
-def build_final_mesh_from_graph(sg, rg, mesh_name="FloorPlan_Baked"):
+
+def build_final_mesh_from_graph(
+    sg,
+    rg,
+    mesh_name="FloorPlan_Baked",
+    include_ceiling=False,
+    include_outer_faces=True,
+):
     # Build a clean static mesh from graph data only.
     rg.sync_from_structural_graph()
     junctions_by_id = {j.id: j for j in sg.get_all_junctions()}
+    interior_by_wall = _wall_interior_sides(sg, rg, junctions_by_id)
 
     bm = bmesh.new()
     vcache = {}
 
     for wall in sg.get_all_walls():
-        _build_wall_geometry(bm, vcache, wall, sg, junctions_by_id)
+        _build_wall_geometry(
+            bm,
+            vcache,
+            wall,
+            sg,
+            junctions_by_id,
+            interior_by_wall.get(wall.id, set()),
+            include_outer_faces,
+        )
 
-    for junction in sg.get_all_junctions():
-        _build_junction_fill(bm, vcache, junction, sg, junctions_by_id)
+    if include_outer_faces:
+        for junction in sg.get_all_junctions():
+            _build_junction_fill(bm, vcache, junction, sg, junctions_by_id)
 
     for room in rg.get_all_rooms():
-        _build_room_surfaces(bm, vcache, room, sg, junctions_by_id)
+        _build_room_surfaces(bm, vcache, room, sg, junctions_by_id, include_ceiling, include_outer_faces)
 
     bm.verts.ensure_lookup_table()
     bm.edges.ensure_lookup_table()
@@ -300,8 +419,18 @@ def build_final_mesh_from_graph(sg, rg, mesh_name="FloorPlan_Baked"):
     if bm.edges:
         bmesh.ops.dissolve_degenerate(bm, edges=bm.edges, dist=1e-7)
 
-    if bm.faces:
+    # Inner-only output can leave loose verts where caps/top were suppressed.
+    loose_verts = [v for v in bm.verts if not v.link_faces]
+    if loose_verts:
+        bmesh.ops.delete(bm, geom=loose_verts, context='VERTS')
+
+    if include_outer_faces and bm.faces:
+        # Full outer shell is a closed manifold — safe to auto-recalculate.
         bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    # Inner-only mode: face winding is set per-face during construction via
+    # _add_face_oriented (out_left/out_right for wall sides, (0,0,1) for floors).
+    # No post-processing — a global centroid or recalc would flip dividing-wall
+    # faces that legitimately point in opposite directions toward adjacent rooms.
 
     bm.normal_update()
 

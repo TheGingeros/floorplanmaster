@@ -125,6 +125,8 @@ def detach_floorplan_object(
     cleanup_attributes=True,
     assign_default_material=True,
     apply_flat_shading=False,
+    include_ceiling=False,
+    include_outer_faces=True,
 ):
     # Convert procedural FloorPlan object into a plain mesh object.
     from .. import (
@@ -150,6 +152,8 @@ def detach_floorplan_object(
         sg,
         rg,
         mesh_name=f"{target_obj.name}_BakedMesh",
+        include_ceiling=include_ceiling,
+        include_outer_faces=include_outer_faces,
     )
     old_mesh = target_obj.data
     target_obj.data = baked_mesh
@@ -233,6 +237,16 @@ class FLOORPLAN_OT_finalize(bpy.types.Operator):
         description="Duplicate and bake a copy instead of baking destructively",
         default=True,
     )
+    include_ceiling: BoolProperty(
+        name="Add Ceiling",
+        description="Add room ceiling faces at room top heights",
+        default=False,
+    )
+    include_outer_faces: BoolProperty(
+        name="Include Outer Faces",
+        description="Keep outward wall faces; disable for inward-facing walls only",
+        default=True,
+    )
 
     @classmethod
     def poll(cls, context):
@@ -248,6 +262,8 @@ class FLOORPLAN_OT_finalize(bpy.types.Operator):
         col.prop(self, "material_assignment")
         col.prop(self, "cleanup_attributes")
         col.prop(self, "keep_original")
+        col.prop(self, "include_ceiling")
+        col.prop(self, "include_outer_faces")
 
     def execute(self, context):
         from .. import reset_graphs_for_obj
@@ -267,6 +283,8 @@ class FLOORPLAN_OT_finalize(bpy.types.Operator):
             cleanup_attributes=self.cleanup_attributes,
             assign_default_material=True,
             apply_flat_shading=True,
+            include_ceiling=self.include_ceiling,
+            include_outer_faces=self.include_outer_faces,
         )
 
         if self.keep_original:
