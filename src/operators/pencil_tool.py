@@ -146,8 +146,8 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
 
         # Use existing floor plan object data if present; otherwise keep the
         # drawing session purely in-memory and create the object on confirm.
-        from .. import reset_graphs_for_obj
-        self._obj = _find_floorplan_obj(context)
+        from .. import find_floorplan_obj, reset_graphs_for_obj
+        self._obj = find_floorplan_obj(context)
         if self._obj is not None:
             # Make the existing Floor Plan object active for semantic editing.
             context.view_layer.objects.active = self._obj
