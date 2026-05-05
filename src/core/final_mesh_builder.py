@@ -319,8 +319,9 @@ def _build_wall_geometry(
         _add_face_oriented(bm, [l1t, l2t, r2t, r1t], (0.0, 0.0, -1.0))
 
         # Window sill only (doors stay open to floor). Sill faces up into opening.
-        if z1 > _EPS:
-            _add_face_oriented(bm, [r1b, r2b, l2b, l1b], (0.0, 0.0, 1.0))
+        # Sill face: windows get a raised sill; doors get a floor-level bridge.
+        # Both face up into the opening passage.
+        _add_face_oriented(bm, [r1b, r2b, l2b, l1b], (0.0, 0.0, 1.0))
 
 
 def _room_ceiling_height(room, sg, junctions_by_id):
