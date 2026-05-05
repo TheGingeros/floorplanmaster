@@ -6,6 +6,7 @@ import bpy
 import json
 
 from ..utils.constants import DEFAULT_DOOR_WIDTH, DEFAULT_WINDOW_WIDTH
+from ..utils.unit_format import format_area, format_length
 
 
 def _get_panel_floorplan_obj(context):
@@ -269,6 +270,7 @@ class FLOORPLAN_PT_room_properties(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         settings = context.scene.floorplan
+        display_unit = settings.display_unit
         from .. import is_floorplan_mode_active
 
         mode_active = is_floorplan_mode_active(context)
@@ -289,10 +291,10 @@ class FLOORPLAN_PT_room_properties(bpy.types.Panel):
         # root.separator()
         col = root.column(align=True)
         for label_text in (
-            f"Area: {room.area:.2f} m²",
-            f"Perimeter: {room.perimeter:.2f} m",
+            f"Area: {format_area(room.area, display_unit)}",
+            f"Perimeter: {format_length(room.perimeter, display_unit)}",
             f"Walls: {len(room.cycle)}",
-            f"Height: {room.height:.1f} m",
+            f"Height: {format_length(room.height, display_unit)}",
         ):
             row = col.row()
             row.scale_y = 1.4
@@ -319,6 +321,7 @@ class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         settings = context.scene.floorplan
+        display_unit = settings.display_unit
 
         from .. import _graph_store, find_floorplan_obj, is_floorplan_mode_active
         from .selection_state import _selection
@@ -333,7 +336,7 @@ class FLOORPLAN_PT_wall_properties(bpy.types.Panel):
             if wall is not None:
                 wall_num = mapper.get(wall_uuid)
                 length = sg.wall_length(wall_uuid)
-                wall_label = f"Wall #{wall_num}  ({length:.2f} m)"
+                wall_label = f"Wall #{wall_num}  ({format_length(length, display_unit)})"
 
         root = layout.box()
         header = root.row(align=True)
@@ -495,6 +498,7 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         settings = context.scene.floorplan
+        display_unit = settings.display_unit
         from .selection_state import _selection
         from .. import (
             _graph_store,
@@ -570,9 +574,9 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
             if expanded:
                 col = box.column(align=True)
                 for label_text in (
-                    f"Area: {room.area:.2f} m²",
-                    f"Perimeter: {room.perimeter:.2f} m",
-                    f"Height: {room.height:.1f} m",
+                    f"Area: {format_area(room.area, display_unit)}",
+                    f"Perimeter: {format_length(room.perimeter, display_unit)}",
+                    f"Height: {format_length(room.height, display_unit)}",
                 ):
                     row = col.row()
                     row.scale_y = 1.4
@@ -614,7 +618,7 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
                             emboss=False,
                         )
                         wall_toggle.wall_id = wall.id
-                        wall_row.label(text=f"Wall #{wall_num} ({wall_len:.2f} m)")
+                        wall_row.label(text=f"Wall #{wall_num} ({format_length(wall_len, display_unit)})")
                         select_row = wall_row.row(align=True)
                         select_row.enabled = mode_active
                         op = select_row.operator(
@@ -659,8 +663,8 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
                                 mid_col.label(text="Middle")
                                 mid_col.prop(settings, "active_wall_mid_normal")
                         else:
-                            details.label(text=f"Thickness: {wall.thickness:.2f} m")
-                            details.label(text=f"Height: {wall.height:.2f} m")
+                            details.label(text=f"Thickness: {format_length(wall.thickness, display_unit)}")
+                            details.label(text=f"Height: {format_length(wall.height, display_unit)}")
 
                         openings = sg.get_openings_for_wall(wall.id)
                         openings_expanded = bool(obj.get(f"wall_openings_expanded_{wall.id}", 0))
@@ -706,10 +710,10 @@ class FLOORPLAN_PT_rooms(bpy.types.Panel):
                                         opening_col.prop(item, "sill_height")
                                     opening_col.prop(item, "position")
                                 else:
-                                    opening_col.label(text=f"Width: {opening.width:.2f} m")
-                                    opening_col.label(text=f"Height: {opening.height:.2f} m")
+                                    opening_col.label(text=f"Width: {format_length(opening.width, display_unit)}")
+                                    opening_col.label(text=f"Height: {format_length(opening.height, display_unit)}")
                                     if opening.opening_type == 'WINDOW':
-                                        opening_col.label(text=f"Sill: {opening.sill_height:.2f} m")
+                                        opening_col.label(text=f"Sill: {format_length(opening.sill_height, display_unit)}")
                                     opening_col.label(text=f"Position: {opening.position:.2f}")
 
 
@@ -732,6 +736,8 @@ class FLOORPLAN_PT_settings(bpy.types.Panel):
         settings = context.scene.floorplan
 
         col = layout.column(align=True)
+        col.prop(settings, "display_unit")
+        col.separator()
         col.prop(settings, "default_thickness")
         col.prop(settings, "default_height")
         col.separator()

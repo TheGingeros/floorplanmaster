@@ -19,6 +19,7 @@ from bpy_extras.view3d_utils import location_3d_to_region_2d
 from mathutils import Vector
 
 from ... import _graph_store, is_floorplan_obj, is_floorplan_obj_visible
+from ...utils.unit_format import format_length
 
 # Font sizes (Blender font_id=0 is the built-in proportional font).
 _FONT_ID = 0
@@ -110,7 +111,7 @@ def _draw_wall_labels(context, sg, rg, mapper, region, rv3d, settings):
         wall_num = mapper.get(wall.id)
         length   = math.hypot(ex - sx, ey - sy)
         line1 = f"Wall #{wall_num}"
-        line2 = f"{length:.2f} m"
+        line2 = format_length(length, settings.display_unit)
         blf.size(_FONT_ID, _WALL_FONT_SIZE)
         w1, _ = blf.dimensions(_FONT_ID, line1)
         w2, _ = blf.dimensions(_FONT_ID, line2)

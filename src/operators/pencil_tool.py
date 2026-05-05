@@ -17,6 +17,7 @@ from ..core.structural_graph import StructuralGraph
 from ..core.room_graph import RoomGraph
 from ..core.sync import IdMapper
 from ..geometry.gn_setup import ensure_gn_modifier
+from ..utils.unit_format import format_length
 
 
 # Pencil Tool states
@@ -544,7 +545,9 @@ class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
                     angle = math.degrees(math.atan2(dy, dx))
                     blf.color(font_id, 0.7, 0.9, 1.0, 0.9)
                     blf.position(font_id, 20, 40, 0)
-                    blf.draw(font_id, f"FloorPlan Pencil — Length: {length:.2f} m   Angle: {angle:.1f}°")
+                    display_unit = getattr(context.scene.floorplan, "display_unit", 'M')
+                    length_label = format_length(length, display_unit)
+                    blf.draw(font_id, f"FloorPlan Pencil — Length: {length_label}   Angle: {angle:.1f}°")
 
     def _draw_preview_line_3d(self, context):
         # Draw the in-progress wall preview as a 3D line in world space.

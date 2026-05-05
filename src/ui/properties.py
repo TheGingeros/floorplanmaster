@@ -122,6 +122,35 @@ def _on_room_name_update(self, context):
     persist_room_names(obj, rg)
 
 
+def _on_display_unit_update(self, context):
+    scene = getattr(context, "scene", None)
+    if scene is None:
+        return
+    unit_settings = getattr(scene, "unit_settings", None)
+    if unit_settings is None:
+        return
+
+    if self.display_unit in {'M', 'CM', 'MM'}:
+        unit_settings.system = 'METRIC'
+        if self.display_unit == 'CM':
+            unit_settings.length_unit = 'CENTIMETERS'
+        elif self.display_unit == 'MM':
+            unit_settings.length_unit = 'MILLIMETERS'
+        else:
+            unit_settings.length_unit = 'METERS'
+    else:
+        unit_settings.system = 'IMPERIAL'
+        if self.display_unit == 'IN':
+            unit_settings.length_unit = 'INCHES'
+        else:
+            unit_settings.length_unit = 'FEET'
+
+    screen = getattr(context, "screen", None)
+    if screen is not None:
+        for area in screen.areas:
+            area.tag_redraw()
+
+
 def _on_wall_thickness_update(self, context):
     global _updating_wall_props
     if _updating_wall_props:
@@ -513,6 +542,20 @@ class OpeningItem(bpy.types.PropertyGroup):
 
 
 class FloorPlanSettings(bpy.types.PropertyGroup):
+    display_unit: EnumProperty(
+        name="Units",
+        description="Unit system used for displaying dimensions",
+        items=[
+            ('M', "Meters (m)", "Display measurements in meters"),
+            ('CM', "Centimeters (cm)", "Display measurements in centimeters"),
+            ('MM', "Millimeters (mm)", "Display measurements in millimeters"),
+            ('FT', "Feet (ft)", "Display measurements in feet"),
+            ('IN', "Inches (in)", "Display measurements in inches"),
+        ],
+        default='M',
+        update=_on_display_unit_update,
+    )
+
     default_thickness: FloatProperty(
         name="Default Wall Thickness",
         description="Default wall thickness for new walls (meters)",
