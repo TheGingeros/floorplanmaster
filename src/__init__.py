@@ -318,10 +318,11 @@ if _HAS_BPY:
                     if key in obj:
                         stored = str(obj[key])
                         if stored != room.name:
+                            old_name = room.name
                             effective_name = rg_local.set_room_name(room.id, stored)
                             if effective_name != stored:
                                 obj[key] = effective_name
-                            if effective_name != room.name:
+                            if effective_name != old_name:
                                 changed = True
                 if changed:
                     from .core.sync import persist_room_names
