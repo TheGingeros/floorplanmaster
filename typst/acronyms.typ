@@ -55,6 +55,12 @@
     long: "Global Interpreter Lock",
   ),
   (
+    key: "gltf",
+    short: "glTF",
+    plural: "glTF",
+    long: "GL Transmission Format",
+  ),
+  (
     key: "gn",
     short: "GN",
     plural: "GN",
@@ -89,6 +95,12 @@
     short: "JSON",
     plural: "JSON",
     long: "JavaScript Object Notation",
+  ),
+  (
+    key: "lmb",
+    short: "LMB",
+    plural: "LMB",
+    long: "Left Mouse Button",
   ),
   (
     key: "mvc",
@@ -143,6 +155,12 @@
     short: "UV",
     plural: "UV",
     long: "UV coordinates — 2D texture mapping coordinates",
+  ),
+  (
+    key: "uuid",
+    short: "UUID",
+    plural: "UUID",
+    long: "Universally Unique Identifier",
   ),
   (
     key: "ux",
