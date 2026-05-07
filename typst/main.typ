@@ -186,17 +186,17 @@ Kromě Blenderu existují na trhu tři hlavní nástroje pro architektonické mo
   caption: [Srovnání analyzovaných nástrojů podle hodnotících kritérií],
 ) <tab-tools-comparison>
 
-==== Identifikované mezery a příležitosti
+==== Zjištěné nedostatky a příležitosti pro zlepšení
 
-Přehled existujících řešení odhaluje opakující se nedostatky, které představují hlavní příležitosti pro budoucí návrh modulu FloorPlanMaster.
+Z přehledu stávajících řešení vyplývají opakující se nedostatky, které nám jasně ukazují, jakým směrem by se měl ubírat vývoj nového modulu FloorPlanMaster.
 
-*Chybějící nástroj pro přirozené kreslení půdorysů.* Ani Archimesh, ani Archipack nenabízejí plnohodnotný nástroj pro skicování dispozice klikáním bodů přímo ve viewportu způsobem srovnatelným se SketchUpem nebo Archicadem. Archimesh sice umí interpretovat tahy Grease Pencil jako stěny a Archipack vygeneruje stěny z křivky, ale ani v jednom případě nevzniká dojem přirozené „tužky v půdorysu". FloorPlanMaster proto může zavést interaktivní Pencil Tool jako primární vstupní metodu — modální operátor, který by sledoval kurzor a při každém kliknutí okamžitě vytvořil stěnu.
+*Chybí nástroj pro intuitivní rýsování půdorysů.* Archimesh ani Archipack nemají funkci, která by umožnila skicovat dispozici prostým zadáváním bodů přímo v pracovním okně (viewportu), jak jsme zvyklí ze SketchUpu nebo Archicadu. Archimesh sice umí převést tahy nástroje Grease Pencil na zdi a Archipack je dokáže vygenerovat z křivky, ale ani jedno nepůsobí jako přirozené kreslení. FloorPlanMaster by proto měl přinést interaktivní „tužku“ jako hlavní způsob rýsování --- nástroj, který by sledoval kurzor a na každé kliknutí okamžitě vytvořil segment stěny.
 
-*Nespolehlivá správa otvorů.* Systém automatických otvorů v modulu Archimesh má dokumentované slabiny u složitějších stěn a při použití solveru Exact. Otvory v Archipacku sice fungují robustně, ale vložení okna nebo dveří často vede k nepřehlednému zanořování do složitých panelů nastavení. Zde se nabízí prostor pro záměrné zjednodušení rozhraní: otvor by se dal přidávat pouhým výběrem stěny a zadáním tří základních hodnot (šířka, výška, výška parapetu), zatímco o geometrickou konzistenci by se staral modifikátor založený na Geometry Nodes (Mesh Boolean) propojený datovou vazbou.
+*Nespolehlivé vyřezávání otvorů.* Automatická tvorba otvorů v modulu Archimesh má známé problémy u složitějších stěn, zvlášť při použití výpočetní metody Exact. Archipack sice v tomto ohledu funguje spolehlivě, ale vložení okna nebo dveří znamená proklikat se nepřehledným množstvím složitých panelů s nastavením. V tomto směru se nabízí uživatelské prostředí radikálně zjednodušit: otvor by mělo stačit přidat pouhým kliknutím na stěnu a zadáním tří základních rozměrů (šířky, výšky a výšky parapetu). O bezchybnou návaznost geometrie by se na pozadí staraly Geometry Nodes (Mesh Boolean) přes datovou vazbu.
 
-*Chybějící přehled o místnostech a plochách.* Žádný z analyzovaných addonů pro Blender nedetekuje uzavřené cykly stěn jako místnosti automaticky a nezobrazuje jejich plochu jako primární informaci. Analytické výměry jsou v Archipacku i Archimesh skryté v technickém rozhraní, nebo zcela chybí. Přitom právě integrace detekce místností a zobrazení ploch přímo do hlavního přehledu v N-panelu by představovala klíčový výstup jak pro architekta, tak pro game designéra při ověřování parametrů návrhu.
+*Chybějící výkazy místností a ploch.* Žádný z testovaných doplňků v Blenderu neumí automaticky rozpoznat uzavřené prostory (místnosti) a rovnou spočítat jejich podlahovou plochu. Výpočty výměr jsou v Archipacku i Archimeshi buď nešikovně skryté v technickém nastavení, nebo zcela chybí. Přitom okamžitý přehled o místnostech a jejich výměrách přímo v hlavním panelu (N-panel) je naprosto zásadní informací pro architekty i game designéry, aby si mohli průběžně ověřovat parametry svého návrhu.
 
-*Izolace externích nástrojů mimo ekosystém programu Blender.* SketchUp, Archicad a Revit sice ve svém oboru vynikají, ale postrádají integraci do programu Blender — přechod z konceptuálního modelu z programu SketchUp do plnohodnotné renderovací scény v programu Blender vyžaduje export, čištění topologie a vede ke ztrátě parametrických vlastností. Cílem FloorPlanMasteru je tuto bariéru eliminovat a zajistit, aby celý životní cyklus — od prvního načrtnutí dispozice přes parametrické úpravy až po finalizovanou síť (mesh) pro rendering — probíhal přímo v jedné scéně v programu Blender.
+*Složitý přenos dat z externích programů do Blenderu.* SketchUp, Archicad i Revit jsou sice ve svém oboru špička, ale práce v nich je od ekosystému Blenderu izolovaná. Přenos konceptuálního modelu ze SketchUpu do renderovací scény v Blenderu vyžaduje export a zdlouhavé čistění topologie sítě. Tím se navíc ztratí všechny původní parametrické vlastnosti. Cílem modulu FloorPlanMaster je tuto bariéru zbourat a zajistit, aby celý proces návrhu --- od první skicy dispozice přes parametrické ladění až po finální 3D model (mesh) připravený na render --- probíhal pohodlně v jediné scéně přímo v Blenderu.
 
 == Cílové skupiny
 
@@ -419,8 +419,7 @@ Blender využívá kombinaci vzoru #gls("mvc", long: false) (Model-View-Controll
 
 === Interaktivní kreslení a interakce ve viewportu
 
-Plynulé kreslení stěny — sledování kurzoru, průběžná aktualizace náhledové linky a potvrzení kliknutím — vyžaduje zpracování každého z těchto kroků v rámci jednoho snímku. Tato sekce vysvětluje, jak Blender takovou interakci umožňuje přes modální operátory a stavový automat, a kde leží výkonnostní limit Pythonu, který je nutné obejít delegováním práce na C++ jádro.
-
+Plynulé kreslení stěny — sledování kurzoru, průběžná aktualizace náhledové linky a potvrzení kliknutím — vyžaduje zpracování každého z těchto kroků v rámci jednoho snímku. Tato sekce vysvětluje, jak Blender takovou interakci umožňuje přes modální operátory a stavový automat.
 ==== Modální operátory
 
 Interaktivní kreslení ve viewportu stojí na modálních operátorech --- podtřídách `bpy.types.Operator` @blender_api, které po spuštění zůstávají aktivní a naslouchají událostem myši a klávesnice. Na rozdíl od standardních operátorů, které vykonávají jednorázovou funkci a okamžitě skončí, modální operátor kontinuálně naslouchá událostem generovaným uživatelem nebo systémem. Je nezbytný pro plynulé kreslení, kdy systém průběžně sleduje polohu kurzoru a dynamicky na ni reaguje.
@@ -440,15 +439,17 @@ Inicializace operátoru začíná metodou `invoke()`, která připraví počáte
   caption: [Návratové hodnoty modálního operátoru],
 ) <tab-modal-returns>
 
-Metoda `modal()` funguje na principu stavového automatu, který umožňuje operátoru měnit chování v závislosti na fázi interakce. Pro kreslení půdorysu jsou typické stavy: `START` (čekání na první kliknutí), `DRAWING` (průběžné přepočítávání délky a úhlu stěny a vykreslování náhledové linky přes GPU modul), `EXTRUDING` (definování tloušťky nebo výšky) a `FINISHING` (zápis geometrie do scény a čištění draw handlerů).
+Metoda `modal()` funguje na principu stavového automatu, který umožňuje operátoru měnit chování v závislosti na fázi interakce. Stavový automat přináší tři klíčové výhody: řízení složitosti při implementaci vícekrokových nástrojů, možnost kontextového snappingu (v různých stavech jsou aktivní různé typy přichytávání) a optimalizaci výkonu --- složité operace se spouštějí pouze při přechodu mezi stavy, zatímco při pohybu myši se aktualizuje pouze drobná vizualizace.
 
-Stavový automat přináší tři klíčové výhody: řízení složitosti při implementaci vícekrokových nástrojů, možnost kontextového snappingu (v různých stavech jsou aktivní různé typy přichytávání) a optimalizaci výkonu --- složité operace se spouštějí pouze při přechodu mezi stavy, zatímco při pohybu myši se aktualizuje pouze drobná vizualizace.
+// Pro kreslení půdorysu jsou typické stavy: `START` (čekání na první kliknutí), `DRAWING` (průběžné přepočítávání délky a úhlu stěny a vykreslování náhledové linky přes GPU modul), `EXTRUDING` (definování tloušťky nebo výšky) a `FINISHING` (zápis geometrie do scény a čištění draw handlerů).
 
-==== Limity výkonu jazyka Python v programu Blender
 
-Python je v programu Blender interpretovaným jazykem, proto je potřeba náročné operace delegovat na stranu programu Blender nebo GPU využívající C++. Zkušenosti z vývoje komplexních generativních nástrojů ukazují, že čistý Python je při hromadném zpracování dat řádově pomalejší. V kontextu architektonického kreslení jsou hlavními limitujícími faktory iterace přes mesh data pomocí `for` smyčky, rostoucí počet unikátních objektů ve scéně a časté aktualizace DepsGraphu.
 
-K překonání těchto limitů se v profesionálních addonech využívají tři techniky. Metody `foreach_set` a `foreach_get` umožňují přenášet celá pole dat mezi jazykem Python a interními C++ strukturami v jedné operaci namísto nastavování každého vrcholu zvlášť. Delegování na modifikátory spočívá v tom, že Python vytvoří pouze základní čárový model a na něj aplikuje modifikátory jako Solidify nebo Bevel --- ty jsou implementovány v C++, plně využívají multithreading a jsou optimalizovány pro real-time aktualizaci. Geometry Nodes jako výpočetní backend pak umožňují jazyku Python pouze manipulovat se vstupními hodnotami uzlového stromu, zatímco veškerý výpočet geometrie probíhá v nativním kódu programu Blender.
+// ==== Limity výkonu jazyka Python v programu Blender
+
+// Python je v programu Blender interpretovaným jazykem, proto je potřeba náročné operace delegovat na stranu programu Blender nebo GPU využívající C++. Zkušenosti z vývoje komplexních generativních nástrojů ukazují, že čistý Python je při hromadném zpracování dat řádově pomalejší. V kontextu architektonického kreslení jsou hlavními limitujícími faktory iterace přes mesh data pomocí `for` smyčky, rostoucí počet unikátních objektů ve scéně a časté aktualizace DepsGraphu.
+
+// K překonání těchto limitů se v profesionálních addonech využívají tři techniky. Metody `foreach_set` a `foreach_get` umožňují přenášet celá pole dat mezi jazykem Python a interními C++ strukturami v jedné operaci namísto nastavování každého vrcholu zvlášť. Delegování na modifikátory spočívá v tom, že Python vytvoří pouze základní čárový model a na něj aplikuje modifikátory jako Solidify nebo Bevel --- ty jsou implementovány v C++, plně využívají multithreading a jsou optimalizovány pro real-time aktualizaci. Geometry Nodes jako výpočetní backend pak umožňují jazyku Python pouze manipulovat se vstupními hodnotami uzlového stromu, zatímco veškerý výpočet geometrie probíhá v nativním kódu programu Blender.
 
 === Reprezentace geometrie
 
