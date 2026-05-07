@@ -158,22 +158,28 @@ Pro tvorbu místností nabízí Archimesh dva přístupy: definování počtu st
 
 ==== Architektonické nástroje mimo Blender
 
-Mimo ekosystém programu Blender existují tři dominantní nástroje pro architektonické modelování, která tvoří referenční rámec pro analýzu potřeb cílových skupin. *SketchUp* @sketchup je postaven na principu přímého modelování ploch a jako prioritu klade rychlost a intuitivní transformaci myšlenky do 3D formy. *AutoCAD* @autocad představuje standard pro 2D dokumentaci a detailní rýsování --- funguje jako digitální rýsovací prkno, nepostradatelné pro technické výkresy. *Revit* @revit je robustní parametrický BIM nástroj, kde každý prvek v modelu je instancí v databázi s definovanými funkčními vztahy; změna v jednom zobrazení se automaticky promítne do všech výkresů a výkazů.
+Kromě Blenderu existují na trhu tři hlavní nástroje pro architektonické modelování, které udávají standard a pomáhají nám pochopit, co uživatelé potřebují.
+
+*SketchUp* @sketchup je intuitivní 3D modelovací nástroj od společnosti Trimble. Jeho hlavní výhodou je, že se dá velmi rychle naučit a umožňuje snadno přenést nápady do 3D. Základem je nástroj Push/Pull, kterým uživatel nakreslí 2D plochu a jedním tahem z ní vytáhne 3D objekt. Díky tomu lze jednoduše rýsovat půdorysné obrysy stěn přímo v pracovním prostoru. Ze všech zmíněných nástrojů se tak SketchUp nejvíce blíží klasickému kreslení tužkou na papír. Parametrické úpravy jsou však velmi omezené --- jakmile objekt dokončíte, jeho rozměry se do systému neukládají jako parametry. Každá další změna proto znamená ruční zásah do geometrie. Nedestruktivní postup práce tu nefunguje a otvory se do stěn vyřezávají ručně pomocí booleovských operací, aniž by s danou zdí zůstaly dál propojené. Pro modelování nabízí SketchUp rozsáhlou online knihovnu (3D Warehouse) a export do mnoha formátů.
+
+*Archicad* @archicad od společnosti Graphisoft patří k historickým průkopníkům parametrického BIM navrhování. Na rozdíl od SketchUpu nepracuje jen s prázdnou geometrií, ale s chytrými stavebními prvky: stěna má své konkrétní vlastnosti --- tloušťku, materiál, skladbu konstrukcí a návaznost na okolí. Při kreslení půdorysu uživatel vynáší stěny velmi jednoduše a intuitivně, přičemž program sám automaticky řeší jejich křížení a rohové spoje. Okna i dveře tvoří plnohodnotné objekty, které jsou pevně vázané na stěnu: zachovávají svou polohu v segmentu zdi a při změně tloušťky se samy přizpůsobí. Archicad také automaticky detekuje uzavřené místnosti a jejich plochu umí rovnou propisovat do výkazů. Umožňuje export do formátu IFC, DWG a dalších standardů. Hlavní nevýhodou zůstává horší propojení s Blenderem a vysoká cena komerční licence.
+
+*Revit* @revit od Autodesku je robustní parametrický BIM nástroj, který funguje jako komplexní projektová databáze. Každý prvek v modelu tvoří instanci takzvané „rodiny“ (family). Jakmile změníte její vlastnost --- například tloušťku stěny nebo výšku patra --- úprava se okamžitě propíše do všech výkresů, řezů, pohledů i výkazů výměr. Díky tomu je celá projektová dokumentace vždy aktuální a provázaná. Stěny se do půdorysu vynášejí zadáváním os nebo líců a systém opět automaticky řeší napojení na další konstrukční prvky i prostupy. Otvory fungují jako chytré parametrické objekty obdobně jako v Archicadu. V současnosti jde o průmyslový standard pro ty nejkomplexnější stavební projekty, cílí ale čistě na profesionální využití v BIM prostředí. Z toho plynou jeho úskalí: jeho osvojení je nesmírně časově náročné, vyžaduje silný hardware a drahou licenci. Pokud potřebujete jen naskicovat koncept nebo připravit jednoduchou vizualizaci, je zbytečně složitý a těžkopádný.
 
 #figure(
   {
-    set text(size: 0.88em)
+    set text(size: 0.8em)
     table(
       columns: (2fr, 1fr, 1fr, 1fr, 1fr, 1fr),
       align: (left, center, center, center, center, center),
       table.header(
-        [*Nástroj*], [*(1) Kreslení*], [*(2) Param. editace*], [*(3) Místnosti*], [*(4) Otvory*], [*(5) Nedestruktivní*],
+        [*Nástroj*], [*Kreslení*], [*Param. editace*], [*Místnosti*], [*Otvory*], [* Nedestruktivní*],
       ),
       [Archimesh @archimesh], [Částečně], [Částečně], [Ne], [Ano], [Částečně],
       [Archipack @archipack], [Částečně], [Ano], [Ne], [Ano], [Ano],
       [BonsaiBIM @bonsaibim], [Ne], [Ano], [Ne], [Ano], [Ano],
       [SketchUp @sketchup], [Ano], [Částečně], [Ne], [Částečně], [Ne],
-      [AutoCAD @autocad], [Částečně], [Ne], [Ne], [Základní], [Ne],
+      [Archicad @archicad], [Ano], [Ano], [Ano], [Ano], [Částečně],
       [Revit @revit], [Částečně], [Ano], [Ano], [Ano], [Ano],
     )
   },
@@ -184,13 +190,13 @@ Mimo ekosystém programu Blender existují tři dominantní nástroje pro archit
 
 Přehled existujících řešení odhaluje opakující se nedostatky, které představují hlavní příležitosti pro budoucí návrh modulu FloorPlanMaster.
 
-*Chybějící nástroj pro přirozené kreslení půdorysů.* Ani Archimesh, ani Archipack nenabízejí plnohodnotný nástroj pro skicování dispozice klikáním bodů přímo ve viewportu způsobem srovnatelným se SketchUpem nebo AutoCADem. Archimesh sice umí interpretovat tahy Grease Pencil jako stěny a Archipack vygeneruje stěny z křivky, ale ani v jednom případě nevzniká dojem přirozené „tužky v půdorysu". FloorPlanMaster proto může zavést interaktivní Pencil Tool jako primární vstupní metodu — modální operátor, který by sledoval kurzor a při každém kliknutí okamžitě vytvořil stěnu.
+*Chybějící nástroj pro přirozené kreslení půdorysů.* Ani Archimesh, ani Archipack nenabízejí plnohodnotný nástroj pro skicování dispozice klikáním bodů přímo ve viewportu způsobem srovnatelným se SketchUpem nebo Archicadem. Archimesh sice umí interpretovat tahy Grease Pencil jako stěny a Archipack vygeneruje stěny z křivky, ale ani v jednom případě nevzniká dojem přirozené „tužky v půdorysu". FloorPlanMaster proto může zavést interaktivní Pencil Tool jako primární vstupní metodu — modální operátor, který by sledoval kurzor a při každém kliknutí okamžitě vytvořil stěnu.
 
 *Nespolehlivá správa otvorů.* Systém automatických otvorů v modulu Archimesh má dokumentované slabiny u složitějších stěn a při použití solveru Exact. Otvory v Archipacku sice fungují robustně, ale vložení okna nebo dveří často vede k nepřehlednému zanořování do složitých panelů nastavení. Zde se nabízí prostor pro záměrné zjednodušení rozhraní: otvor by se dal přidávat pouhým výběrem stěny a zadáním tří základních hodnot (šířka, výška, výška parapetu), zatímco o geometrickou konzistenci by se staral modifikátor založený na Geometry Nodes (Mesh Boolean) propojený datovou vazbou.
 
 *Chybějící přehled o místnostech a plochách.* Žádný z analyzovaných addonů pro Blender nedetekuje uzavřené cykly stěn jako místnosti automaticky a nezobrazuje jejich plochu jako primární informaci. Analytické výměry jsou v Archipacku i Archimesh skryté v technickém rozhraní, nebo zcela chybí. Přitom právě integrace detekce místností a zobrazení ploch přímo do hlavního přehledu v N-panelu by představovala klíčový výstup jak pro architekta, tak pro game designéra při ověřování parametrů návrhu.
 
-*Izolace externích nástrojů mimo ekosystém programu Blender.* SketchUp, AutoCAD a Revit sice ve svém oboru vynikají, ale postrádají integraci do programu Blender — přechod z konceptuálního modelu z programu SketchUp do plnohodnotné renderovací scény v programu Blender vyžaduje export, čištění topologie a vede ke ztrátě parametrických vlastností. Cílem FloorPlanMasteru je tuto bariéru eliminovat a zajistit, aby celý životní cyklus — od prvního načrtnutí dispozice přes parametrické úpravy až po finalizovanou síť (mesh) pro rendering — probíhal přímo v jedné scéně v programu Blender.
+*Izolace externích nástrojů mimo ekosystém programu Blender.* SketchUp, Archicad a Revit sice ve svém oboru vynikají, ale postrádají integraci do programu Blender — přechod z konceptuálního modelu z programu SketchUp do plnohodnotné renderovací scény v programu Blender vyžaduje export, čištění topologie a vede ke ztrátě parametrických vlastností. Cílem FloorPlanMasteru je tuto bariéru eliminovat a zajistit, aby celý životní cyklus — od prvního načrtnutí dispozice přes parametrické úpravy až po finalizovanou síť (mesh) pro rendering — probíhal přímo v jedné scéně v programu Blender.
 
 == Cílové skupiny
 
@@ -224,7 +230,7 @@ Abstraktní popis cílových skupin neukáže, jak přesně se zmíněné frustr
 
 ==== 1. Architekt Adam
 
-Adam (32 let) pracuje v menším architektonickém ateliéru a má na starosti úvodní studie a komunikaci s klienty při hledání tvaru a dispozice budovy. Běžně pracuje v profesionálních CAD a BIM programech (AutoCAD, Revit), ale pro rychlé 3D koncepty a objemové studie si oblíbil Blender díky jeho svižnosti a real-time zobrazení. Neumí však programovat a práce s Geometry Nodes je pro něj příliš složitá.
+Adam (32 let) pracuje v menším architektonickém ateliéru a má na starosti úvodní studie a komunikaci s klienty při hledání tvaru a dispozice budovy. Běžně pracuje v profesionálních CAD a BIM programech (ArchiCAD, Revit), ale pro rychlé 3D koncepty a objemové studie si oblíbil Blender díky jeho svižnosti a real-time zobrazení. Neumí však programovat a práce s Geometry Nodes je pro něj příliš složitá.
 
 Jeho typickým cílem je během pár hodin vytvořit pro klienta tři různé varianty prostorového uspořádání domu. Primárně ho zajímá hmota, návaznosti místností a základní rozměry. Frustruje ho zdlouhavé extrudování polygonů v nativním Blenderu: když klient požádá o rozšíření obývacího pokoje o metr, Adam musí ručně posouvat vertexy a složitě přepočítávat navazující stěny, přičemž mu navíc chybí okamžitý přehled o rozměrech místností. Od addonu očekává jednoduché rozhraní, ve kterém zadá rozměry místnosti nebo je naskicuje, a systém při jakékoliv změně automaticky zachová tloušťku zdiva a nerozbije návaznost na další prostory.
 
@@ -944,7 +950,7 @@ Možným rozšířením je přidání editace polohy stěny a jejích koncových
 
 === Klávesové zkratky
 
-Návrh klávesových zkratek se řídí dvěma principy: zkratky musejí být kompatibilní se stávající svalovou pamětí uživatelů Blenderu a AutoCADu @autocad; zkratky platné v modálním kontextu nesmějí kolidovat s globálními Blender zkratkami. Klávesový mód Pencil Tool je záměrně analogický Blender Knife Tool: rozlišuje stav ČEKÁNÍ a stav KRESLENÍ.
+Návrh klávesových zkratek se řídí dvěma principy: zkratky musejí být kompatibilní se stávající svalovou pamětí uživatelů Blenderu; zkratky platné v modálním kontextu nesmějí kolidovat s globálními Blender zkratkami. Klávesový mód Pencil Tool je záměrně analogický Blender Knife Tool: rozlišuje stav ČEKÁNÍ a stav KRESLENÍ.
 
 #figure(
   table(
@@ -953,7 +959,7 @@ Návrh klávesových zkratek se řídí dvěma principy: zkratky musejí být ko
     table.header(
       [*Akce*], [*Klávesa*], [*Kontext*], [*Zdůvodnění*],
     ),
-    [Aktivovat Pencil Tool], [`D`], [Object Mode], [`D` = Draw; AutoCAD konvence; v Blenderu Object Mode neobsazeno],
+    [Aktivovat Pencil Tool], [`D`], [Object Mode], [`D` = Draw; ArchiCAD konvence; v Blenderu Object Mode neobsazeno],
     [Umístit bod / pokračovat], [`LMB`], [Pencil Tool aktivní], [LMB jako primární potvrzovací vstup --- Blender standard od v2.80],
     [Potvrdit sezení], [`Enter`], [Oba stavy], [Blender konvence pro potvrzení modálního operátoru (Knife Tool, Loop Cut)],
     [Vrátit poslední bod], [`Z`], [Oba stavy], [`Z` jako Undo; bezpečné --- Blender `Z` (shading pie) blokováno po dobu aktivity operátoru],
