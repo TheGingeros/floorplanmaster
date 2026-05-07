@@ -146,7 +146,7 @@ Všechny nástroje jsou hodnoceny podle pěti shodných kritérií: (1) _interak
 
 ==== Architektonické rozšiřující moduly pro Blender
 
-Blender za posledních deset let prošel dramatickou evolucí. Původně vnímaný jako nástroj pro organické modelování, animace a vizuální efekty byl díky open-source modelu a robustnímu Python #gls("api", long: false) transformován v platformu schopnou realizovat komplexní architektonické projekty. Vzniklo tak několik specializovaných addonů.
+// Blender za posledních deset let prošel dramatickou evolucí. Původně vnímaný jako nástroj pro organické modelování, animace a vizuální efekty byl díky open-source modelu a robustnímu Python #gls("api", long: false) transformován v platformu schopnou realizovat komplexní architektonické projekty. Vzniklo tak několik specializovaných addonů.
 
 *Archimesh* @archimesh je základním kamenem architektonických nástrojů pro Blender. Vytvořil ho Antonio Vazquez s cílem automatizovat tvorbu interiérových a exteriérových prvků, která by jinak zabrala hodně času manuálním modelováním. Díky stabilitě a užitečnosti byl dlouhodobě integrován přímo do oficiální distribuce Blenderu jako komunitní doplněk a je primárně určen pro rychlé skicování prostor a interiérový design.
 
@@ -161,19 +161,22 @@ Pro tvorbu místností nabízí Archimesh dva přístupy: definování počtu st
 Mimo ekosystém programu Blender existují tři dominantní nástroje pro architektonické modelování, která tvoří referenční rámec pro analýzu potřeb cílových skupin. *SketchUp* @sketchup je postaven na principu přímého modelování ploch a jako prioritu klade rychlost a intuitivní transformaci myšlenky do 3D formy. *AutoCAD* @autocad představuje standard pro 2D dokumentaci a detailní rýsování --- funguje jako digitální rýsovací prkno, nepostradatelné pro technické výkresy. *Revit* @revit je robustní parametrický BIM nástroj, kde každý prvek v modelu je instancí v databázi s definovanými funkčními vztahy; změna v jednom zobrazení se automaticky promítne do všech výkresů a výkazů.
 
 #figure(
-  table(
-    columns: (2fr, auto, auto, auto, auto, auto),
-    align: (left, center, center, center, center, center),
-    table.header(
-      [*Nástroj*], [*(1) Kreslení*], [*(2) Param. editace*], [*(3) Místnosti*], [*(4) Otvory*], [*(5) Nedestruktivní*],
-    ),
-    [Archimesh @archimesh], [Částečně], [Částečně], [Ne], [Ano], [Částečně],
-    [Archipack @archipack], [Částečně], [Ano], [Ne], [Ano], [Ano],
-    [BonsaiBIM @bonsaibim], [Ne], [Ano], [Ne], [Ano], [Ano],
-    [SketchUp @sketchup], [Ano], [Částečně], [Ne], [Částečně], [Ne],
-    [AutoCAD @autocad], [Částečně], [Ne], [Ne], [Základní], [Ne],
-    [Revit @revit], [Částečně], [Ano], [Ano], [Ano], [Ano],
-  ),
+  {
+    set text(size: 0.88em)
+    table(
+      columns: (2fr, 1fr, 1fr, 1fr, 1fr, 1fr),
+      align: (left, center, center, center, center, center),
+      table.header(
+        [*Nástroj*], [*(1) Kreslení*], [*(2) Param. editace*], [*(3) Místnosti*], [*(4) Otvory*], [*(5) Nedestruktivní*],
+      ),
+      [Archimesh @archimesh], [Částečně], [Částečně], [Ne], [Ano], [Částečně],
+      [Archipack @archipack], [Částečně], [Ano], [Ne], [Ano], [Ano],
+      [BonsaiBIM @bonsaibim], [Ne], [Ano], [Ne], [Ano], [Ano],
+      [SketchUp @sketchup], [Ano], [Částečně], [Ne], [Částečně], [Ne],
+      [AutoCAD @autocad], [Částečně], [Ne], [Ne], [Základní], [Ne],
+      [Revit @revit], [Částečně], [Ano], [Ano], [Ano], [Ano],
+    )
+  },
   caption: [Srovnání analyzovaných nástrojů podle hodnotících kritérií],
 ) <tab-tools-comparison>
 
