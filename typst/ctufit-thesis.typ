@@ -125,7 +125,9 @@
   set document(author: author-full, title: title)
   
   import "glossarium/glossarium.typ": make-glossary, register-glossary, print-glossary, gls, glspl
+  import "acronyms.typ": entry-list
   // import "@preview/glossarium:0.5.7": make-glossary, register-glossary, print-glossary, gls, glspl
+  register-glossary(entry-list)
 
   /* Sizes
   https://latex-tutorial.com/changing-font-size/
@@ -626,8 +628,6 @@
 
   heading(abbreviation-label, outlined: false)
   show: make-glossary
-  import "acronyms.typ": entry-list
-  register-glossary(entry-list)
   // TODO user-print-title
   print-glossary(entry-list)
 

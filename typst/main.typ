@@ -132,9 +132,9 @@ Parametrické modelování je způsob vytváření 3D modelů, kde tvar objektu 
 
 Oproti klasickému polygonálnímu modelování, kde se pracuje s body, hranami a plochami jejich přímou manipulací, parametrické modelování pracuje s čísly, funkcemi a historií kroků. Polygonální modelování je primárně vhodné pro hry, filmy a animace; parametrické modelování převládá v architektuře, strojírenství a produktovém designu.
 
-Rozlišují se dvě hlavní paradigmata @architizer_parametric @bim_vs_cad. _Historické_ modelování, typické pro #gls("cad", long: false) a #gls("bim", long: false) software, si pamatuje časovou osu úprav: software zaznamenává sekvenci kroků a umožňuje vrátit se k dřívějšímu kroku a automaticky přepočítat všechny závislé operace. Toto paradigma je standardem v průmyslovém #gls("cad", long: false) (SolidWorks @solidworks) i architektonickém #gls("bim", long: false) (Revit). _Algoritmické_ modelování, označované také jako vizuální skriptování, popisuje geometrii pomocí uzlových grafů a je analogické Geometry Nodes v Blenderu.
+Rozlišují se dvě hlavní paradigmata @architizer_parametric @bim_vs_cad. _Historické_ modelování, typické pro #gls("cad", long: false) a #gls("bim", long: false) software, si pamatuje časovou osu úprav: software zaznamenává sekvenci kroků a umožňuje vrátit se k dřívějšímu kroku a automaticky přepočítat všechny závislé operace. Toto paradigma je standardem v průmyslovém #gls("cad", long: false) (SolidWorks @solidworks) i architektonickém #gls("bim", long: false) (Revit @revit). _Algoritmické_ modelování, označované také jako vizuální skriptování, popisuje geometrii pomocí uzlových grafů a je analogické Geometry Nodes v Blenderu.
 
-Parametrické modelování v architektuře přináší posun od tradičního reprezentačního kreslení k algoritmickému přístupu. Tradiční #gls("cad", long: false) systémy se spoléhají na explicitní definici geometrie pomocí statických bodů a úseček. Parametrický přístup zavádí systém vzájemně propojených proměnných, matematických omezení a deduktivních pravidel, která dynamicky generují a aktualizují výslednou formu. Úprava jediného parametru --- například celkové výšky podlaží nebo tloušťky nosné stěny --- automaticky a kaskádovitě modifikuje všechny závislé entity.
+Parametrické modelování v architektuře přináší posun od tradičního reprezentačního kreslení k algoritmickému přístupu. Tradiční #gls("cad", long: false) systémy se spoléhají na explicitní definici geometrie pomocí statických bodů a úseček. Parametrický přístup zavádí systém vzájemně propojených proměnných, matematických omezení a deduktivních pravidel, která dynamicky generují a aktualizují výslednou formu. Úprava jediného parametru --- například celkové výšky podlaží nebo tloušťky nosné stěny --- automaticky a kaskádovitě modifikuje všechny závislé entity @architizer_parametric.
 
 _Prostorová dispozice_ je logické a funkční uspořádání trojrozměrného objemu do smysluplných celků (místností a zón) s definovanými vztahy mezi nimi. Tento pojem vymezuje konkrétní předmět návrhu, se kterým addon pracuje.
 
@@ -413,16 +413,16 @@ Funkční požadavky říkají _co_ má addon umět; technická analýza odpoví
 
 === Architektura Blenderu
 
-Blender je modulární systém postavený na unikátním způsobu správy dat --- dualitě systému #gls("dna", long: false) a #gls("rna", long: false). #gls("dna", long: false) (Blender's Data Architecture) definuje struktury C pro veškerá interní data scény, zatímco #gls("rna", long: false) (Runtime Notification Architecture) poskytuje reflexivní #gls("api", long: false), přes které Python přistupuje k těmto strukturám a reaguje na jejich změny @blender_dev.
+Blender je modulární systém postavený na unikátním způsobu správy dat --- dualitě systému #gls("dna", long: false) a #gls("rna", long: false). #gls("dna", long: false) (Blender's Data Architecture) definuje struktury C pro veškerá interní data scény, zatímco #gls("rna", long: false) (Runtime Notification Architecture) poskytuje reflexivní #gls("api", long: false), přes které Python přistupuje k těmto strukturám a reaguje na jejich změny @blender_dev_dna.
 
-Blender využívá kombinaci vzoru #gls("mvc", long: false) (Model-View-Controller), která umožňuje oddělit uživatelské rozhraní (View) od vnitřní logiky (Model) a zpracování vstupů (Controller). Addony mohou definovat vlastní výpočty například v Geometry Nodes (Model), zatímco Blender se stará o jejich vykreslení do viewportu a zachytávání událostí myši přes Python #gls("api", long: false).
+Blender využívá kombinaci vzoru #gls("mvc", long: false) (Model-View-Controller), která umožňuje oddělit uživatelské rozhraní (View) od vnitřní logiky (Model) a zpracování vstupů (Controller). Addony mohou definovat vlastní výpočty například v Geometry Nodes (Model), zatímco Blender se stará o jejich vykreslení do viewportu a zachytávání událostí myši přes Python #gls("api", long: false) @blender_dev.
 
 === Interaktivní kreslení a interakce ve viewportu
 
 Plynulé kreslení stěny — sledování kurzoru, průběžná aktualizace náhledové linky a potvrzení kliknutím — vyžaduje zpracování každého z těchto kroků v rámci jednoho snímku. Tato sekce vysvětluje, jak Blender takovou interakci umožňuje přes modální operátory a stavový automat.
 ==== Modální operátory
 
-Interaktivní kreslení ve viewportu stojí na modálních operátorech --- podtřídách `bpy.types.Operator` @blender_api, které po spuštění zůstávají aktivní a naslouchají událostem myši a klávesnice. Na rozdíl od standardních operátorů, které vykonávají jednorázovou funkci a okamžitě skončí, modální operátor kontinuálně naslouchá událostem generovaným uživatelem nebo systémem. Je nezbytný pro plynulé kreslení, kdy systém průběžně sleduje polohu kurzoru a dynamicky na ni reaguje.
+Interaktivní kreslení ve viewportu stojí na modálních operátorech --- podtřídách `bpy.types.Operator` @blender_api_operator, které po spuštění zůstávají aktivní a naslouchají událostem myši a klávesnice. Na rozdíl od standardních operátorů, které vykonávají jednorázovou funkci a okamžitě skončí, modální operátor kontinuálně naslouchá událostem generovaným uživatelem nebo systémem. Je nezbytný pro plynulé kreslení, kdy systém průběžně sleduje polohu kurzoru a dynamicky na ni reaguje.
 
 Inicializace operátoru začíná metodou `invoke()`, která připraví počáteční stav a registruje operátor do modálního handleru správce oken pomocí `context.window_manager.modal_handler_add(self)`. Od tohoto momentu je každá událost ve viewportu předávána metodě `modal()`. Návratové hodnoty `modal()` určují, jak Blender s událostí dále naloží:
 
@@ -459,7 +459,7 @@ Geometrie (poloha prvků v prostoru) a topologie (vzájemné vztahy a propojení
 
 ==== Datová struktura BMesh
 
-BMesh je interní datová struktura programu Blender @blender_api, která na rozdíl od tradičních struktur založených na trojúhelnících podporuje n-gony (polygony s více než čtyřmi vrcholy). 
+BMesh je interní datová struktura programu Blender @blender_api_bmesh, která na rozdíl od tradičních struktur založených na trojúhelnících podporuje n-gony (polygony s více než čtyřmi vrcholy). 
 
 // Využívá systém podobný half-edge datovým strukturám, kde jsou vztahy mezi plochami a hranami uloženy tak, aby umožňovaly rychlou navigaci po povrchu sítě.
 
@@ -469,10 +469,10 @@ Z pohledu parametrického modelování nabízí BMesh skrze Python #gls("api", l
 
 Geometry Nodes (#gls("gn", long: false)) @blender_api zastupují deklarativní, paralelní přístup: uživatel definuje systém pravidel aplikovaných na celou geometrii současně. Data jsou reprezentována jako pole atributů vázaných na různé domény (vrcholy, hrany, plochy, instance), přičemž výpočet probíhá v nativním kódu C++ s plným multithreadingem.
 
-Pro generování stěn se v #gls("gn", long: false) nejčastěji používá uzel `Curve to Mesh`. Klíčovou výzvou je Miter Joint problém --- standardní vytažení profilu podél křivky vede ke ztenčení stěny v ostrých rozích. 
+Pro generování stěn se v #gls("gn", long: false) nejčastěji používá uzel `Curve to Mesh`. Klíčovou výzvou je Miter Joint problém @blender_curve_miter --- standardní vytažení profilu podél křivky vede ke ztenčení stěny v ostrých rozích. 
 // Řešením je matematická korekce měřítka profilu v každém bodě křivky pomocí faktoru $f = 1 / sin(theta / 2)$, kde $theta$ je úhel mezi sousedními segmenty stěny. Tento výpočet se v GN realizuje pomocí vektorové matematiky (skalární součin pro výpočet úhlu) a ač je komplexnější na přípravu, umožňuje dynamicky měnit tloušťku stěn pouhým posunutím bodu v 2D půdorysu. 
 
-Zásadní slabinou #gls("gn", long: false) je ovšem výsledná topologie. Zvláště po aplikaci booleovských operací (např. pro otvory oken a dveří) #gls("gn", long: false) často generují nepředvídatelnou, triangulovanou nebo nevhodnou n-gonovou síť, která silně komplikuje čisté #gls("uv", long: false) mapování a další manuální úpravy.
+Zásadní slabinou #gls("gn", long: false) je ovšem výsledná topologie. Zvláště po aplikaci booleovských operací (např. pro otvory oken a dveří) #gls("gn", long: false) často generují nepředvídatelnou, triangulovanou nebo nevhodnou n-gonovou síť, která silně komplikuje čisté #gls("uv", long: false) mapování a další manuální úpravy @blender_gn_boolean.
 
 ==== Hybridní přístup: Python quad-polygon a #gls("gn", long: false) extrude
 
@@ -537,7 +537,7 @@ Nedestruktivní přístup k otvorům předpokládá, že pohyb stěny automatick
 
 _Boolean operace spravované přes Python #gls("api", long: false)_ využívají standardní modifikátorový stack, kde Python dynamicky vytváří cutter objekty a přiřazuje je ke stěně. Hlavní nevýhodou je vysoká režie při správě stacku s desítkami modifikátorů a numerická nestabilita --- pokud souřadnice po transformaci nejsou binárně identické (kvůli zaokrouhlení floatů), `Exact` solver může selhat při detekci společných ploch.
 
-_Mesh Boolean v Geometry Nodes_ nahrazuje objektový stack jedním uzlovým stromem, kde operace probíhají nad toky geometrických dat. Na rozdíl od modifikátorů, které pracují v párech, uzel Mesh Boolean v #gls("gn", long: false) dokáže zpracovat celé kolekce instancí oken jako jeden sloučený vstup --- to dramaticky snižuje počet reevaluací. Problémem je, že solver považuje vše zapojené do vstupu za jediné těleso; pokud se dvě stěny překrývají, může dojít ke vzniku dutých výsledků.
+_Mesh Boolean v Geometry Nodes_ nahrazuje objektový stack jedním uzlovým stromem, kde operace probíhají nad toky geometrických dat. Na rozdíl od modifikátorů, které pracují v párech, uzel Mesh Boolean v #gls("gn", long: false) dokáže zpracovat celé kolekce instancí oken jako jeden sloučený vstup --- to dramaticky snižuje počet reevaluací. Problémem je, že solver považuje vše zapojené do vstupu za jediné těleso; pokud se dvě stěny překrývají, může dojít ke vzniku dutých výsledků @blender_gn_boolean.
 
 _Metody bez Boolean operací_ se vyhýbají výpočtům průsečíků a otvory vkládají přímo do procesu generování topologie. Curve Trimming ořízne vodicí křivku před vytažením do 3D, čímž vzniknou fyzické mezery s čistou topologií --- tato metoda však vyžaduje reprezentaci stěn jako Blender Curve objektů a není kompatibilní s architekturou pracující s base meshem a Named Attributes. Modulární instancování chápe stěnu jako pole buněk s plnými nebo prázdnými moduly. Vertex Group Topology označí specifické vrcholy atributem `is_window` a #gls("gn", long: false) je posunou aby vytvořily pravoúhlý otvor.
 
@@ -563,7 +563,7 @@ Parametrický addon pracuje s daty na dvou odlišných úrovní: s geometrií st
 
 ==== Systémy pro správu uživatelských parametrů
 
-Blender nabízí dva hlavní mechanismy. *Vlastnosti ID* (Custom Properties) jsou flexibilní mechanismus pro připojování libovolných dat k jakémukoliv datovému bloku --- ukládají celá čísla, desetinná čísla, řetězce a pole. Pro komplexní architektonické systémy mají nedostatky: absenci striktní typové kontroly a omezené možnosti definice logiky při změně hodnoty. *Modul `bpy.props`* @blender_api umožňuje definovat vlastnosti registrované přímo do systému #gls("rna", long: false) s plnou podporou zpětných volání (`update`, `get`, `set`), klíčových pro reaktivní architektonické prvky.
+Blender nabízí dva hlavní mechanismy. *Vlastnosti ID* (Custom Properties) @blender_api_props jsou flexibilní mechanismus pro připojování libovolných dat k jakémukoliv datovému bloku --- ukládají celá čísla, desetinná čísla, řetězce a pole. Pro komplexní architektonické systémy mají nedostatky: absenci striktní typové kontroly a omezené možnosti definice logiky při změně hodnoty. *Modul `bpy.props`* @blender_api_props umožňuje definovat vlastnosti registrované přímo do systému #gls("rna", long: false) s plnou podporou zpětných volání (`update`, `get`, `set`), klíčových pro reaktivní architektonické prvky.
 
 Pro správu informací o prostorech (název, plocha, typ místnosti, výška) je optimálním vzorem `bpy.types.PropertyGroup`, který seskupuje souvísející parametry do logického celku připojeného k datovému bloku pomocí `PointerProperty` (vazba 1:1) nebo `CollectionProperty` (vazba 1:N).
 
@@ -575,7 +575,7 @@ Pro správu informací o prostorech (název, plocha, typ místnosti, výška) je
 
 ==== Perzistence grafových dat
 
-Blender při uložení `.blend` souboru automaticky ukládá mesh geometrii a Custom Properties objektů --- Python objekty v paměti (např. NetworkX grafy) nikoli. Po zavření a opětovném otevření souboru jsou grafy ztraceny, pokud nejsou zachovány.
+Blender při uložení `.blend` souboru automaticky ukládá mesh geometrii a Custom Properties objektů --- Python objekty v paměti (např. NetworkX grafy) nikoli @blender_dev. Po zavření a opětovném otevření souboru jsou grafy ztraceny, pokud nejsou zachovány.
 
 #figure(
   table(
@@ -593,7 +593,7 @@ Blender při uložení `.blend` souboru automaticky ukládá mesh geometrii a Cu
 
 Addon spravuje dvě kategorie nastavení. *Projektová data* (výchozí tloušťka stěny, výška, systém jednotek) přímo ovlivňují geometrii konkrétního půdorysu. *Nastavení chování addonu* (výkon, cesty k souborům, #gls("ui", long: false) preference) jsou naopak nezávislá na projektu.
 
-Pro každou kategorii nabízí Blender jiný mechanismus: `bpy.types.AddonPreferences` ukládá data globálně do `userpref.blend` (platí napříč projekty), zatímco `bpy.types.PropertyGroup` na `Scene` ukládá data per-projekt do aktuálního `.blend` souboru. Analýza existujících addonů ukazuje, že oba hlavní architektonické addony (Archimesh, Archipack) projektová data do `AddonPreferences` neukládají --- ten rezervují výhradně pro chování addonu. Pro FloorPlanMaster je proto optimálním řešením *Scene PropertyGroup* se zapečenými výchozími hodnotami: projektové hodnoty jsou součástí `.blend` souboru, jsou tedy přenositelné a verzovatelné s projektem. `AddonPreferences` se použijí výhradně pro nastavení nesouvisející s konkrétním projektem.
+Pro každou kategorii nabízí Blender jiný mechanismus: `bpy.types.AddonPreferences` ukládá data globálně do `userpref.blend` (platí napříč projekty), zatímco `bpy.types.PropertyGroup` na `Scene` ukládá data per-projekt do aktuálního `.blend` souboru. Analýza existujících addonů ukazuje, že oba hlavní architektonické addony (Archimesh @archimesh, Archipack @archipack) projektová data do `AddonPreferences` neukládají --- ten rezervují výhradně pro chování addonu. Pro FloorPlanMaster je proto optimálním řešením *Scene PropertyGroup* se zapečenými výchozími hodnotami: projektové hodnoty jsou součástí `.blend` souboru, jsou tedy přenositelné a verzovatelné s projektem. `AddonPreferences` se použijí výhradně pro nastavení nesouvisející s konkrétním projektem.
 
 === Uživatelské rozhraní
 
@@ -603,13 +603,13 @@ Architekt, který musí odtrhnout pohled od půdorysu, aby v postranním panelu 
 
 ==== #gls("gpu", long: false) modul a draw handlery
 
-Modul `gpu` @blender_api slouží jako abstrakční vrstva nad nízkoúrovňovými grafickými #gls("api", long: false) (OpenGL, Metal, Vulkan) a je pro architektonický addon klíčový: umožňuje vykreslovat vodící linky, kóty a náhledy stěn přímo na #gls("gpu", long: false) bez nutnosti vytvářet geometrii v databázi Blenderu. Draw handlery se registrují k `bpy.types.SpaceView3D` metodou `draw_handler_add`. Existují dva hlavní režimy: `POST_VIEW` pracuje v souřadném systému 3D scény (ideální pro vodící linky) a `POST_PIXEL` pracuje v souřadnicích obrazovky a je nezbytný pro textové popisky a kóty, které mají zůstat čitelné nezávisle na míře přiblížení. Každý přidaný handler musí být při ukončení operátoru odstraněn pomocí `draw_handler_remove()`.
+Modul `gpu` @blender_api_gpu slouží jako abstrakční vrstva nad nízkoúrovňovými grafickými #gls("api", long: false) (OpenGL, Metal, Vulkan) a je pro architektonický addon klíčový: umožňuje vykreslovat vodící linky, kóty a náhledy stěn přímo na #gls("gpu", long: false) bez nutnosti vytvářet geometrii v databázi Blenderu. Draw handlery se registrují k `bpy.types.SpaceView3D` metodou `draw_handler_add`. Existují dva hlavní režimy: `POST_VIEW` pracuje v souřadném systému 3D scény (ideální pro vodící linky) a `POST_PIXEL` pracuje v souřadnicích obrazovky a je nezbytný pro textové popisky a kóty, které mají zůstat čitelné nezávisle na míře přiblížení. Každý přidaný handler musí být při ukončení operátoru odstraněn pomocí `draw_handler_remove()`.
 
-Pro kótovací popisky lze použít modul #gls("blf", long: false) @blender_api (Blender Font Library), který vykresluje text přímo do viewportu s možností kontroly nad pozicí a vzhledem. Pro kótovací overlay je rozhodující čitelnost nezávislá na úhlu pohledu --- #gls("gpu", long: false) `POST_PIXEL` overlay tuto podmínku splňuje; alternativní přístup s #gls("gn", long: false) String to Curves generuje 3D mesh textu, který je při šikmém pohledu hůře čitelný.
+Pro kótovací popisky lze použít modul #gls("blf", long: false) @blender_api_blf (Blender Font Library), který vykresluje text přímo do viewportu s možností kontroly nad pozicí a vzhledem. Pro kótovací overlay je rozhodující čitelnost nezávislá na úhlu pohledu --- #gls("gpu", long: false) `POST_PIXEL` overlay tuto podmínku splňuje; alternativní přístup s #gls("gn", long: false) String to Curves generuje 3D mesh textu, který je při šikmém pohledu hůře čitelný.
 
 ==== #gls("ui", long: false) vzory v architektonických nástrojích
 
-Analýza existujících řešení odhalila opakující se #gls("ui", long: false) vzory, které cílová uživatelská skupina již ovládá. *Sidebar / Properties panel* --- parametry vybraného objektu jsou trvale viditelné v postranním panelu; Archipack posouvá tento vzor dál automatickým zobrazením parametrů v N-panelu při výběru objektu bez nutnosti klikat na tlačítko. *Gizmo při výběru (Auto-manipulate on select)* --- při výběru stěny se automaticky zobrazí táhla pro tloušťku a výšku, vhodné pro geometrické úpravy tažením myši. *#gls("hud", long: false) během modálního nástroje* --- aktuální hodnoty a nápověda kláves zobrazeny přímo ve viewportu, nezbytné pro nástroje s více stavy. *Kontextová nabídka na #gls("rmb", long: false)* --- přístup k méně frekventovaným akcím (přejmenování, smazání, nastavení materiálu) je primární #gls("ui", long: false) konvencí Blenderu; nabídka je závislá na vybraný prvek, čímž redukuje vizuální šum. *Pop-over dialog* --- otevírá se u kurzoru, poskytuje prostor pro textový vstup nebo výběr z enumu a zavře se kliknutím mimo bez nutnosti potvrzení. *Jednoznakové zkratky* --- odpovídající prvnímu písmenu akce nebo ustálené konvenci prostředí, snižují latenci opakovaných akcí bez přepnutí pohledu na toolbar.
+Analýza existujících řešení odhalila opakující se #gls("ui", long: false) vzory, které cílová uživatelská skupina již ovládá. *Sidebar / Properties panel* --- parametry vybraného objektu jsou trvale viditelné v postranním panelu; Archipack posouvá tento vzor dál automatickým zobrazením parametrů v N-panelu při výběru objektu bez nutnosti klikat na tlačítko @archipack. *Gizmo při výběru (Auto-manipulate on select)* --- při výběru stěny se automaticky zobrazí táhla pro tloušťku a výšku, vhodné pro geometrické úpravy tažením myši. *#gls("hud", long: false) během modálního nástroje* --- aktuální hodnoty a nápověda kláves zobrazeny přímo ve viewportu, nezbytné pro nástroje s více stavy. *Kontextová nabídka na #gls("rmb", long: false)* --- přístup k méně frekventovaným akcím (přejmenování, smazání, nastavení materiálu) je primární #gls("ui", long: false) konvencí Blenderu; nabídka je závislá na vybraný prvek, čímž redukuje vizuální šum. *Pop-over dialog* --- otevírá se u kurzoru, poskytuje prostor pro textový vstup nebo výběr z enumu a zavře se kliknutím mimo bez nutnosti potvrzení. *Jednoznakové zkratky* --- odpovídající prvnímu písmenu akce nebo ustálené konvenci prostředí, snižují latenci opakovaných akcí bez přepnutí pohledu na toolbar.
 
 === Finalizační nástroj
 
