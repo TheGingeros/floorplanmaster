@@ -459,7 +459,9 @@ Geometrie (poloha prvků v prostoru) a topologie (vzájemné vztahy a propojení
 
 ==== Datová struktura BMesh
 
-BMesh je interní datová struktura programu Blender, která na rozdíl od tradičních struktur založených na trojúhelnících podporuje n-gony (polygony s více než čtyřmi vrcholy). Využívá systém podobný half-edge datovým strukturám, kde jsou vztahy mezi plochami a hranami uloženy tak, aby umožňovaly rychlou navigaci po povrchu sítě.
+BMesh je interní datová struktura programu Blender, která na rozdíl od tradičních struktur založených na trojúhelnících podporuje n-gony (polygony s více než čtyřmi vrcholy). 
+
+// Využívá systém podobný half-edge datovým strukturám, kde jsou vztahy mezi plochami a hranami uloženy tak, aby umožňovaly rychlou navigaci po povrchu sítě.
 
 Z pohledu parametrického modelování nabízí BMesh skrze Python API (modul `bmesh`) nízkoúrovňový přístup k topologii --- možnost dotazovat se, které hrany jsou spojeny s daným vrcholem, a tím provádět operace jako dissolve bez poškození okolní topologie. Algoritmus pro generování stěn obvykle začíná načtením 2D hran, identifikuje uzavřené smyčky jako obrysy místností a operací tloušťky (offset) --- například přes `bmesh.ops.bevel` nebo posunem vrcholů podél normál hran --- vytváří 3D stěny. Tento proces je v Pythonu relativně pomalý a neumožňuje plynulou interaktivní odezvu, zejména při průběžné validaci integrity sítě. Na druhou stranu ale poskytuje absolutní kontrolu nad datovou strukturou a zaručuje bezchybnou, čistou topologii.
 
@@ -467,15 +469,18 @@ Z pohledu parametrického modelování nabízí BMesh skrze Python API (modul `b
 
 Geometry Nodes (#gls("gn", long: false)) zastupují deklarativní, paralelní přístup: uživatel definuje systém pravidel aplikovaných na celou geometrii současně. Data jsou reprezentována jako pole atributů vázaných na různé domény (vrcholy, hrany, plochy, instance), přičemž výpočet probíhá v nativním kódu C++ s plným multithreadingem.
 
-Pro generování stěn se v GN nejčastěji používá uzel `Curve to Mesh`. Klíčovou výzvou je Miter Joint problém --- standardní vytažení profilu podél křivky vede ke ztenčení stěny v ostrých rozích. Řešením je matematická korekce měřítka profilu v každém bodě křivky pomocí faktoru $f = 1 / sin(theta / 2)$, kde $theta$ je úhel mezi sousedními segmenty stěny. Tento výpočet se v GN realizuje pomocí vektorové matematiky (skalární součin pro výpočet úhlu) a ač je komplexnější na přípravu, umožňuje dynamicky měnit tloušťku stěn pouhým posunutím bodu v 2D půdorysu. Zásadní slabinou GN je ovšem výsledná topologie. Zvláště po aplikaci booleovských operací (např. pro otvory oken a dveří) GN často generují nepředvídatelnou, triangulovanou nebo nevhodnou n-gonovou síť, která silně komplikuje čisté UV mapování a další manuální úpravy.
+Pro generování stěn se v GN nejčastěji používá uzel `Curve to Mesh`. Klíčovou výzvou je Miter Joint problém --- standardní vytažení profilu podél křivky vede ke ztenčení stěny v ostrých rozích. 
+// Řešením je matematická korekce měřítka profilu v každém bodě křivky pomocí faktoru $f = 1 / sin(theta / 2)$, kde $theta$ je úhel mezi sousedními segmenty stěny. Tento výpočet se v GN realizuje pomocí vektorové matematiky (skalární součin pro výpočet úhlu) a ač je komplexnější na přípravu, umožňuje dynamicky měnit tloušťku stěn pouhým posunutím bodu v 2D půdorysu. 
+
+Zásadní slabinou GN je ovšem výsledná topologie. Zvláště po aplikaci booleovských operací (např. pro otvory oken a dveří) GN často generují nepředvídatelnou, triangulovanou nebo nevhodnou n-gonovou síť, která silně komplikuje čisté UV mapování a další manuální úpravy.
 
 ==== Hybridní přístup: Python quad-polygon a GN extrude
 
 Třetí možností je kombinace obou předchozích přístupů, kde Python řeší geometricky náročné výpočty a Geometry Nodes (GN) fungují primárně jako vykreslovací backend. Důvodem je, že čistě programový ani čistě uzlový přístup nedokážou současně zajistit všechny tři úvodní požadavky: přesné napojení stěn, interaktivní odezvu i čistou topologii --- každý z nich má v určitém ohledu slabinu.
 
-Zvláštní pozornost je věnována rohům a křížení stěn pod různými úhly, kde by jednoduchý kolmý řez vytvářel mezery nebo nechtěné překryvy. Tento problém je řešen algoritmicky na straně Pythonu. Systém analyzuje všechny stěny v daném spoji, seřadí je podle úhlu odchozího směru a následně vypočítá přesné průsečíky jejich hran. Pro každou stěnu tak vznikne přesný 2D půdorys, který plně respektuje její osu a tloušťku. U složitějších spojů, jako jsou křížení ve tvaru T nebo X, algoritmus navíc generuje speciální výplňovou geometrii (_junction fill_), která spoj plynule uzavře a zabrání vzniku vizuálních děr v horní ploše křížení.
+// Zvláštní pozornost je věnována rohům a křížení stěn pod různými úhly, kde by jednoduchý kolmý řez vytvářel mezery nebo nechtěné překryvy. Tento problém je řešen algoritmicky na straně Pythonu. Systém analyzuje všechny stěny v daném spoji, seřadí je podle úhlu odchozího směru a následně vypočítá přesné průsečíky jejich hran. Pro každou stěnu tak vznikne přesný 2D půdorys, který plně respektuje její osu a tloušťku. U složitějších spojů, jako jsou křížení ve tvaru T nebo X, algoritmus navíc generuje speciální výplňovou geometrii (_junction fill_), která spoj plynule uzavře a zabrání vzniku vizuálních děr v horní ploše křížení.
 
-Vypočítané půdorysy jsou následně zapsány do základní sítě modelu společně s potřebnými metadaty, jako je cílová výška stěn. Role stromu Geometry Nodes je díky tomu zredukována na minimalistickou a stabilní sadu operací: vyfiltrování příslušného půdorysu, jeho vytažení do 3D prostoru na základě předaných parametrů a následné vyříznutí otvorů pro architektonické prvky pomocí booleovských operací.
+// Vypočítané půdorysy jsou následně zapsány do základní sítě modelu společně s potřebnými metadaty, jako je cílová výška stěn. Role stromu Geometry Nodes je díky tomu zredukována na minimalistickou a stabilní sadu operací: vyfiltrování příslušného půdorysu, jeho vytažení do 3D prostoru na základě předaných parametrů a následné vyříznutí otvorů pro architektonické prvky pomocí booleovských operací.
 
 Zásadní výhodou tohoto řešení je, že úspěšně uzavírá pomyslný trojúhelník nároků definovaný v úvodu. Generování 2D půdorysů a spojů čistě v Pythonu zajišťuje naprostou přesnost tloušťky i čistou quad topologii, přičemž oddělenou logiku lze spolehlivě ověřovat pomocí standardních automatizovaných testů. Následné delegování 3D extruze na C++ jádro GN zase poskytuje potřebný výkon pro rychlou interaktivní odezvu při úpravách. Nevýhodou je naopak o něco náročnější implementace synchronizační vrstvy. Přenos vypočítaných vlastností z Pythonu do Geometry Nodes vyžaduje pečlivou správu dat a obcházení určitých limitací při zápisu interních atributů sítě. Celkové srovnání analyzovaných přístupů napříč klíčovými technickými parametry shrnuje @tab-bmesh-gn.
 
@@ -562,11 +567,11 @@ Blender nabízí dva hlavní mechanismy. *Vlastnosti ID* (Custom Properties) jso
 
 Pro správu informací o prostorech (název, plocha, typ místnosti, výška) je optimálním vzorem `bpy.types.PropertyGroup`, který seskupuje souvísející parametry do logického celku připojeného k datovému bloku pomocí `PointerProperty` (vazba 1:1) nebo `CollectionProperty` (vazba 1:N).
 
-==== Vazby dat na úrovně hierarchie Blenderu
+// ==== Vazby dat na úrovně hierarchie Blenderu
 
-Rozhodnutí, na jakou úroveň hierarchie Blenderu budou metadata uložena, má hluboké důsledky pro stabilitu addonu a chování při Undo/Redo.
+// Rozhodnutí, na jakou úroveň hierarchie Blenderu budou metadata uložena, má hluboké důsledky pro stabilitu addonu a chování při Undo/Redo.
 
-Úroveň *Scéna* (`bpy.types.Scene`) je vhodná pro globální parametry projektu. Data specifická pro jednotlivé místnosti jsou na této úrovni nevhodná: smazání objektu ve viewportu nezpůsobí automatické smazání metadat v kolekci, což vede k hromadění dat. Úroveň *Objekt* (`bpy.types.Object`) nese informace o transformaci a viditelnosti. Komplikace nastávají při instancování: vytvoření instance přes Alt+D vytvoří dva objekty sdílející stejná geometrická data, ale s unikátními daty na úrovni Object --- změna rozměru jednoho okna by se neprojevila u ostatních instancí. Úroveň *Geometrie* (`bpy.types.Mesh`) je nejvhodnějším přístupem pro architektonické prvky: mesh reprezentuje „definici typu" prvku a všechny sdílené instance mají identické parametry, v souladu s principy BIM.
+// Úroveň *Scéna* (`bpy.types.Scene`) je vhodná pro globální parametry projektu. Data specifická pro jednotlivé místnosti jsou na této úrovni nevhodná: smazání objektu ve viewportu nezpůsobí automatické smazání metadat v kolekci, což vede k hromadění dat. Úroveň *Objekt* (`bpy.types.Object`) nese informace o transformaci a viditelnosti. Komplikace nastávají při instancování: vytvoření instance přes Alt+D vytvoří dva objekty sdílející stejná geometrická data, ale s unikátními daty na úrovni Object --- změna rozměru jednoho okna by se neprojevila u ostatních instancí. Úroveň *Geometrie* (`bpy.types.Mesh`) je nejvhodnějším přístupem pro architektonické prvky: mesh reprezentuje „definici typu" prvku a všechny sdílené instance mají identické parametry, v souladu s principy BIM.
 
 ==== Perzistence grafových dat
 
@@ -608,13 +613,16 @@ Analýza existujících řešení odhalila opakující se UI vzory, které cílo
 
 === Finalizační nástroj
 
-Parametrický model funguje jako živý organismus plný vzájemných závislostí: Geometry Nodes v reálném čase přepočítávají tvary geometrie, pojmenované atributy uchovávají data o místnostech a modifikátory čekají na své konečné uplatnění. Renderovací a herní enginy však vyžadují přesný opak – statickou geometrii (mesh) s čistými UV kanály a bez zbytečných materiálů, která už není nijak svázána s původním procedurálním výpočtem. Tato sekce analyzuje, jak takovou konverzi bezpečně provést pomocí vyhodnoceného grafu závislostí (Evaluated Depsgraph), aby nedošlo ke ztrátě dat ani k nevratnému zničení původního modelu.
+Parametrický model je neustále se měnící systém, ale renderovací a herní enginy potřebují přesný opak: čistou a statickou geometrii (mesh) se správnými UV mapami a bez zbytečných materiálů. 
 
-Nástroj pro finalizaci tvoří pomyslnou tečku za nedestruktivní fází návrhu. Jeho úkolem je převést procedurální geometrii do statické, topologicky čisté a plně optimalizované sítě. Technicky se tento proces opírá o rozdíl mezi původními daty (Original Data, tedy čistou sítí bez modifikátorů) a vyhodnoceným objektem (Evaluated Object), což je stav po aplikaci všech modifikátorů a uzlových stromů. Vzhledem k tomu, že Blender používá pro správu vztahů mezi objekty centrální graf závislostí (DepsGraph), je pro finalizaci klíčové získat právě jeho vyhodnocenou verzi, která reprezentuje finální stav scény.
+Úkolem finalizačního nástroje je převést procedurální objekt na topologicky čistou síť. Je naprosto klíčové to provést tak, abychom si původní, dál editovatelný model nezničili. Běžný postup postupného aplikování modifikátorů přes `modifier_apply()` je riskantní, protože v průběhu mění indexy těch zbývajících. Mnohem spolehlivější je proto využití vyhodnoceného grafu závislostí (DepsGraph). 
 
-Abychom získali čistou síť připravenou pro export, je nezbytné načíst vyhodnocený stav objektu pomocí metody `evaluated_get()` a z něj následně vygenerovat novou statickou geometrii voláním `bpy.data.meshes.new_from_object(obj_eval)`. Tento postup zaručuje naprostou nedestruktivnost – původní parametrický objekt zůstává nedotčen a uživatel se k němu může kdykoliv vrátit. Naopak běžný postup, který spoléhá na procházení seznamu `obj.modifiers` a postupné volání `modifier_apply()`, bývá vysoce rizikový. Každá úspěšná aplikace modifikátoru totiž změní indexy těch zbývajících. V praxi se proto osvědčují spolehlivější přístupy: buď iterace přes předem připravený statický seznam názvů modifikátorů, nebo použití cyklu `while` s integrovaným ošetřením chyb, který problematické položky jednoduše přeskočí.
+Pomocí metody `evaluated_get()` si načteme aktuální, vyhodnocený stav objektu (tedy stav po aplikaci všech modifikátorů a Geometry Nodes). Z něj pak voláním `bpy.data.meshes.new_from_object()` vygenerujeme zcela novou statickou síť. Původní parametrický objekt tak zůstane beze změny ukrytý ve scéně pro případné další úpravy.
 
-Zvláštní pozornost vyžadují UV mapy a materiály. V prostředí Geometry Nodes jsou UV mapy ukládány pouze jako 2D vektory v rozích polygonů (v doméně Face Corner). Pokud by zůstaly v této podobě, exportéry do formátů FBX nebo glTF by je zcela ignorovaly. Po aplikaci procedurální geometrie je proto nezbytné tyto pojmenované atributy explicitně převést na standardní UV vrstvy. Další komplikace vzniká při slučování instancí – často totiž dochází ke kumulaci geometrií s odlišnými definicemi, čímž vznikají zbytečně duplicitní materiálové sloty. V herních enginech by tento stav vedl k nežádoucímu nárůstu vykreslovacích požadavků (draw calls). Závěrečná finalizace by proto měla zahrnovat důkladné čištění materiálů, při kterém nástroj zanalyzuje existující sloty, identifikuje duplikáty, pomocí modulu BMesh přemapuje indexy a následně odstraní veškeré prázdné a nadbytečné pozice.
+Během tohoto procesu je nutné ohlídat dvě hlavní technické komplikace:
+
+- *UV mapy:* V Geometry Nodes se UV data ukládají jen jako 2D vektory v rozích polygonů (doména _Face Corner_). Standardní exportéry (jako FBX nebo glTF) by je v této podobě ignorovaly, takže je skript musí explicitně převést na klasické UV vrstvy.
+- *Duplicitní materiály:* Slučování instancí často nabaluje duplicitní materiálové sloty. V herních enginech by tento balast zbytečně zvyšoval počet vykreslovacích požadavků (_draw calls_). Skript proto musí pomocí modulu BMesh zanalyzovat existující sloty, přemapovat indexy materiálů na samotných polygonech a následně všechny prázdné nebo nadbytečné sloty z objektu odstranit.
 
 
 #pagebreak()
@@ -624,7 +632,7 @@ Tato kapitola převádí FloorPlanMaster do realizovatelného technického návr
 
 == Definice rozsahu MVP
 
-Funkční požadavky FP1 až FP7 identifikované v analýze (@tab-req-priority) pokrývají kompletní workflow od prvního načrtnutí dispozice až po finální export pro herní engine či renderovací pipeline. Celý tento rozsah nelze realizovat najednou --- pokus o to by vedl k nekonzistentní a nedokončené implementaci. Tato sekce proto zavádí MoSCoW prioritizaci jako filtr: musí být zcela jasné, které dílčí prvky tvoří nezbytné jádro MVP, které jsou hodnotnou, ale volitelnou nadstavbou a které lze realizovat až v pozdějších iteracích. Toto rozlišení prostupuje celým návrhem a v každé z následujících sekcí je každá funkce explicitně označena svou prioritou.
+Funkční požadavky FP1 až FP7 identifikované v analýze (@tab-req-priority) pokrývají kompletní workflow od prvního načrtnutí dispozice až po finální export pro herní engine či renderovací pipeline. Tato sekce zavádí MoSCoW prioritizaci jako filtr: musí být zcela jasné, které dílčí prvky tvoří nezbytné jádro MVP, které jsou hodnotnou, ale volitelnou nadstavbou a které lze realizovat až v pozdějších iteracích. Toto rozlišení prostupuje celým návrhem a v každé z následujících sekcí je každá funkce explicitně označena svou prioritou.
 
 MVP realizuje kompletní workflow jednoho podlaží: interaktivní kreslení stěn, automatickou detekci místností, parametrické otvory a finalizaci do statické geometrie. Must-have prvky tvoří minimální sadu, bez níž addon nesplňuje základní účel a nemůže být nasazen.
 
