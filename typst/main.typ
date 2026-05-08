@@ -1319,6 +1319,62 @@ Tato kapitola shrnuje oblasti, které nebyly součástí #gls("mvp", long: false
 
 *Persistence stavu módu a výběru.* Po načtení souboru je sémantický mód vždy vypnutý a výběr prázdný. `_mode_object_name` a `SelectionState` jsou module-level Python proměnné mimo Blender undo stack a nejsou serializovány do `.blend` souboru --- jde o záměrné a bezpečné výchozí chování. Uživatel po otevření souboru začíná v neutrálním stavu a aktivuje mód explicitně (Shift+Q). Geometrie, grafy a veškerá topologická data jsou naopak plně perzistovaná: #gls("json", long: false) custom property `_floorplan_graphs` je součástí `.blend` souboru a grafy se z ní korrektně rekonstruují po každém načtení.
 
+== Směr navazujícího vývoje
+
+Implementace popsaná v této kapitole tvoří funkční základ, na nějž lze navázat ve třech navzájem nezávislých oblastech: opravou zmíněných nedostatků, doplněním zbývajících částí #gls("mvp", long: false) a rozšířením mimo jeho rámec.
+
+Čtyři omezení popsaná v předchozí podkapitole --- transformace objektu, duplikování, přejmenování a jednoobjektový sémantický mód --- jsou nedostatky s přesně identifikovaným místem zásahu, nikoliv projevy chyb v architektonickém návrhu. Pro každé z nich existuje v kódu konkrétní bod napojení: `sync.py` pro aplikaci `matrix_world` při zápisu vrcholů do meshe, `depsgraph_update_post` handler pro přeindexaci `_graph_store` po přejmenování, přegenerování #gls("uuid", long: false) s vynuceným unlinkováním datového bloku meshe pro případ duplikování a rozšíření `_mode_object_name` a `SelectionState` ze skalárních hodnot na množiny pro souběžně aktivní objekty. Datový model ani vrstvy 1--3 žádnou z těchto oprav nevyžadují.
+
+Tři funkční oblasti z původního návrhu zůstaly mimo #gls("mvp", long: false) rozsah a pro každou z nich je v kódu předpřipraven konkrétní opěrný bod. Kontextové menu (FP5) je ze zbývajících funkcí nejblíže dokončení: `_pick_element()` v `select_wall.py` vrací typovaný výsledek `('wall', uuid)` nebo `('room', uuid)` a samotná nabídka je věcí nového Blender operátoru bez zásahu do logiky výběru. 3D manipulátory (FP6) mohou přímo vyjít z výstupů `junction_solver.py` --- přesné rohové body stěnového quadu jsou dostupné pro každý endpoint, overlay manager poskytuje kreslicí kontext a `move_junction_xy()` v `StructuralGraph` je vstupní branou pro napojení gizma. Automatické kótování (FP7) pracuje výhradně s daty Vrstvy 1 --- délkami stěn a souřadnicemi vrcholů --- a kreslení kót přes BLF draw handler je přirozené rozšíření stávající overlay architektury bez dotyku synchronizační vrstvy. Vedle samotných funkcí jsou v kódu explicitně sledovány záměrně odložené datové atributy: `Wall.is_bearing`, `Room.wall_color`, `Adjacency.connection_type` a `Adjacency.openings`. Datová struktura pro ně připravena je; jejich aktivace nevyžaduje refaktor, pouze doplnění konkrétních hodnot a rozšíření UI.
+
+Za hranicemi původního zadání se nabízejí tři přirozené směry navazujícího rozvoje, pro něž jsou architektonické podmínky splněny již v aktuální verzi. Podpora více podlaží by nevyžadovala zásah do Vrstev 1 a 2 --- postačovala by koordinační vrstva replikující stávající datový model pro každé podlaží a přidávající vazby mezi nimi; grafy, validátory i synchronizační pipeline by pracovaly per-podlaží beze změny. Exportní pipeline do formátů DXF, SVG nebo IFC pracuje výhradně s daty Vrstvy 3; základ pro ni tvoří bake operátor, jenž ze synchronizované geometrie a named atributů generuje statický mesh --- export by byl dalším výstupním krokem nad týmiž daty, nikoli novým principem. Prostorová validace --- kontrola minimálních průchodů, požárních únikových cest nebo normových plošných požadavků --- nevyžaduje rozšíření datového modelu: architektura `validators.py` je navržena pro přidávání izolovaných pravidel a `StructuralGraph` i `RoomGraph` poskytují veškerý topologický a geometrický kontext, který taková pravidla vyžadují.
+
+Třívrstvé jádro s jasně vymezenými zodpovědnostmi, centralizovaný overlay manager a synchronizační pipeline tvoří základ, na nějž lze navazovat bez zásahu do existující funkcionality. Architektura k tomu vede přirozenou cestou --- nové schopnosti se přidávají za výstupem stávajících vrstev nebo jejich rozšiřováním, nikoliv přepisováním jejich vnitřní logiky.
+
 #pagebreak()
 = Testování
-// Složka s testy pokrývá celé čisté Python jádro: Vrstvu 1, Vrstvu 2, validátory a matematické utility. Každý testovací soubor ověřuje jak standardní scénáře, tak hraniční podmínky --- minimální a maximální hodnoty parametrů, duplicitní entity, topologicky neplatné grafy a výpočetně degenerované situace. Celkem je k dispozici přes 190 testovacích případů, přičemž všechny procházejí. Synchronizační vrstva a operátory nejsou pokryty automatickými testy, neboť vyžadují přítomnost Blenderu --- jejich správnost je ověřována manuálně přímo v prostředí Blenderu.
+
+Testování addonu probíhá na dvou úrovních. První tvoří automatizované jednotkové testy pokrývající čisté Python jádro; druhou je uživatelské testování implementovaného #gls("mvp", long: false) s reprezentativní skupinou účastníků z definovaných cílových skupin. Tato kapitola popisuje obě úrovně: stav automatizovaných testů a plán uživatelského testování, které v době odevzdání práce neproběhlo.
+
+== Automatizované testy
+
+Testovací sada pokrývá celé čisté Python jádro: Vrstvu 1, Vrstvu 2, validátory a matematické utility. Každý testovací soubor ověřuje standardní scénáře i hraniční podmínky --- minimální a maximální hodnoty parametrů, duplicitní entity, topologicky neplatné grafy a výpočetně degenerované situace (nulová délka stěny, kolineární vrcholy, degenerovaný polygon místnosti). Celkem je k dispozici přes 190 testovacích případů a všechny procházejí bez chyby.
+
+Synchronizační vrstva a operátory automatickými testy pokryty nejsou, neboť vyžadují přítomnost Blenderu a jeho Python interpretu. Jejich správnost je proto ověřována manuálně přímo v Blenderu na sadě referenčních scénářů: kreslení dispozice s různými typy spojů, přidávání otvorů, finalizace meshe a obnova grafů po reloadu souboru.
+
+== Uživatelské testování
+
+#gls("mvp", long: false) addonu je implementačně dokončen a způsobilý pro uživatelské testování. Sběr dat a vyhodnocení neproběhly z časových důvodů. Tato kapitola popisuje zamýšlenou metodiku testování, typové otázky a předpokládané závěry.
+
+=== Cílové skupiny a výběr účastníků
+
+Výběr účastníků vychází přímo z analýzy cílových skupin v kapitole @chap-analysis: testování se zúčastní zástupci architektů, 3D vizualizátorů a game designérů, přičemž z každé skupiny bude osloveno více účastníků tak, aby výsledky umožnily porovnání chování skupin navzájem. Zásadní proměnnou je předchozí zkušenost s programem Blender --- uživatelé bez této zkušenosti narážejí na odlišné překážky než uživatelé zkušení, pro něž je ovládání viewportu přirozenou součástí pracovního postupu. Dotazník proto zahrnuje vstupní otázky zjišťující úroveň zkušenosti s Blenderem a se specializovanými nástroji pro tvorbu půdorysů.
+
+=== Metodika
+
+Testování probíhá formou samostatně plněných úkolů bez přítomnosti moderátora. Každý účastník dostane předem připravený soubor se zadáním a vyplní dotazník po splnění --- nebo pokusu o splnění --- každého úkolu. Účastníci jsou předem instruováni, aby při obtížích zdokumentovali, kde se zastavili, nikoliv aby úkol přeskočili bez záznamu. Tím se zajistí, že i neúspěšné pokusy přinesou použitelná data.
+
+Testovací sada obsahuje čtyři scénáře odpovídající use case z analytické části (UC 1.1--3.2). Každý scénář je formulován jako konkrétní zadání bez technického žargonu:
+
+- *Scénář A* --- Nakresli dispozici se čtyřmi místnostmi navzájem propojenými chodbou. Ověřuje základní workflow nástroje tužka, přichycení na existující vrcholy a automatickou detekci místností.
+- *Scénář B* --- Uprav tloušťku nosných stěn a příček a nastav různé výšky jednotlivých místností. Ověřuje parametrickou editaci přes N-panel a aktivaci FloorPlan módu.
+- *Scénář C* --- Přidej dveřní otvory do každé místnosti a okno do obývacího pokoje. Ověřuje workflow přidávání otvorů a chování validačních omezení.
+- *Scénář D* --- Zkontroluj plochy místností, přejmenuj je dle zadání a vyexportuj dispozici jako statický mesh. Ověřuje čitelnost metadat místností a workflow finalizace.
+
+=== Struktura dotazníku
+
+Dotazník se skládá ze čtyř částí. Vstupní část zjišťuje zkušenostní předpoklady respondenta: cílová skupina, délka práce s Blenderem (kategorie: nikdy, příležitostně, pravidelně) a zkušenost se specializovanými nástroji pro půdorysy. Pro každý scénář zvlášť dotazník zaznamenává, zda byl úkol dokončen (ano / s obtížemi / nedokončen), odhadovaný čas plnění a hodnocení obtížnosti na pětibodové stupnici. Doplňující otevřená otázka ke každému scénáři zjišťuje, co bylo matoucí nebo neočekávané.
+
+Třetí část tvoří uzavřené otázky hodnotící celkový dojem ze tří dimenzí: srozumitelnost ovládání (zejména aktivace FloorPlan módu a nástroje tužka), konzistence s konvencemi programu Blender a přehlednost N-panelu. Závěrečná otevřená část vyzývá respondenta k volnému komentáři a k formulaci jednoho nejdůležitějšího návrhu na zlepšení.
+
+=== Předpokládané závěry
+
+Na základě průběhu implementace a manuálního testování lze vytipovat několik oblastí, ve kterých se problémy pravděpodobně projeví.
+
+Největší riziko pro skupinu uživatelů bez předchozí zkušenosti s Blenderem představuje aktivace pracovního módu. Klávesová zkratka Shift+Q není v rozhraní Blenderu standardní konvencí spojenou s přepínáním módů, a uživatel, který ji nezná, může mít pocit, že addon nereaguje, přestože je ve scéně přítomen FloorPlan objekt. Od této skupiny lze očekávat nižší míru dokončení Scénáře B a C oproti skupině zkušených uživatelů. Nápravou by bylo přidat viditelné upozornění přímo ve viewportu indikující neaktivní mód, nebo zpřístupnit aktivaci primárně přes tlačítko v N-panelu.
+
+Druhý předpokládaný podnět se týká chování polí při přidávání otvorů. Rozsah hodnot šířky a pozice otvoru je průběžně omezován --- pohyb středu otvoru ke kraji stěny šířku otvoru nemění a výška parapetu se zastaví u stropu, aniž by se výška otvoru zmenšila --- ale vizuální zpětná vazba pro uživatele, jehož zadaná hodnota byla tiše upravena, chybí. Lze počítat s tím, že část respondentů označí chování otvorů za nepředvídatelné, přestože je technicky konzistentní.
+
+Pro skupinu zkušených uživatelů Blenderu budou pravděpodobně hlavním podnětem dílčí nedostatky v plynulosti ovládání: absence klávesové zkratky pro přidání otvoru přímo z viewportu, chybějící vizuální nápověda pro příkaz Remove Wall v N-panelu nebo absence zobrazení délky stěny přímo u kurzoru při kreslení. Právě tyto podněty jsou pro iteraci nejcennější: netýkají se principiálního návrhu, ale konkrétních míst tření, kde se zkušený uživatel zbytečně zastaví.
+
+Výstupy testování by sloužily jako vstup do iterace: identifikované problémy by byly seřazeny podle četnosti výskytu a závažnosti dopadu na dokončení úkolu a zapracovány v navazující vývojové fázi.
