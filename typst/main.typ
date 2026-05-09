@@ -2,7 +2,7 @@
 #import "@preview/fletcher:0.5.7" as fletcher: diagram, node, edge
 #import "glossarium/glossarium.typ": gls
 
-#let cpp = [C++]
+
 
 // TODO
 #let acknowledgment = [
@@ -47,7 +47,7 @@
   supervisor: "Ing. Lukáš Bařinka",
   year: "2026",
   declaration: declaration,
-  declaration-place: "Prague",
+  declaration-place: "Praze",
   // TODO: CHECK DATE
   declaration-date: datetime.today(),
   acknowledgment: acknowledgment,
