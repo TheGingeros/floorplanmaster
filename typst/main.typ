@@ -1236,6 +1236,27 @@ Vývoj tužkového nástroje byl doprovázen sérií propojených problémů, z 
 
 Druhým problémem byla obnova pohledu po deaktivaci. Prvotní implementace obnovovala uloženou matici pohledu bezpodmínečně --- pokud uživatel v průběhu kresby ručně otočil viewport a ukončil nástroj z perspektivy, pohled nechtěně přeskočil zpět na uloženou horní ortografii. Oprava podmínila obnovu pohledu: matice se obnoví pouze tehdy, pokud viewport stále zobrazuje horní ortografii, jinak se zachová aktuální pohled uživatele.
 
+#figure(
+  image("/typst/assets/pencil_tool_2.png", width: 85%),
+  caption: [Začátek kreslení první stěny pro navazující místnost],
+) <fig-toolbar>
+
+#figure(
+  image("/typst/assets/pencil_tool_3.png", width: 90%),
+  caption: [Preview doposud vytvořených stěn v aktuální sekvenci stěn],
+) <fig-toolbar>
+
+#figure(
+  image("/typst/assets/pencil_tool_4.png", width: 90%),
+  caption: [Uzavření cyklu nové navazující místnosti],
+) <fig-toolbar>
+
+#figure(
+  image("/typst/assets/pencil_tool_5.png", width: 90%),
+  caption: [Potvrzení nových stěn a automatická detekce nové místnosti],
+) <fig-toolbar>
+
+
 === FP2 --- Výběr a parametrické úpravy
 
 Interaktivní editace běží v dedikovaném FloorPlan módu, který je implementován jako modal controller nad viewportem. Tento režim přebírá ne-navigační události, chrání před nechtěnými globálními zkratkami a centralizuje klikací výběr stěn i místností. Výběr funguje nezávisle na pohledu kamery: implementace testuje klik vůči projekci šesti ploch 3D tělesa stěny (top, bottom, čtyři boky), takže funguje i v perspektivním pohledu.
@@ -1247,9 +1268,29 @@ Přidávání otvorů vynucuje geometrická omezení už při zadávání: otvor
 
 Vložení místnosti umístí pravoúhlý půdorys na aktuální pozici 3D kurzoru se zadanými rozměry jako transakci Vrstvy 1. */
 
+#figure(
+  image("/typst/assets/select_wall_1.png", width: 100%),
+  caption: [Výběr místnosti pro úpravu v FloorPlan módu],
+) <fig-toolbar>
+
+#figure(
+  image("/typst/assets/select_wall_2.png", width: 100%),
+  caption: [Parametrický posun vybrané místnosti podle své normály],
+) <fig-toolbar>
+
 Výběr stěn kliknutím do viewportu prošel dvěma zcela odlišnými implementacemi. Prvotní přístup projektoval pozici myši na rovinu Z=0 a testoval, zda bod leží uvnitř 2D quadu stěny. Tato metoda fungovala v ortografickém top-down pohledu, ale selhávala v perspektivním pohledu nebo při pohledu šikmém: kliknutí na horní hranu 3D stěny se na rovině Z=0 projektovalo mimo stěnu --- do středu místnosti. Přechod na screen-space testování šesti ploch 3D tělesa stěny (top, bottom, čtyři boky) situaci vyřešil: každá plocha se projektuje do 2D souřadnic obrazovky a klik se testuje vůči výsledným 2D polygonům. Tato metoda funguje v libovolném pohledu a přirozeně zohledňuje hloubku.
 
 Přidávání otvorů přineslo nejsložitější validační logiku celého addonu. Otvor nesmí přesáhnout délku stěny, nesmí zasahovat do junction inset zóny a nesmí se překrývat s jiným otvorem. Hodnoty se průběžně omezují (clampují) v metodě `check()` Blender dialogu. Při implementaci se ukázalo, že pořadí omezování rozhoduje: pokud se nejprve omezí šířka a pak poloha, pohyb středu otvoru ke kraji může neočekávaně zúžit otvor. Správné chování --- výška je fixní, parapet se zastaví u stropu, šířka je konstanta stěny nezávislá na poloze --- vyžadovalo přesnou specifikaci invariantů ještě před psaním kódu omezovací logiky.
+
+#figure(
+  image("/typst/assets/insert_opening_1.png", width: 100%),
+  caption: [Vložení parametrického otvoru dveří a úprava jeho hodnot v rámci Undo panelu],
+) <fig-toolbar>
+
+#figure(
+  image("/typst/assets/insert_opening_2.png", width: 100%),
+  caption: [Vložení další paramerického otvoru, tentokrát okna a úprava jeho hodnot],
+) <fig-toolbar>
 
 === FP3 --- Metadata místností
 
@@ -1267,6 +1308,16 @@ FP4 je implementováno operátorem Bake (zapečení), který převádí parametr
 Finalizační krok zahrnuje i úklid dat: převod rohových `float2` atributů na #gls("uv", long: false) vrstvy, volitelné odstranění pojmenovaných atributů a přiřazení výchozího materiálu. Součástí implementace je také ochrana vstupu do režimu úprav (Edit Mode): při pokusu o přechod na ruční editaci sítě se zobrazí varovný dialog s volbami Cancel, Bake nebo Lose Data, aby přechod ze sémantického modelu na běžný objekt byl vždy explicitní. */
 
 Finalizační operátor překonává architektonické oddělení procedurálního a statického modelu. Parametrický objekt modelu nese celou historii topologie v #gls("json", long: false) formátu a vizualizaci přenechává na #gls("gn", long: false) modifikátoru; statická síť oproti tomu obsahuje jen prostá geometrická data bez sémantiky. Před samotným zapečením operátor zrekonstruuje grafy z aktuálního stavu objektu, vygeneruje finální geometrii přes `final_mesh_builder.py` s přesnými spoji a odstraní #gls("gn", long: false) modifikátor i #gls("json", long: false) vlastnost. Ochrana vstupu do režimu úprav zabraňuje situaci, kdy by uživatel neúmyslně přepsal #gls("gn", long: false) síť ručními úpravami: obslužný proces (handler) zachytávající přechod do editace sítě nabídne tři volby --- zrušit přechod, provést Bake a pak editovat, nebo vstoupit a ztratit sémantická data. Tato ochrana brání neočekávaným chybám, které by jinak vznikly použitím standardních nástrojů Blenderu na procedurálním objektu.
+
+#figure(
+  image("/typst/assets/bake_1.png", width: 100%),
+  caption: [Floor Plan objekt před exportem pomocí operátoru Bake],
+) <fig-toolbar>
+
+#figure(
+  image("/typst/assets/bake_2.png", width: 100%),
+  caption: [Výsledný mesh po vygenerování přes operátor Bake],
+) <fig-toolbar>
 
 === Neimplementované funkce
 
