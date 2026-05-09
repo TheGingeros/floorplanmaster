@@ -6,7 +6,18 @@
 
 // TODO
 #let acknowledgment = [
-  TODO: Poděkování
+  // Mé díky patří mému vedoucímu, Ing. Lukáši Bařinkovi, za jeho pomoc při formulaci mého vlastního tématu a jeho převedení do plnohodnotné práce, za jeho ochotu, přínosné rady a kritické hodnocení. Dále děkuji E. a mým přátelům za veškerou podporu a trpělivost, kterou se mnou měli během našich studií. 
+
+  Aniž bych opomněl ostatní, mé díky patří především mému vedoucímu, Ing. Lukáši Bařinkovi.
+
+  Nejvíce si cením jeho pomoci při formulaci vlastního tématu a jeho převedení do plnohodnotné práce.
+
+  Kromě toho mu děkuji za jeho ochotu, přínosné rady a kritické hodnocení.
+
+  A dále samozřejmě děkuji E. a mým přátelům za veškerou podporu.
+
+  Především pak za trpělivost, kterou se mnou měli během našich studií.
+
 ]
 
 #let declaration = [
