@@ -855,12 +855,10 @@
   }
   {
     pagebreak()
-    bibliography(
+      bibliography(
       "works.bib",
-      style: "./assets/ieee-with-url.csl",
-      // style: "institute-of-electrical-and-electronics-engineers",
-      // style: "association-for-computing-machinery",
-      // style: "american-psychological-association",
+      // style: "/assets/ieee-with-url.csl",
+      style: "iso-690-numeric"
     )
     v(1fr)
     align(center, text(fill: head-gray)[Proudly built with Typst])
