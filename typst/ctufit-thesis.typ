@@ -365,6 +365,16 @@
     }
   }
 
+  let format_date_localized(date_obj) = {
+    let months_czech = ("ledna", "února", "března", "dubna", "května", "června", "července", "srpna", "září", "října", "listopadu", "prosince")
+    let months_slovak = ("januára", "februára", "marca", "apríla", "mája", "júna", "júla", "augusta", "septembra", "októbra", "novembra", "decembra")
+    let months_english = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+
+    let months = if lang == "czech" { months_czech } else if lang == "slovak" { months_slovak } else { months_english }
+    let month_name = months.at(date_obj.month() - 1)
+    [#date_obj.day(). #month_name #date_obj.year()]
+  }
+
   let title-page = {
     page(
       margin: (left: 67mm, top: 80mm, right: 40mm, bottom: 35mm),
@@ -399,19 +409,18 @@
       #specialization-label: #specialization \
       #supervisor-label: #supervisor \
       // TODO support Czech and Slovak
-      #declaration-date.display("[month repr:long] [day], [year]")
+      #format_date_localized(declaration-date)
     ]
   }
 
   title-page
 
-  // {
-  //   pagebreak()
-  //   [
-  //     *Replace this page with the official assignment. \
-  //     Místo této strany sem patří list se zadáním závěrečné práce.*
-  //   ]
-  // }
+  {
+    pagebreak()
+    page(margin: 0pt)[
+      #image("assets/wladaosk-assignment.pdf", width: 100%, height: 100%)
+    ]
+  }
 
   {
     pagebreak()
@@ -556,7 +565,7 @@
       #declaration \
       \
       \
-      #decl-pref #declaration-date.display("[month repr:long] [day], [year]")
+      #decl-pref #format_date_localized(declaration-date)
     ]
     pagebreak()
   }
