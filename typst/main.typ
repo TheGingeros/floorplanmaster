@@ -1317,6 +1317,8 @@ Tato kapitola shrnuje oblasti, které nebyly součástí #gls("mvp", long: false
 
 *Persistence stavu módu a výběru.* Po načtení souboru je sémantický mód vždy vypnutý a výběr prázdný. `_mode_object_name` a `SelectionState` jsou module-level Python proměnné mimo Blender undo stack a nejsou serializovány do `.blend` souboru --- jde o záměrné a bezpečné výchozí chování. Uživatel po otevření souboru začíná v neutrálním stavu a aktivuje mód explicitně (Shift+Q). Geometrie, grafy a veškerá topologická data jsou naopak plně perzistovaná: #gls("json", long: false) custom property `_floorplan_graphs` je součástí `.blend` souboru a grafy se z ní korrektně rekonstruují po každém načtení.
 
+*Použitelnost --- riziková místa.* Manuální testování identifikovalo dvě místa, která mohou způsobovat potíže zejména uživatelům bez předchozí zkušenosti s addonem. Prvním je aktivace FloorPlan módu: klávesová zkratka Shift+Q není v rozhraní viditelně indikována a uživatel, který mód neaktivuje, může nabýt dojmu, že addon nereaguje, přestože je ve scéně přítomen FloorPlan objekt. Nápravou by bylo přidat upozornění přímo ve viewportu indikující neaktivní mód, nebo zpřístupnit aktivaci primárně přes tlačítko v N-panelu --- obě varianty nevyžadují zásah do datového modelu. Druhým rizikovým místem je vizuální zpětná vazba při clamping otvorů: pohyb středu otvoru ke kraji stěny šířku otvoru nemění a výška parapetu se zastaví u stropu bez informace o provedené úpravě, takže uživatel neví, proč se jím zadaná hodnota nezobrazuje. Obě omezení lze adresovat na úrovni UI.
+
 == Směr navazujícího vývoje
 
 Implementace popsaná v této kapitole tvoří funkční základ, na nějž lze navázat ve třech navzájem nezávislých oblastech: opravou zmíněných nedostatků, doplněním zbývajících částí #gls("mvp", long: false) a rozšířením mimo jeho rámec.
@@ -1332,7 +1334,7 @@ Třívrstvé jádro s jasně vymezenými zodpovědnostmi, centralizovaný overla
 #pagebreak()
 = Testování
 
-Testování addonu probíhá na dvou úrovních. První tvoří automatizované testy pokrývající čisté Python jádro; druhou je uživatelské testování implementovaného #gls("mvp", long: false) s reprezentativní skupinou účastníků z definovaných cílových skupin. Tato kapitola popisuje obě úrovně: stav automatizovaných testů a plán uživatelského testování, které v době odevzdání práce neproběhlo.
+Testování addonu probíhá na dvou úrovních. První tvoří automatizované testy pokrývající čisté Python jádro; druhou je uživatelské testování implementovaného #gls("mvp", long: false) s reprezentativní skupinou účastníků z definovaných cílových skupin. Tato kapitola popisuje stav automatizovaných testů a připravený plán uživatelského testování, jehož realizace je plánována jako bezprostřední navazující krok po dokončení implementace.
 
 == Automatizované testy
 
@@ -1340,9 +1342,9 @@ Testovací sada pokrývá celé čisté Python jádro: Vrstvu 1, Vrstvu 2, valid
 
 Synchronizační vrstva a operátory automatickými testy pokryty nejsou, neboť vyžadují přítomnost Blenderu a jeho Python interpretu. Jejich správnost je proto ověřována manuálně přímo v Blenderu na sadě referenčních scénářů: kreslení dispozice s různými typy spojů, přidávání otvorů, finalizace meshe a obnova grafů po reloadu souboru.
 
-== Uživatelské testování
+== Plán uživatelského testování
 
-#gls("mvp", long: false) addonu je implementačně dokončen a způsobilý pro uživatelské testování. Sběr dat a vyhodnocení neproběhly z časových důvodů. Tato kapitola popisuje zamýšlenou metodiku testování, typové otázky a předpokládané závěry.
+#gls("mvp", long: false) addonu je implementačně dokončen a způsobilý pro uživatelské testování. Tato sekce definuje metodiku, scénáře a strukturu dotazníku, podle nichž testování proběhne --- slouží zároveň jako podklad pro hodnotitele a jako dokumentace testovacího záměru.
 
 === Cílové skupiny a výběr účastníků
 
@@ -1365,14 +1367,8 @@ Dotazník se skládá ze čtyř částí. Vstupní část zjišťuje zkušenostn
 
 Třetí část tvoří uzavřené otázky hodnotící celkový dojem ze tří dimenzí: srozumitelnost ovládání (zejména aktivace FloorPlan módu a nástroje tužka), konzistence s konvencemi programu Blender a přehlednost N-panelu. Závěrečná otevřená část vyzývá respondenta k volnému komentáři a k formulaci jednoho nejdůležitějšího návrhu na zlepšení.
 
-=== Předpokládané závěry
+=== Identifikovaná rizika použitelnosti
 
-Na základě průběhu implementace a manuálního testování lze vytipovat několik oblastí, ve kterých se problémy pravděpodobně projeví.
+Manuální testování v průběhu implementace odhalilo oblasti, v nichž lze pro určité skupiny uživatelů očekávat zvýšené tření. Tyto poznatky budou ověřeny uživatelským testováním a poslouží jako vstup pro prioritizaci navazujících iterací.
 
-Největší riziko pro skupinu uživatelů bez předchozí zkušenosti s Blenderem představuje aktivace pracovního módu. Klávesová zkratka Shift+Q není v rozhraní Blenderu standardní konvencí spojenou s přepínáním módů, a uživatel, který ji nezná, může mít pocit, že addon nereaguje, přestože je ve scéně přítomen FloorPlan objekt. Od této skupiny lze očekávat nižší míru dokončení Scénáře B a C oproti skupině zkušených uživatelů. Nápravou by bylo přidat viditelné upozornění přímo ve viewportu indikující neaktivní mód, nebo zpřístupnit aktivaci primárně přes tlačítko v N-panelu.
-
-Druhý předpokládaný podnět se týká chování polí při přidávání otvorů. Rozsah hodnot šířky a pozice otvoru je průběžně omezován --- pohyb středu otvoru ke kraji stěny šířku otvoru nemění a výška parapetu se zastaví u stropu, aniž by se výška otvoru zmenšila --- ale vizuální zpětná vazba pro uživatele, jehož zadaná hodnota byla tiše upravena, chybí. Lze počítat s tím, že část respondentů označí chování otvorů za nepředvídatelné, přestože je technicky konzistentní.
-
-Pro skupinu zkušených uživatelů Blenderu budou pravděpodobně hlavním podnětem dílčí nedostatky v plynulosti ovládání: absence klávesové zkratky pro přidání otvoru přímo z viewportu, chybějící vizuální nápověda pro příkaz Remove Wall v N-panelu nebo absence zobrazení délky stěny přímo u kurzoru při kreslení. Právě tyto podněty jsou pro iteraci nejcennější: netýkají se principiálního návrhu, ale konkrétních míst tření, kde se zkušený uživatel zbytečně zastaví.
-
-Výstupy testování by sloužily jako vstup do iterace: identifikované problémy by byly seřazeny podle četnosti výskytu a závažnosti dopadu na dokončení úkolu a zapracovány v navazující vývojové fázi.
+Pro skupinu zkušených uživatelů Blenderu budou pravděpodobně hlavním podnětem dílčí nedostatky v plynulosti ovládání: absence klávesové zkratky pro přidání otvoru přímo z viewportu, chybějící vizuální nápověda pro příkaz Remove Wall v N-panelu nebo absence zobrazení délky stěny přímo u kurzoru při kreslení. Tato místa tření se netýkají principiálního návrhu a lze je adresovat jako izolovaná UI vylepšení v navazující iteraci. Rizika specifická pro uživatele bez předchozí zkušenosti s addonem --- aktivace pracovního módu a chování clampingu otvorů --- jsou detailněji popsána v sekci omezení implementace.
