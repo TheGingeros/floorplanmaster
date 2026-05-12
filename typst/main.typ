@@ -225,7 +225,7 @@ Parametrické modelování půdorysů v Blenderu může urychlit práci architek
 
 === Uživatelské skupiny
 
-Společným problémem všech tří skupin je frustrace z toho, že Blender nedokáže udržet krok s rychlostí jejich myšlení: potřeba změnit dispozici často přichází ve chvíli, kdy je geometrie již pevně spojená v jeden celek a její úprava je zdlouhavá. Každá skupina však naráží na specifické problémy a upřednostňuje jiné vlastnosti addonu, proto je nutné popsat je zvlášť.
+Společným problémem všech tří skupin je frustrace z toho, že Blender nedokáže udržet krok s rychlostí jejich myšlení: potřeba změnit dispozici často přichází ve chvíli, kdy je geometrie již pevně spojená v jeden celek a její úprava je zdlouhavá. Z hlediska priorit projektu je pořadí cílových skupin následující: primárně architekti ve fázi konceptuálního navrhování, sekundárně 3D umělci a vizualizátoři, a terciárně game a level designéři. Toto pořadí vychází z hlavního cíle práce (rychlá a parametrická tvorba architektonického půdorysu v Blenderu) a slouží jako podklad pro pozdější prioritizaci požadavků v hodnoticích tabulkách. Každá skupina však zároveň naráží na specifické problémy a upřednostňuje jiné vlastnosti addonu, proto je nutné popsat je zvlášť.
 
 ==== Architekti ve fázi konceptuálního navrhování
 
