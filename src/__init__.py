@@ -8,94 +8,7 @@ bl_info = {
     "category": "3D View",
 }
 
-import json
-import os
 import sys
-import tempfile
-import urllib.error
-import urllib.request
-
-
-_NETWORKX_VERSION = "3.6.1"
-
-
-def _dependency_cache_dir():
-    # Use platform-appropriate user cache directory to keep source tree clean.
-    if sys.platform == "win32":
-        base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
-        cache_dir = os.path.join(base, "floorplanmaster", "cache")
-    else:
-        cache_dir = os.path.expanduser("~/.cache/floorplanmaster")
-    
-    try:
-        os.makedirs(cache_dir, exist_ok=True)
-        return cache_dir
-    except OSError:
-        pass
-    
-    # Fallback to system temp if user cache fails.
-    try:
-        fallback = os.path.join(tempfile.gettempdir(), "floorplanmaster", "cache")
-        os.makedirs(fallback, exist_ok=True)
-        return fallback
-    except OSError:
-        return None
-
-
-def _download_networkx_wheel(cache_dir):
-    metadata_url = f"https://pypi.org/pypi/networkx/{_NETWORKX_VERSION}/json"
-    with urllib.request.urlopen(metadata_url, timeout=20) as response:
-        metadata = json.load(response)
-
-    wheel_url = None
-    wheel_name = None
-    for file_info in metadata.get("urls", []):
-        if file_info.get("packagetype") != "bdist_wheel":
-            continue
-        filename = file_info.get("filename", "")
-        if not filename.endswith(".whl"):
-            continue
-        wheel_url = file_info.get("url")
-        wheel_name = filename
-        break
-
-    if not wheel_url or not wheel_name:
-        raise ImportError("Unable to locate a downloadable NetworkX wheel on PyPI")
-
-    wheel_path = os.path.join(cache_dir, wheel_name)
-    if not os.path.exists(wheel_path):
-        with urllib.request.urlopen(wheel_url, timeout=60) as response, open(wheel_path, "wb") as handle:
-            handle.write(response.read())
-    return wheel_path
-
-
-def _ensure_networkx_available():
-    try:
-        import networkx  # noqa: F401
-        return
-    except ModuleNotFoundError as exc:
-        if exc.name != "networkx":
-            raise
-
-    cache_dir = _dependency_cache_dir()
-    if cache_dir is None:
-        raise ImportError("FloorPlanMaster could not create a dependency cache directory")
-
-    try:
-        wheel_path = _download_networkx_wheel(cache_dir)
-    except (urllib.error.URLError, TimeoutError, OSError) as exc:
-        raise ImportError(
-            "FloorPlanMaster could not download NetworkX from PyPI. "
-            "Enable internet access and reactivate the addon."
-        ) from exc
-
-    if wheel_path not in sys.path:
-        sys.path.insert(0, wheel_path)
-
-    import networkx  # noqa: F401
-
-
-_ensure_networkx_available()
 
 # Guard bpy imports so pytest can load core/ and utils/ without Blender.
 try:
@@ -104,8 +17,26 @@ try:
 except ImportError:
     _HAS_BPY = False
 
-from .core.structural_graph import StructuralGraph
-from .core.room_graph import RoomGraph
+# Check whether NetworkX is available; if inside Blender, delegate to the
+# dependency module which handles caching, online-access gating and the
+# install dialog.  Outside Blender (pytest), rely on the venv.
+_NETWORKX_AVAILABLE = False
+if _HAS_BPY:
+    from .dependencies import mount_networkx
+    _NETWORKX_AVAILABLE = mount_networkx()
+else:
+    try:
+        import networkx  # noqa: F401
+        _NETWORKX_AVAILABLE = True
+    except ModuleNotFoundError:
+        pass
+
+if _NETWORKX_AVAILABLE:
+    from .core.structural_graph import StructuralGraph
+    from .core.room_graph import RoomGraph
+else:
+    StructuralGraph = None  # type: ignore[assignment,misc]
+    RoomGraph = None  # type: ignore[assignment,misc]
 
 
 # Per-object graph storage: obj.name -> (StructuralGraph, RoomGraph, IdMapper)
@@ -423,6 +354,11 @@ if _HAS_BPY:
     ]
 
     def register():
+        from . import dependencies
+        if not _NETWORKX_AVAILABLE:
+            dependencies.register_minimal()
+            return
+
         for cls in _addon_classes:
             bpy.utils.register_class(cls)
 
@@ -454,6 +390,11 @@ if _HAS_BPY:
         _rebuild_graph_store()
 
     def unregister():
+        from . import dependencies
+        if not _NETWORKX_AVAILABLE:
+            dependencies.unregister_minimal()
+            return
+
         global _mode_object_name
         if _load_post_handler in bpy.app.handlers.load_post:
             bpy.app.handlers.load_post.remove(_load_post_handler)
