@@ -867,7 +867,7 @@
       bibliography(
       "works.bib",
       // style: "/assets/ieee-with-url.csl",
-      style: "iso-690-numeric"
+      style: "assets/iso690-numeric-brackets-cs.csl"
     )
     v(1fr)
     align(center, text(fill: head-gray)[Proudly built with Typst])
