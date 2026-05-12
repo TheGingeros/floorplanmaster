@@ -8,26 +8,94 @@ bl_info = {
     "category": "3D View",
 }
 
+import json
 import os
 import sys
+import tempfile
+import urllib.error
+import urllib.request
 
 
-def _bootstrap_bundled_wheels():
-    # Blender Extensions installs wheels automatically.
-    # Legacy ZIP installs need this local fallback so bundled dependencies work.
-    wheels_dir = os.path.join(os.path.dirname(__file__), "wheels")
-    if not os.path.isdir(wheels_dir):
-        return
+_NETWORKX_VERSION = "3.6.1"
 
-    for whl_name in os.listdir(wheels_dir):
-        if not whl_name.endswith(".whl"):
+
+def _dependency_cache_dir():
+    # Use platform-appropriate user cache directory to keep source tree clean.
+    if sys.platform == "win32":
+        base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
+        cache_dir = os.path.join(base, "floorplanmaster", "cache")
+    else:
+        cache_dir = os.path.expanduser("~/.cache/floorplanmaster")
+    
+    try:
+        os.makedirs(cache_dir, exist_ok=True)
+        return cache_dir
+    except OSError:
+        pass
+    
+    # Fallback to system temp if user cache fails.
+    try:
+        fallback = os.path.join(tempfile.gettempdir(), "floorplanmaster", "cache")
+        os.makedirs(fallback, exist_ok=True)
+        return fallback
+    except OSError:
+        return None
+
+
+def _download_networkx_wheel(cache_dir):
+    metadata_url = f"https://pypi.org/pypi/networkx/{_NETWORKX_VERSION}/json"
+    with urllib.request.urlopen(metadata_url, timeout=20) as response:
+        metadata = json.load(response)
+
+    wheel_url = None
+    wheel_name = None
+    for file_info in metadata.get("urls", []):
+        if file_info.get("packagetype") != "bdist_wheel":
             continue
-        whl_path = os.path.join(wheels_dir, whl_name)
-        if whl_path not in sys.path:
-            sys.path.insert(0, whl_path)
+        filename = file_info.get("filename", "")
+        if not filename.endswith(".whl"):
+            continue
+        wheel_url = file_info.get("url")
+        wheel_name = filename
+        break
+
+    if not wheel_url or not wheel_name:
+        raise ImportError("Unable to locate a downloadable NetworkX wheel on PyPI")
+
+    wheel_path = os.path.join(cache_dir, wheel_name)
+    if not os.path.exists(wheel_path):
+        with urllib.request.urlopen(wheel_url, timeout=60) as response, open(wheel_path, "wb") as handle:
+            handle.write(response.read())
+    return wheel_path
 
 
-_bootstrap_bundled_wheels()
+def _ensure_networkx_available():
+    try:
+        import networkx  # noqa: F401
+        return
+    except ModuleNotFoundError as exc:
+        if exc.name != "networkx":
+            raise
+
+    cache_dir = _dependency_cache_dir()
+    if cache_dir is None:
+        raise ImportError("FloorPlanMaster could not create a dependency cache directory")
+
+    try:
+        wheel_path = _download_networkx_wheel(cache_dir)
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        raise ImportError(
+            "FloorPlanMaster could not download NetworkX from PyPI. "
+            "Enable internet access and reactivate the addon."
+        ) from exc
+
+    if wheel_path not in sys.path:
+        sys.path.insert(0, wheel_path)
+
+    import networkx  # noqa: F401
+
+
+_ensure_networkx_available()
 
 # Guard bpy imports so pytest can load core/ and utils/ without Blender.
 try:

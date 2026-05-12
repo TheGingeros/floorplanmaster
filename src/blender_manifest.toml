@@ -23,3 +23,6 @@ paths_exclude_pattern = [
 wheels = [
     "./wheels/networkx-3.6.1-py3-none-any.whl",
 ]
+
+[permissions]
+network = "Download NetworkX on first activation"
