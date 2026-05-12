@@ -439,7 +439,7 @@ Funkční požadavky říkají _co_ má addon umět; technická analýza odpoví
 
 === Architektura Blenderu
 
-Blender je modulární systém postavený na unikátním způsobu správy dat --- dualitě systému #gls("dna", long: false) a #gls("rna", long: false). #gls("dna", long: false) (Blender's Data Architecture) definuje struktury C pro veškerá interní data scény, zatímco #gls("rna", long: false) (Runtime Notification Architecture) poskytuje reflexivní #gls("api", long: false), přes které Python přistupuje k těmto strukturám a reaguje na jejich změny @blender_dev_dna.
+Blender je modulární systém postavený na unikátním způsobu správy dat. #gls("dna", long: false) (Blender's Data Architecture) definuje struktury C pro veškerá interní data scény, zatímco #gls("rna", long: false) (Runtime Notification Architecture) poskytuje reflexivní #gls("api", long: false), přes které Python přistupuje k těmto strukturám a reaguje na jejich změny @blender_dev_dna.
 
 Blender využívá kombinaci vzoru #gls("mvc", long: false) (Model-View-Controller), která umožňuje oddělit uživatelské rozhraní (View) od vnitřní logiky (Model) a zpracování vstupů (Controller). Addony mohou definovat vlastní výpočty například v Geometry Nodes (Model), zatímco Blender se stará o jejich vykreslení do viewportu a zachytávání událostí myši přes Python #gls("api", long: false) @blender_dev.
 
@@ -502,7 +502,7 @@ Zásadní slabinou #gls("gn", long: false) je ovšem výsledná topologie. Zvlá
 
 ==== Hybridní přístup: Python quad-polygon a #gls("gn", long: false) extrude
 
-Třetí možností je kombinace obou předchozích přístupů, kde Python řeší geometricky náročné výpočty a Geometry Nodes (#gls("gn", long: false)) fungují primárně jako vykreslovací backend. Důvodem je, že čistě programový ani čistě uzlový přístup nedokážou současně zajistit všechny tři úvodní požadavky: přesné napojení stěn, interaktivní odezvu i čistou topologii --- každý z nich má v určitém ohledu slabinu.
+Třetí možností je přístup, kde čistý Python přebírá geometricky náročné výpočty a Geometry Nodes (#gls("gn", long: false)) fungují primárně jako vykreslovací backend. Důvodem je, že ani imperativní přístup přes #gls("bmesh", long: false), ani deklarativní přístup přes samotné #gls("gn", long: false) nedokážou současně zajistit všechny tři úvodní požadavky: přesné napojení stěn, interaktivní odezvu i čistou topologii --- každý z nich má v určitém ohledu slabinu.
 
 // Zvláštní pozornost je věnována rohům a křížení stěn pod různými úhly, kde by jednoduchý kolmý řez vytvářel mezery nebo nechtěné překryvy. Tento problém je řešen algoritmicky na straně Pythonu. Systém analyzuje všechny stěny v daném spoji, seřadí je podle úhlu odchozího směru a následně vypočítá přesné průsečíky jejich hran. Pro každou stěnu tak vznikne přesný 2D půdorys, který plně respektuje její osu a tloušťku. U složitějších spojů, jako jsou křížení ve tvaru T nebo X, algoritmus navíc generuje speciální výplňovou geometrii (_junction fill_), která spoj plynule uzavře a zabrání vzniku vizuálních děr v horní ploše křížení.
 
