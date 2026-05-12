@@ -7,21 +7,21 @@ bl_info = {
     "description": "Interactive floor plan creation with parametric walls and automatic room detection",
     "category": "3D View",
 }
+# DEVELOPMENT INCLUDES
+# # Ensure bundled wheels are importable.
+# # .whl files are zip archives — Python can import from them directly via sys.path.
+# # This is a fallback for development (VS Code Blender extension) where Blender
+# # does not run the Extensions install pipeline that would handle blender_manifest.toml.
+# import sys
+# import os
 
-# Ensure bundled wheels are importable.
-# .whl files are zip archives — Python can import from them directly via sys.path.
-# This is a fallback for development (VS Code Blender extension) where Blender
-# does not run the Extensions install pipeline that would handle blender_manifest.toml.
-import sys
-import os
-
-_wheels_dir = os.path.join(os.path.dirname(__file__), "wheels")
-if os.path.isdir(_wheels_dir):
-    for _whl in os.listdir(_wheels_dir):
-        if _whl.endswith(".whl"):
-            _whl_path = os.path.join(_wheels_dir, _whl)
-            if _whl_path not in sys.path:
-                sys.path.insert(0, _whl_path)
+# _wheels_dir = os.path.join(os.path.dirname(__file__), "wheels")
+# if os.path.isdir(_wheels_dir):
+#     for _whl in os.listdir(_wheels_dir):
+#         if _whl.endswith(".whl"):
+#             _whl_path = os.path.join(_wheels_dir, _whl)
+#             if _whl_path not in sys.path:
+#                 sys.path.insert(0, _whl_path)
 
 # Guard bpy imports so pytest can load core/ and utils/ without Blender.
 try:
