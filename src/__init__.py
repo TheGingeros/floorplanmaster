@@ -248,7 +248,16 @@ def toggle_floorplan_mode(context):
     return True
 
 
-if _HAS_BPY:
+if _HAS_BPY and not _NETWORKX_AVAILABLE:
+    def register():
+        from . import dependencies
+        dependencies.register_minimal()
+
+    def unregister():
+        from . import dependencies
+        dependencies.unregister_minimal()
+
+if _HAS_BPY and _NETWORKX_AVAILABLE:
     from bpy.props import PointerProperty
     from .ui.properties import OpeningItem, FloorPlanSettings, populate_opening_items
 
@@ -354,11 +363,6 @@ if _HAS_BPY:
     ]
 
     def register():
-        from . import dependencies
-        if not _NETWORKX_AVAILABLE:
-            dependencies.register_minimal()
-            return
-
         for cls in _addon_classes:
             bpy.utils.register_class(cls)
 
@@ -390,11 +394,6 @@ if _HAS_BPY:
         _rebuild_graph_store()
 
     def unregister():
-        from . import dependencies
-        if not _NETWORKX_AVAILABLE:
-            dependencies.unregister_minimal()
-            return
-
         global _mode_object_name
         if _load_post_handler in bpy.app.handlers.load_post:
             bpy.app.handlers.load_post.remove(_load_post_handler)
