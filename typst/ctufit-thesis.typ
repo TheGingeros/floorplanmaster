@@ -192,7 +192,17 @@
       )
     }
   }
-
+  let ref-box-v2(it) = {
+    if twosided {
+      it
+    } else {
+      box(
+        outset: (x: 0.5pt, y: 194% - 1em),
+        stroke: 0.5pt + red,
+        it,
+      )
+    }
+  }
   // https://github.com/typst/typst/discussions/2585
   // show ref: it => context {
   //   // TODO handle other forms
@@ -491,7 +501,7 @@
   }
 
   show outline.entry: entry => {
-    ref-box(entry)
+    ref-box-v2(entry)
   }
 
   set list(
