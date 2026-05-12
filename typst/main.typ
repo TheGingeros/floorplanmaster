@@ -163,7 +163,7 @@ Všechny nástroje jsou hodnoceny podle pěti shodných kritérií:
 - *parametrická editace stěn* — možnost kdykoli změnit tloušťku, výšku nebo polohu stěny bez narušení sousední geometrie.
 - *automatická detekce místností* — samostatné rozpoznávání uzavřených cyklů stěn jako místností s výpočtem ploch.
 - *správa otvorů* — okna a dveře svázané s parametry stěny, pohybující se spolu s ní.
-- *nedestruktivní workflow* — parametrická úprava geometrii okamžitě přepočítá bez ručního zásahu do okolní topologie; změny zachovají vazby prvků (stěny, otvory, místnosti) a model zůstává dál plně editovatelný.
+- *nedestruktivní workflow* — parametrická úprava geometrii okamžitě přepočítá bez ručního zásahu do okolní topologie.
 
 ==== Architektonické rozšiřující moduly pro Blender
 
@@ -269,23 +269,25 @@ Jeho úkolem je v krátkém čase vybudovat rozsáhlou herní mapu (například 
 
 == Vstupy a výstupy
 
-FloorPlanMaster je navržen tak, aby dokázal reagovat na reálné pracovní situace: architekt často začíná s prázdnou scénou a úvodní myšlenkou, vizualizátorka dostane od klienta 2D půdorys ve formátu #gls("pdf", long: false) a game designér vychází z přibližných rozměrů v herním design dokumentu. Tato sekce jasně vymezuje, jaké formy vstupních dat addon zpracovává a jaké výstupy následně produkuje, čímž definuje hranice životního cyklu celého modelu.
+Z person a scénářů použití vyplývá, že uživatelé vstupují do práce s velmi odlišnou mírou připravenosti podkladů: od přesných výkresů přes číselné požadavky až po čistě koncepční skicování. Pro další analýzu je proto nutné explicitně vymezit, jaké informační vstupy systém přijímá a jaké výsledky od něj jednotlivé cílové skupiny očekávají. Tím se stanovují hranice řešeného problému z pohledu uživatele, nikoliv způsob implementace.
 
 === Vstupy
 
-Addon dokáže zpracovat tři základní kategorie vstupů. První kategorií jsou *2D podklady* — naskenované ruční skice, výkresy v #gls("pdf", long: false), obrázky půdorysů nebo importované 2D #gls("cad", long: false) výkresy (#gls("dxf", long: false)/#gls("dwg", long: false)), které uživatel potřebuje převést do 3D prostoru. Podkladový soubor se typicky umístí na pozadí scény a slouží jako vizuální reference pro následné obkreslování.
+Analýza potřeb identifikuje tři hlavní kategorie vstupů:
 
-Druhou kategorií je *kvantitativní zadání* — přesný seznam požadavků od klienta nebo technické specifikace (např. „obývací pokoj musí mít minimálně 30 m²“ nebo „minimální šířka chodby jsou 2 metry“). Tyto hodnoty lze přímo zadávat do panelu nástroje jako číselné parametry.
+První kategorií jsou *2D podklady* — naskenované ruční skice, výkresy v #gls("pdf", long: false), obrázky půdorysů nebo importované 2D #gls("cad", long: false) výkresy (#gls("dxf", long: false)/#gls("dwg", long: false)). Tento typ vstupu je typický zejména pro vizualizátory, kteří potřebují rychle převést existující podklad do prostorového modelu.
 
-Třetí kategorií je *volný návrh* — situace, kdy uživatel nemá žádné přesné podklady, začíná s prázdnou scénou a potřebuje nástroj, který ho nebude omezovat v rychlém a intuitivním skicování úvodních konceptů.
+Druhou kategorií je *kvantitativní zadání* — přesný seznam požadavků od klienta nebo technické specifikace (např. „obývací pokoj musí mít minimálně 30 m² nebo „minimální šířka chodby jsou 2 metry“). Tento vstup odpovídá potřebě architektů a designerů ověřovat návrh proti měřitelným kritériím.
+
+Třetí kategorií je *volný návrh* — situace, kdy uživatel nemá přesné podklady a začíná s prázdnou scénou. Tato varianta reflektuje především ranou fázi konceptu, kde je klíčová rychlá iterace bez administrativní přípravy vstupních dat.
 
 === Výstupy
 
-Výstupy z addonu se dělí do tří kategorií. Tou první je *3D hmotový model* — prostorová 3D reprezentace stěn, místností a otvorů, která slouží primárně k vizuální kontrole proporcí, tvorbě hmotových renderů, analýze osvětlení nebo k základní prezentaci klientovi. 
+Z analyzovaných scénářů použití vyplývají tři hlavní kategorie očekávaných výstupů. První kategorií je *3D hmotový model* — prostorová reprezentace stěn, místností a otvorů určená pro vizuální kontrolu proporcí, tvorbu hmotových renderů, orientační analýzu osvětlení a základní prezentaci klientovi. 
 
-Druhou kategorií je *optimalizovaná geometrie pro export*. Jedná se o čistou topologickou síť (mesh) bez chyb nebo překrývajících se stěn, kterou může level designér okamžitě a bez dalších úprav vyexportovat (například do formátu #gls("fbx", long: false) nebo #gls("obj", long: false)) pro použití v herním enginu. 
+Druhou kategorií je *geometrie připravená pro export*. Jde o výstup, který cílová skupina game/level designérů potřebuje pro navazující použití v herním enginu, ideálně bez nutnosti rozsáhlých ručních oprav topologie. 
 
-Třetí a poslední kategorií jsou *prostorová a analytická data* — rychlá vizuální zpětná vazba pro uživatele. Zahrnuje automatické výpočty podlahové plochy jednotlivých místností a jasnou indikaci tloušťky stěn přímo v uživatelském rozhraní.
+Třetí kategorií jsou *prostorová a analytická data* — průběžná zpětná vazba, kterou uživatelé potřebují při rozhodování během návrhu. Sem patří zejména informace o podlahové ploše jednotlivých místností a čitelné zobrazení klíčových rozměrových parametrů.
 
 == Scénáře použití
 
