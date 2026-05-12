@@ -163,7 +163,7 @@ Všechny nástroje jsou hodnoceny podle pěti shodných kritérií:
 - *parametrická editace stěn* — možnost kdykoli změnit tloušťku, výšku nebo polohu stěny bez narušení sousední geometrie.
 - *automatická detekce místností* — samostatné rozpoznávání uzavřených cyklů stěn jako místností s výpočtem ploch.
 - *správa otvorů* — okna a dveře svázané s parametry stěny, pohybující se spolu s ní.
-- *nedestruktivní workflow* — parametrická úprava geometrii okamžitě přepočítá bez ručního zásahu do okolní topologie.
+- *nedestruktivní workflow* — parametrická úprava geometrii okamžitě přepočítá bez ručního zásahu do okolní topologie; změny zachovají vazby prvků (stěny, otvory, místnosti) a model zůstává dál plně editovatelný.
 
 ==== Architektonické rozšiřující moduly pro Blender
 
