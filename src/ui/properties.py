@@ -1,3 +1,15 @@
+"""PropertyGroups and update callbacks for FloorPlanMaster.
+
+:class:`OpeningItem` — per-opening editable item in the N-panel list.
+:class:`FloorPlanSettings` — scene-level addon settings stored as a
+``PointerProperty`` on ``bpy.types.Scene``.
+
+:func:`populate_opening_items` repopulates the opening list after wall
+selection changes or CRUD operations.
+
+:func:`set_wall_props_updating` exposes the circular-update guard so
+operators can suppress callbacks during their own changes.
+"""
 # PropertyGroups and their update callbacks for FloorPlanMaster.
 # OpeningItem — per-opening editable item in the N-panel list.
 # FloorPlanSettings — scene-level addon settings (PointerProperty on Scene).
@@ -494,6 +506,12 @@ def _on_opening_position_update(self, context):
 
 
 class OpeningItem(bpy.types.PropertyGroup):
+    """Per-opening editable item in the N-panel opening list.
+
+    Mirrors :class:`~structural_graph.Opening` dataclass fields with identical
+    validation applied via update callbacks so that live edits remain within
+    the same bounds as CRUD operations.
+    """
     # Per-opening editable item in the N-panel opening list.
     # Mirrors Opening dataclass fields with identical validation via update callbacks.
     opening_id: StringProperty(options={'HIDDEN'})
@@ -542,6 +560,11 @@ class OpeningItem(bpy.types.PropertyGroup):
 
 
 class FloorPlanSettings(bpy.types.PropertyGroup):
+    """Scene-level addon settings stored as a ``PointerProperty`` on ``bpy.types.Scene``.
+
+    Contains display preferences (units) and mode flags.  Persisted by
+    Blender alongside the ``.blend`` file.
+    """
     display_unit: EnumProperty(
         name="Units",
         description="Unit system used for displaying dimensions",

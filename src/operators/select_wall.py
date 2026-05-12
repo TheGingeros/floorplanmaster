@@ -1,3 +1,10 @@
+"""FP2 — Select Wall / Room operator.
+
+Handles click-based element selection in the 3D viewport.  Projects wall
+outline boxes and room floor polygons to 2D screen space and tests the
+mouse position against them.  The element closest to the camera (highest
+view-space Z) wins when multiple elements overlap.
+"""
 # FP2 — Select Wall / Room operator
 # Click anywhere in the viewport to select a wall or room (or deselect if clicking empty space).
 # Projects wall 3D boxes and room floor polygons to 2D screen space and tests mouse against them.
@@ -153,6 +160,13 @@ def _pick_element(context, sg, rg, mx, my):
 
 
 class FLOORPLAN_OT_select_wall(bpy.types.Operator):
+    """Click-based selection operator for walls and rooms in the 3D viewport.
+
+    Projects wall bounding boxes and room floor polygons to 2D screen space
+    and returns the element whose screen polygon contains the mouse cursor.
+    When multiple elements overlap, the one closest to the camera wins.
+    """
+
     bl_idname = "floorplan.select_wall"
     bl_label = "Select Wall / Room"
     bl_description = "Click a wall or room on the active floor plan object"

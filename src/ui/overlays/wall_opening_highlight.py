@@ -1,4 +1,9 @@
 # pyright: reportMissingImports=false
+"""GPU overlay — always-visible wall and opening edge highlights.
+
+Draws geometry-matching wall edges for every visible FloorPlan object.
+Openings are highlighted by type: doors (cyan), windows (purple).
+"""
 # GPU overlay — always-visible wall/opening edge highlights.
 # Draws geometry-matching wall edges for every visible FloorPlan object.
 # Openings are highlighted by type: doors (cyan), windows (purple).

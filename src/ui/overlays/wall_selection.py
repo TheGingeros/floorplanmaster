@@ -1,3 +1,8 @@
+"""GPU overlay — wall selection highlight.
+
+Draws a semi-transparent orange OBB box over the currently selected wall.
+Registered as a persistent POST_VIEW layer via :mod:`~ui.overlay_manager`.
+"""
 # GPU overlay — wall selection highlight.
 # Draws a semi-transparent orange OBB box over the currently selected wall.
 # Registered as a persistent POST_VIEW layer via overlay_manager.

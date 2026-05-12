@@ -1,3 +1,8 @@
+"""FP2 — Remove Selected Wall operator.
+
+Removes the currently selected wall from the structural graph, cleans up
+isolated junctions, and re-syncs the mesh and Geometry Nodes modifier.
+"""
 # FP2 — Remove selected wall operator
 # Removes the currently selected wall, updates rooms, and syncs mesh/GN.
 
@@ -10,6 +15,7 @@ from ..ui.properties import set_room_props_updating, set_wall_props_updating
 
 
 class FLOORPLAN_OT_remove_selected_wall(bpy.types.Operator):
+    """Remove the currently selected wall and clean up isolated junctions."""
     bl_idname = "floorplan.remove_selected_wall"
     bl_label = "Remove Selected Wall"
     bl_description = "Remove the selected wall"

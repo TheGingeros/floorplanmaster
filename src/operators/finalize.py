@@ -1,3 +1,9 @@
+"""FP4 — Finalize operator.
+
+Converts the procedural FloorPlan object to a static, export-ready mesh by
+baking the Geometry Nodes result and cleaning up all addon-specific
+custom properties.  Optionally reassigns materials and applies flat shading.
+"""
 # FP4 — Finalize operator
 # Converts the procedural FloorPlan object to a static mesh ready for export.
 

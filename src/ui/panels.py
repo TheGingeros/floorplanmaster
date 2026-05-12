@@ -1,3 +1,8 @@
+"""N-panel sidebar for FloorPlanMaster.
+
+Sections: Wall Properties (top-level), Tools, Rooms, Settings.
+Reference: ``05_ui_ux_npanel.md``.
+"""
 # N-panel sidebar for FloorPlanMaster.
 # Sections: Wall Properties (top-level), Tools, Rooms, Settings (under main).
 # References: 05_ui_ux_npanel.md

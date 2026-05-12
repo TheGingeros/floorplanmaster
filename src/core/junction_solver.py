@@ -1,3 +1,14 @@
+"""
+Junction geometry solver for FloorPlanMaster.
+
+Computes the precise corner points of wall quads and junction fill polygons
+given the angular order of walls meeting at each junction.  Handles
+T-junctions (3 walls), X-junctions (4+ walls), and straight connections
+(2 walls) with an optional miter-limit guard.
+
+No bpy dependency — safe to import in unit tests without Blender.
+"""
+
 import math
 
 
@@ -19,14 +30,31 @@ def _line_intersect(p1, d1, p2, d2):
 
 
 def _walls_connectable(a, b):
+	"""Return ``True`` if walls *a* and *b* belong to the same non-zero connection group."""
 	# Option B groundwork: only walls in the same non-zero connection group are joinable.
 	return a.connection_group != 0 and a.connection_group == b.connection_group
 
 
 def junction_entries(junction, junctions_by_id, sg, target_wall=None):
-	# Angularly-sorted entries of walls connected at this junction.
-	# When target_wall is provided, keep only walls connectable with target_wall
-	# (plus the target itself) so policy filtering can be introduced incrementally.
+	"""Return the walls at *junction* sorted by outgoing angle.
+
+	When *target_wall* is given, only walls whose connection group matches
+	that wall (plus the wall itself) are included, enabling policy-based
+	join filtering.
+
+	Each entry is a tuple::
+
+	    (angle, wall, out_ux, out_uy, out_nx, out_ny, half_thickness)
+
+	Args:
+	    junction: The :class:`~structural_graph.Junction` to query.
+	    junctions_by_id (dict): Full ``{id: Junction}`` lookup.
+	    sg: The :class:`~structural_graph.StructuralGraph` instance.
+	    target_wall: Optional wall for connection-group filtering.
+
+	Returns:
+	    list[tuple]: Angularly sorted entries.
+	"""
 	jx, jy = junction.position
 	entries = []
 	for w in sg.get_walls_for_junction(junction.id):
@@ -52,7 +80,22 @@ def junction_entries(junction, junctions_by_id, sg, target_wall=None):
 
 
 def junction_polygon_corners(junction, junctions_by_id, sg):
-	jx, jy = junction.position
+	"""Return the corners of the fill polygon for a T/X junction (3+ walls).
+
+	For each consecutive pair of angularly-sorted wall entries the corner
+	point is computed as the intersection of the left-side offset line of the
+	first wall and the right-side offset line of the second wall.
+
+	Returns an empty list for junctions with fewer than 3 walls (no gap to fill).
+
+	Args:
+	    junction: The :class:`~structural_graph.Junction` to process.
+	    junctions_by_id (dict): Full ``{id: Junction}`` lookup.
+	    sg: The :class:`~structural_graph.StructuralGraph` instance.
+
+	Returns:
+	    list[tuple[float, float]]: Corner points in CCW order, or ``[]``.
+	"""
 	entries = junction_entries(junction, junctions_by_id, sg)
 	if len(entries) < 3:
 		return []
@@ -84,8 +127,27 @@ def junction_polygon_corners(junction, junctions_by_id, sg):
 
 def corner_at_junction(junction, target_wall, is_start, ux, uy, nx, ny, ht,
 					   side_off, junctions_by_id, sg):
-	jx, jy = junction.position
-	raw = (jx + side_off[0], jy + side_off[1])
+	"""Compute the exact corner point for one side of a wall quad at a junction.
+
+	The corner is the intersection of the wall's own offset line with the
+	offset line of the adjacent wall on the same side, subject to a miter
+	limit of ``2 * max(half_thickness)``.  Falls back to the raw offset point
+	when the walls are anti-parallel or the miter would be excessively long.
+
+	Args:
+	    junction: The junction at which the corner is being computed.
+	    target_wall: The wall whose corner is being computed.
+	    is_start (bool): ``True`` if we are at the start junction of the wall.
+	    ux, uy (float): Unit direction vector of the wall (start → end).
+	    nx, ny (float): Left normal of the wall direction.
+	    ht (float): Half-thickness of the wall.
+	    side_off: ``(dx, dy)`` offset tuple selecting the side (left or right).
+	    junctions_by_id (dict): Full ``{id: Junction}`` lookup.
+	    sg: The :class:`~structural_graph.StructuralGraph` instance.
+
+	Returns:
+	    tuple[float, float]: The resolved 2D corner point in metres.
+	"""
 	wall_dir = (ux, uy) if is_start else (-ux, -uy)
 
 	entries = junction_entries(junction, junctions_by_id, sg, target_wall=target_wall)
@@ -131,7 +193,26 @@ def corner_at_junction(junction, target_wall, is_start, ux, uy, nx, ny, ht,
 
 
 def compute_wall_quad(wall, junctions_by_id, sg):
-	j_start = junctions_by_id.get(wall.junction_start)
+	"""Compute the 4 corner points of a wall's 2D outline quad.
+
+	Corners are computed by calling :func:`corner_at_junction` for each
+	endpoint and each side (left / right) of the wall.  The returned quad
+	is ordered as ``(p0, p1, p2, p3)`` where:
+
+	- ``p0`` — start-junction, left side
+	- ``p1`` — end-junction, left side
+	- ``p2`` — end-junction, right side
+	- ``p3`` — start-junction, right side
+
+	Args:
+	    wall: The :class:`~structural_graph.Wall` to outline.
+	    junctions_by_id (dict): Full ``{id: Junction}`` lookup.
+	    sg: The :class:`~structural_graph.StructuralGraph` instance.
+
+	Returns:
+	    tuple[tuple, tuple, tuple, tuple] | None: Four 2D corner points,
+	    or ``None`` if either junction is missing or the wall has zero length.
+	"""
 	j_end = junctions_by_id.get(wall.junction_end)
 	if not (j_start and j_end):
 		return None

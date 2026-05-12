@@ -1,15 +1,26 @@
-import math
+"""
+2D geometry helpers for FloorPlanMaster.
 
-# All coordinates are 2D tuples: (x, y).
-# All units are meters internally.
+All coordinates are 2D tuples (x, y).  All units are metres internally.
+No bpy dependency — safe to import in unit tests without Blender.
+"""
+
+import math
 
 # Cool source for calculating area and centroid of polygon and many more fancy things:
 # https://paulbourke.net/geometry/polygonmesh/ - section: Calculating the area and centroid of a polygon
 
 # https://en.wikipedia.org/wiki/Shoelace_formula
 def polygon_area(vertices):
-    # Shoelace / Gauss formula for the signed area of a simple polygon.
-    # Returns absolute area. Vertices are a list of (x, y) tuples in order.
+    """Return the absolute area of a simple polygon using the Shoelace (Gauss) formula.
+
+    Args:
+        vertices: Ordered list of (x, y) tuples representing polygon corners.
+
+    Returns:
+        float: Absolute area in square metres.  Returns 0.0 for degenerate
+               input (fewer than 3 vertices).
+    """
     n = len(vertices)
     if n < 3:
         return 0.0
@@ -22,8 +33,17 @@ def polygon_area(vertices):
 
 # https://en.wikipedia.org/wiki/Centroid#Of_a_polygon
 def polygon_centroid(vertices):
-    # Centroid of a simple polygon using the shoelace-weighted formula.
-    # Returns (cx, cy). Assumes non-zero area.
+    """Return the centroid of a simple polygon using the shoelace-weighted formula.
+
+    Falls back to the arithmetic mean for degenerate polygons (fewer than 3
+    vertices or near-zero area).
+
+    Args:
+        vertices: Ordered list of (x, y) tuples.
+
+    Returns:
+        tuple[float, float]: (cx, cy) centroid coordinates.
+    """
     n = len(vertices)
     if n == 0:
         return (0.0, 0.0)
@@ -58,7 +78,14 @@ def polygon_centroid(vertices):
 # https://docs.python.org/3/library/math.html#math.hypot
 # https://en.wikipedia.org/wiki/Euclidean_distance
 def polygon_perimeter(vertices):
-    # Sum of edge lengths around a polygon.
+    """Return the total perimeter of a polygon (sum of all edge lengths).
+
+    Args:
+        vertices: Ordered list of (x, y) tuples.
+
+    Returns:
+        float: Perimeter in metres.
+    """
     n = len(vertices)
     if n < 2:
         return 0.0
@@ -69,28 +96,61 @@ def polygon_perimeter(vertices):
 
 
 def point_distance(p1, p2):
-    # Euclidean distance between two 2D points.
+    """Return the Euclidean distance between two 2D points.
+
+    Args:
+        p1: (x, y) tuple.
+        p2: (x, y) tuple.
+
+    Returns:
+        float: Distance in metres.
+    """
     dx = p2[0] - p1[0]
     dy = p2[1] - p1[1]
     return math.hypot(dx, dy)
 
 
 def edge_length(p1, p2):
-    # Alias for point_distance — length of a wall between two junctions.
+    """Return the length of a wall edge between two junction positions.
+
+    Alias for :func:`point_distance`.
+
+    Args:
+        p1: Start junction position (x, y).
+        p2: End junction position (x, y).
+
+    Returns:
+        float: Edge length in metres.
+    """
     return point_distance(p1, p2)
 
 # https://docs.python.org/3/library/math.html#math.atan2
 def edge_angle(p1, p2):
-    # Angle of the edge p1→p2 in radians, measured counter-clockwise from the +X axis.
-    # Returns value in (-π, π].
+    """Return the angle of edge p1→p2 in radians, counter-clockwise from +X.
+
+    Args:
+        p1: Start point (x, y).
+        p2: End point (x, y).
+
+    Returns:
+        float: Angle in radians, in the range (-π, π].
+    """
     dx = p2[0] - p1[0]
     dy = p2[1] - p1[1]
     return math.atan2(dy, dx)
 
 # https://docs.python.org/3/library/math.html#math.atan2
 def angle_between_edges(p_common, p1, p2):
-    # Interior angle at p_common formed by edges p_common→p1 and p_common→p2.
-    # Returns value in (0, 2π). Uses atan2 difference.
+    """Return the interior angle at *p_common* formed by edges p_common→p1 and p_common→p2.
+
+    Args:
+        p_common: Vertex shared by both edges (x, y).
+        p1: Far end of the first edge (x, y).
+        p2: Far end of the second edge (x, y).
+
+    Returns:
+        float: Angle in radians, normalised to (0, 2π).
+    """
     a1 = edge_angle(p_common, p1)
     a2 = edge_angle(p_common, p2)
     angle = a2 - a1
@@ -103,8 +163,16 @@ def angle_between_edges(p_common, p1, p2):
 
 # https://en.wikipedia.org/wiki/Minimum_bounding_box#Axis-aligned_minimum_bounding_box
 def aspect_ratio(vertices):
-    # Approximate aspect ratio of a polygon via its axis-aligned bounding box.
-    # Returns width/height (or height/width if height > width to keep ratio ≥ 1).
+    """Return an approximate aspect ratio of a polygon via its axis-aligned bounding box.
+
+    Always returns a value ≥ 1 (swaps width and height when height > width).
+
+    Args:
+        vertices: List of (x, y) tuples.
+
+    Returns:
+        float: Aspect ratio ≥ 1.  Returns 1.0 for degenerate input.
+    """
     if len(vertices) < 3:
         return 1.0
     xs = [v[0] for v in vertices]
@@ -118,8 +186,17 @@ def aspect_ratio(vertices):
 
 # https://en.wikipedia.org/wiki/Point_in_polygon — winding number / ray casting
 def point_in_polygon(point, polygon):
-    # Ray-casting test: cast ray in +X from *point*, count edge crossings.
-    # Returns True if point is strictly inside or on the boundary.
+    """Test whether *point* is inside *polygon* using the ray-casting algorithm.
+
+    Casts a ray in the +X direction from *point* and counts edge crossings.
+
+    Args:
+        point: (x, y) query point.
+        polygon: Ordered list of (x, y) tuples forming a simple polygon.
+
+    Returns:
+        bool: True if the point is strictly inside or on the boundary.
+    """
     x, y = point
     n = len(polygon)
     if n < 3:

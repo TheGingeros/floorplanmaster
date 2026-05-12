@@ -1,3 +1,13 @@
+"""NetworkX dependency bootstrap for FloorPlanMaster.
+
+Handles mounting the bundled ``networkx`` wheel so the library is available
+inside Blender without requiring the user to install anything manually.  When
+online access is permitted the module can also download and install the wheel
+on demand.
+
+``mount_networkx()`` is the sole public entry point called from ``__init__.py``
+before any ``import networkx`` statements run.
+"""
 import json
 import os
 import sys

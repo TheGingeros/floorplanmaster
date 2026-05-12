@@ -1,3 +1,9 @@
+"""FP2 — Remove Room operator.
+
+Deletes one room while preserving walls that are shared with neighbouring
+rooms.  Resolves the room by its canonical cycle key so the operation
+remains stable after Blender undo and addon reload.
+"""
 # FP2 — Remove Room operator
 # Deletes one room while preserving walls shared with neighboring rooms.
 
@@ -13,6 +19,7 @@ from ..ui.properties import set_room_props_updating
 
 
 class FLOORPLAN_OT_remove_room(bpy.types.Operator):
+    """Remove a room while preserving walls shared with neighbouring rooms."""
     bl_idname = "floorplan.remove_room"
     bl_label = "Remove Room"
     bl_description = "Remove this room and keep shared walls with neighboring rooms"

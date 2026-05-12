@@ -1,3 +1,13 @@
+"""
+Validation functions and error codes for FloorPlanMaster graph layers.
+
+All validators raise :class:`ValidationError` with a structured error code
+when a constraint is violated.  They are called at CRUD boundaries in the
+graph modules so the invalid state is never allowed to enter the data model.
+
+No bpy dependency — safe to import in unit tests without Blender.
+"""
+
 from ..utils.constants import (
     MIN_THICKNESS, MAX_THICKNESS,
     MIN_HEIGHT, MAX_HEIGHT,
@@ -31,7 +41,13 @@ E_PLANARITY_VIOLATION = "E_PLANARITY_VIOLATION"
 # Define own class for expection handling
 # Enables to try and catch only these defined errors and also custom error messaging
 class ValidationError(Exception):
-    # Raised when a validation rule is violated.
+    """Raised when a FloorPlanMaster validation rule is violated.
+
+    Attributes:
+        code (str): Machine-readable error code (one of the ``E_*`` constants).
+        message (str): Human-readable description of the violation.
+    """
+
     def __init__(self, code, message=""):
         self.code = code
         self.message = message
@@ -40,6 +56,14 @@ class ValidationError(Exception):
 
 # Validators — called at CRUD boundaries in graph modules.
 def validate_thickness(value):
+    """Raise :class:`ValidationError` if *value* is outside the allowed wall thickness range.
+
+    Args:
+        value (float): Proposed thickness in metres.
+
+    Raises:
+        ValidationError: Code ``E_THICKNESS_OUT_OF_RANGE``.
+    """
     if not (MIN_THICKNESS <= value <= MAX_THICKNESS):
         raise ValidationError(
             E_THICKNESS_OUT_OF_RANGE,
@@ -48,6 +72,14 @@ def validate_thickness(value):
 
 
 def validate_height(value):
+    """Raise :class:`ValidationError` if *value* is outside the allowed wall height range.
+
+    Args:
+        value (float): Proposed height in metres.
+
+    Raises:
+        ValidationError: Code ``E_HEIGHT_OUT_OF_RANGE``.
+    """
     if not (MIN_HEIGHT <= value <= MAX_HEIGHT):
         raise ValidationError(
             E_HEIGHT_OUT_OF_RANGE,
@@ -56,6 +88,14 @@ def validate_height(value):
 
 
 def validate_room_area(area):
+    """Raise :class:`ValidationError` if the room area is below the minimum.
+
+    Args:
+        area (float): Room area in square metres.
+
+    Raises:
+        ValidationError: Code ``E_ROOM_TOO_SMALL``.
+    """
     if area < MIN_ROOM_AREA:
         raise ValidationError(
             E_ROOM_TOO_SMALL,
@@ -64,6 +104,14 @@ def validate_room_area(area):
 
 
 def validate_aspect_ratio(ratio):
+    """Raise :class:`ValidationError` if the room aspect ratio is out of range.
+
+    Args:
+        ratio (float): Aspect ratio (bounding-box width / height, always ≥ 1).
+
+    Raises:
+        ValidationError: Code ``E_ROOM_BAD_ASPECT``.
+    """
     if not (MIN_ASPECT_RATIO <= ratio <= MAX_ASPECT_RATIO):
         raise ValidationError(
             E_ROOM_BAD_ASPECT,
@@ -72,6 +120,14 @@ def validate_aspect_ratio(ratio):
 
 
 def validate_room_vertex_count(count):
+    """Raise :class:`ValidationError` if the room has too few vertices.
+
+    Args:
+        count (int): Number of polygon vertices.
+
+    Raises:
+        ValidationError: Code ``E_ROOM_TOO_FEW_VERTICES``.
+    """
     if count < MIN_ROOM_VERTICES:
         raise ValidationError(
             E_ROOM_TOO_FEW_VERTICES,
@@ -80,6 +136,14 @@ def validate_room_vertex_count(count):
 
 
 def validate_opening_width(value):
+    """Raise :class:`ValidationError` if *value* is outside the allowed opening width range.
+
+    Args:
+        value (float): Proposed opening width in metres.
+
+    Raises:
+        ValidationError: Code ``E_OPENING_WIDTH_OUT_OF_RANGE``.
+    """
     if not (MIN_OPENING_WIDTH <= value <= MAX_OPENING_WIDTH):
         raise ValidationError(
             E_OPENING_WIDTH_OUT_OF_RANGE,
@@ -88,6 +152,19 @@ def validate_opening_width(value):
 
 
 def validate_opening_height(value, wall_height=None):
+    """Raise :class:`ValidationError` if the opening height is invalid.
+
+    Checks both the absolute minimum height and, when *wall_height* is given,
+    ensures the opening does not exceed the wall.
+
+    Args:
+        value (float): Proposed opening height in metres.
+        wall_height (float | None): Height of the parent wall, or ``None`` to
+            skip the wall-height check.
+
+    Raises:
+        ValidationError: Code ``E_OPENING_HEIGHT_OUT_OF_RANGE``.
+    """
     if value < MIN_OPENING_HEIGHT:
         raise ValidationError(
             E_OPENING_HEIGHT_OUT_OF_RANGE,
@@ -120,6 +197,23 @@ def _opening_value(opening, attr):
 def get_opening_free_spans(wall_length, existing_openings=None,
                            inset_start=0.0, inset_end=0.0,
                            min_gap=MIN_OPENING_CLEARANCE):
+    """Return a list of free (start, end) spans along the wall as normalised fractions.
+
+    Accounts for the junction inset at each end and a minimum clearance gap
+    around every existing opening.
+
+    Args:
+        wall_length (float): Total wall length in metres.
+        existing_openings: Iterable of opening objects/dicts that have
+            ``position`` and ``width`` attributes.  ``None`` means no openings.
+        inset_start (float): Reserved length (metres) at the start end.
+        inset_end (float): Reserved length (metres) at the end.
+        min_gap (float): Minimum required clearance between openings (metres).
+
+    Returns:
+        list[tuple[float, float]]: Sorted, non-overlapping free spans expressed
+        as normalised fractions [0.0, 1.0] along the wall.
+    """
     if wall_length <= 0:
         return []
 
@@ -168,6 +262,24 @@ def get_opening_free_spans(wall_length, existing_openings=None,
 def get_opening_center_intervals(width, wall_length, existing_openings=None,
                                  inset_start=0.0, inset_end=0.0,
                                  min_gap=MIN_OPENING_CLEARANCE):
+    """Return valid centre-position intervals for a new opening of the given width.
+
+    Shrinks each free span by ``width/2`` on each side so that any position
+    within the returned intervals will place the opening without collision.
+
+    Args:
+        width (float): Width of the new opening in metres.
+        wall_length (float): Total wall length in metres.
+        existing_openings: Existing openings (same format as
+            :func:`get_opening_free_spans`).
+        inset_start (float): Reserved length at the start end (metres).
+        inset_end (float): Reserved length at the end (metres).
+        min_gap (float): Minimum clearance between openings (metres).
+
+    Returns:
+        list[tuple[float, float]]: Sorted centre-position intervals as
+        normalised fractions.
+    """
     half_norm = _opening_half_norm(width, wall_length)
     intervals = []
     for span_start, span_end in get_opening_free_spans(
@@ -187,6 +299,26 @@ def get_opening_center_intervals(width, wall_length, existing_openings=None,
 def clamp_opening_position(position, width, wall_length, existing_openings=None,
                            inset_start=0.0, inset_end=0.0,
                            min_gap=MIN_OPENING_CLEARANCE):
+    """Return the nearest valid centre position for an opening, or ``None`` if it cannot fit.
+
+    If *position* already lies within a valid interval it is returned unchanged
+    (clamped to interval boundaries).  Otherwise the closest interval boundary
+    is returned.
+
+    Args:
+        position (float): Desired normalised centre position [0.0, 1.0].
+        width (float): Opening width in metres.
+        wall_length (float): Total wall length in metres.
+        existing_openings: Existing openings (same format as
+            :func:`get_opening_free_spans`).
+        inset_start (float): Reserved length at the start end (metres).
+        inset_end (float): Reserved length at the end (metres).
+        min_gap (float): Minimum clearance between openings (metres).
+
+    Returns:
+        float | None: Clamped centre position, or ``None`` if the opening
+        cannot fit anywhere.
+    """
     intervals = get_opening_center_intervals(
         width,
         wall_length,
@@ -216,6 +348,19 @@ def clamp_opening_position(position, width, wall_length, existing_openings=None,
 def max_opening_width(wall_length, existing_openings=None,
                       inset_start=0.0, inset_end=0.0,
                       min_gap=MIN_OPENING_CLEARANCE):
+    """Return the largest opening width that can still be placed anywhere on the wall.
+
+    Args:
+        wall_length (float): Total wall length in metres.
+        existing_openings: Existing openings (same format as
+            :func:`get_opening_free_spans`).
+        inset_start (float): Reserved length at the start end (metres).
+        inset_end (float): Reserved length at the end (metres).
+        min_gap (float): Minimum clearance between openings (metres).
+
+    Returns:
+        float: Maximum fitting width in metres, or 0.0 if nothing fits.
+    """
     spans = get_opening_free_spans(
         wall_length,
         existing_openings=existing_openings,
@@ -231,6 +376,20 @@ def max_opening_width(wall_length, existing_openings=None,
 def max_opening_width_at_position(position, wall_length, existing_openings=None,
                                   inset_start=0.0, inset_end=0.0,
                                   min_gap=MIN_OPENING_CLEARANCE):
+    """Return the maximum opening width centred at *position* that fits without collision.
+
+    Args:
+        position (float): Normalised centre position [0.0, 1.0].
+        wall_length (float): Total wall length in metres.
+        existing_openings: Existing openings (same format as
+            :func:`get_opening_free_spans`).
+        inset_start (float): Reserved length at the start end (metres).
+        inset_end (float): Reserved length at the end (metres).
+        min_gap (float): Minimum clearance between openings (metres).
+
+    Returns:
+        float: Maximum width in metres, or 0.0 if the position is blocked.
+    """
     spans = get_opening_free_spans(
         wall_length,
         existing_openings=existing_openings,
@@ -250,6 +409,20 @@ def max_opening_width_at_position(position, wall_length, existing_openings=None,
 def can_fit_opening(width, wall_length, existing_openings=None,
                     inset_start=0.0, inset_end=0.0,
                     min_gap=MIN_OPENING_CLEARANCE):
+    """Return ``True`` if an opening of *width* can be placed anywhere on the wall.
+
+    Args:
+        width (float): Opening width in metres.
+        wall_length (float): Total wall length in metres.
+        existing_openings: Existing openings (same format as
+            :func:`get_opening_free_spans`).
+        inset_start (float): Reserved length at the start end (metres).
+        inset_end (float): Reserved length at the end (metres).
+        min_gap (float): Minimum clearance between openings (metres).
+
+    Returns:
+        bool: ``True`` if the opening fits, ``False`` otherwise.
+    """
     intervals = get_opening_center_intervals(
         width,
         wall_length,
@@ -264,6 +437,23 @@ def can_fit_opening(width, wall_length, existing_openings=None,
 def validate_opening_placement(position, width, wall_length, existing_openings=None,
                                inset_start=0.0, inset_end=0.0,
                                min_gap=MIN_OPENING_CLEARANCE):
+    """Raise :class:`ValidationError` if the opening placement is invalid.
+
+    Checks that the opening fits within the usable wall span and does not
+    overlap or touch an existing opening.
+
+    Args:
+        position (float): Normalised centre position [0.0, 1.0].
+        width (float): Opening width in metres.
+        wall_length (float): Total wall length in metres.
+        existing_openings: Existing openings to check against.
+        inset_start (float): Reserved length at the start end (metres).
+        inset_end (float): Reserved length at the end (metres).
+        min_gap (float): Minimum clearance between openings (metres).
+
+    Raises:
+        ValidationError: Code ``E_OPENING_TOO_LARGE`` or ``E_OPENING_OVERLAP``.
+    """
     # Check that opening fits within the usable wall span and does not overlap or touch.
     # inset_start / inset_end are the miter-inset distances (in meters) at each end.
     base_intervals = get_opening_center_intervals(
@@ -304,6 +494,17 @@ def validate_opening_placement(position, width, wall_length, existing_openings=N
 
 
 def validate_opening_sill(sill_height, opening_height, wall_height):
+    """Raise :class:`ValidationError` if the sill + opening height exceeds the wall.
+
+    Args:
+        sill_height (float): Distance from floor to bottom of opening (metres).
+        opening_height (float): Height of the opening (metres).
+        wall_height (float): Height of the parent wall (metres).
+
+    Raises:
+        ValidationError: Code ``E_OPENING_HEIGHT_OUT_OF_RANGE`` or
+            ``E_OPENING_EXCEEDS_WALL``.
+    """
     if sill_height < 0:
         raise ValidationError(
             E_OPENING_HEIGHT_OUT_OF_RANGE,
@@ -382,6 +583,21 @@ def _segment_distance(a, b, c, d):
 
 
 def validate_planar_wall_layout(wall_segments, min_wall_length=1e-6, eps=1e-9):
+    """Validate 2D planarity of the current wall layout.
+
+    Checks that every wall has a non-zero length and that no pair of
+    non-adjacent walls intersects or overlaps.
+
+    Args:
+        wall_segments (list[dict]): Each dict must contain keys
+            ``'wall_id'``, ``'junction_start'``, ``'junction_end'``,
+            ``'start'`` (x, y), and ``'end'`` (x, y).
+        min_wall_length (float): Minimum acceptable wall length (metres).
+        eps (float): Numerical epsilon for intersection tests.
+
+    Raises:
+        ValidationError: Code ``E_WALL_TOO_SHORT`` or ``E_PLANARITY_VIOLATION``.
+    """
     # Validate geometry-level planarity in 2D:
     # - Every wall has non-zero usable length.
     # - No pair of non-adjacent walls intersects or touches.

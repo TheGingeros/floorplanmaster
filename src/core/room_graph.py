@@ -1,3 +1,13 @@
+"""
+Layer 2 — Room Graph (semantic dual graph).
+
+Derives rooms and adjacency information from the structural graph (Layer 1)
+by detecting minimal face cycles.  Rooms are created, updated, and removed
+automatically whenever :meth:`RoomGraph.sync_from_structural_graph` is called.
+
+No bpy dependency — safe to import in unit tests without Blender.
+"""
+
 import uuid
 import re
 
@@ -7,6 +17,21 @@ from .validators import validate_room_area, validate_aspect_ratio, validate_room
 
 # Room — node in the room graph (Layer 2)
 class Room:
+    """A room node in the semantic room graph (Layer 2).
+
+    Derived from a minimal face cycle in the structural graph.
+    Geometric attributes (``area``, ``perimeter``, ``centroid``) are
+    recomputed whenever the cycle geometry changes during sync.
+
+    Attributes:
+        id (str): Unique UUID string identifier.
+        cycle (list[str]): Ordered list of junction IDs forming the room boundary.
+        name (str): User-editable room label (e.g. ``'Room 1'``).
+        area (float): Floor area in square metres.
+        perimeter (float): Boundary perimeter in metres.
+        centroid (tuple[float, float]): Centroid ``(x, y)`` in metres.
+        height (float): Maximum wall height along the room boundary.
+    """
     def __init__(self, cycle, room_id=None):
         self.id = room_id or str(uuid.uuid4())
         self.cycle = list(cycle)  # ordered list of junction IDs
@@ -22,6 +47,13 @@ class Room:
 
 # Adjacency — edge in the room graph
 class Adjacency:
+    """An edge in the semantic room graph representing a shared wall between two rooms.
+
+    Attributes:
+        room_a (str): ID of the first :class:`Room`.
+        room_b (str): ID of the second :class:`Room`.
+        shared_wall (str): ID of the shared :class:`~floorplanmaster.core.structural_graph.Wall`.
+    """
     def __init__(self, room_a_id, room_b_id, shared_wall_id):
         self.room_a = room_a_id
         self.room_b = room_b_id
@@ -33,8 +65,14 @@ class Adjacency:
 
 # RoomGraph — Layer 2
 class RoomGraph:
-    # Semantic dual graph derived from StructuralGraph (Layer 1).
-    # Rooms are created/removed automatically based on cycle detection.
+    """Layer 2 — Semantic dual graph of rooms and their adjacencies.
+
+    Rooms are discovered automatically from minimal cycles in the
+    :class:`~floorplanmaster.core.structural_graph.StructuralGraph` (Layer 1).
+    Existing rooms are matched to cycles by a rotation- and direction-invariant
+    canonical key so that room metadata (name, custom properties) persists
+    across topology edits.
+    """
 
     def __init__(self, structural_graph):
         self._sg = structural_graph  # reference to Layer 1
@@ -47,8 +85,11 @@ class RoomGraph:
 
     # Synchronisation with Layer 1
     def sync_from_structural_graph(self):
-        # Detect cycles in Layer 1 and create/update/remove rooms accordingly.
-        # This is the core lazy detection mechanism.
+        """Re-detect cycles from Layer 1 and create, update, or remove rooms.
+
+        This is the core lazy synchronisation mechanism.  It should be called
+        after any structural topology change (add/remove junction or wall).
+        """
         detected_cycles = self._sg.detect_minimal_cycles()
 
         # Build canonical keys for detected cycles.
@@ -119,16 +160,31 @@ class RoomGraph:
 
     # Room queries
     def get_room(self, room_id):
+        """Return the :class:`Room` with the given ID, or ``None``."""
         return self._rooms.get(room_id)
 
     def get_all_rooms(self):
+        """Return a list of all rooms in the graph."""
         return list(self._rooms.values())
 
     def total_area(self):
+        """Return the total floor area of all rooms in square metres."""
         return sum(r.area for r in self._rooms.values())
 
     # Room metadata updates
     def set_room_name(self, room_id, name):
+        """Set the display name of a room and return the effective name.
+
+        Ignores blank names (returns the existing name unchanged).
+
+        Args:
+            room_id (str): Target room ID.
+            name (str): Proposed new name.
+
+        Returns:
+            str | None: Effective name after update, or ``None`` if the room
+            was not found.
+        """
         room = self._rooms.get(room_id)
         if room is None:
             return None
@@ -138,8 +194,18 @@ class RoomGraph:
         return room.name
 
     def delete_room(self, room_id):
-        # Delete one room by removing only its non-shared boundary walls.
-        # Shared walls (between two rooms) are kept intact.
+        """Delete a room by removing its non-shared boundary walls.
+
+        Walls shared with another room are preserved.  Junctions that become
+        isolated after wall removal are also cleaned up.  Calls
+        :meth:`sync_from_structural_graph` at the end.
+
+        Args:
+            room_id (str): ID of the room to delete.
+
+        Returns:
+            list[str]: IDs of the wall segments that were removed.
+        """
         room = self._rooms.get(room_id)
         if room is None:
             return []
@@ -177,9 +243,11 @@ class RoomGraph:
 
     # Adjacency queries
     def get_adjacencies(self):
+        """Return a list of all :class:`Adjacency` edges."""
         return list(self._adjacencies)
 
     def get_neighbors(self, room_id):
+        """Return all rooms adjacent to *room_id* as ``(room, adjacency)`` pairs."""
         # Return list of (room, adjacency) for all rooms adjacent to room_id.
         neighbors = []
         for adj in self._adjacencies:
@@ -194,6 +262,7 @@ class RoomGraph:
         return neighbors
 
     def are_adjacent(self, room_id_a, room_id_b):
+        """Return ``True`` if the two rooms share a wall."""
         for adj in self._adjacencies:
             pair = {adj.room_a, adj.room_b}
             if pair == {room_id_a, room_id_b}:
@@ -201,6 +270,7 @@ class RoomGraph:
         return False
 
     def recompute_default_room_counter(self):
+        """Ensure the auto-increment room number stays monotonic after restore/reconstruction."""
         # Keep default-room numbering monotonic after restore/reconstruction.
         max_num = 0
         for room in self._rooms.values():
@@ -213,6 +283,7 @@ class RoomGraph:
 
     # Internal helpers
     def _allocate_default_room_name(self):
+        """Allocate the next unused 'Room N' label and advance the counter."""
         used = set()
         for room in self._rooms.values():
             if not room.name:
@@ -229,9 +300,12 @@ class RoomGraph:
 
     @staticmethod
     def _cycle_key(cycle):
-        # Canonical key for a cycle — rotation/direction independent.
-        # Normalise: pick smallest element, then choose direction giving
-        # lexicographically smallest sequence.
+        """Return a rotation- and direction-invariant canonical key for a cycle.
+
+        Picks the minimum junction ID as the starting point then chooses the
+        rotation direction (forward vs. reverse) that yields the
+        lexicographically smallest tuple.
+        """
         if not cycle:
             return ()
         min_val = min(cycle)
@@ -244,6 +318,7 @@ class RoomGraph:
         return min(forward, reverse)
 
     def _max_wall_height(self, cycle):
+        """Return the maximum wall height along the room boundary cycle."""
         max_h = 0.0
         n = len(cycle)
         for i in range(n):
@@ -255,6 +330,7 @@ class RoomGraph:
         return max_h
 
     def _build_edge_usage(self):
+        """Return a dict mapping each boundary edge key to the count of rooms using it."""
         edge_usage = {}
         for room in self._rooms.values():
             n = len(room.cycle)
@@ -264,7 +340,10 @@ class RoomGraph:
         return edge_usage
 
     def _rebuild_adjacencies(self):
-        # Two rooms are adjacent if they share at least one wall (edge).
+        """Rebuild the adjacency list from the current room set.
+
+        Two rooms are adjacent if they share at least one wall edge.
+        """
         self._adjacencies = []
         if len(self._rooms) < 2:
             return

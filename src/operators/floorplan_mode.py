@@ -1,3 +1,14 @@
+"""FloorPlan Mode — modal event controller and mode toggle operator.
+
+:class:`FLOORPLAN_OT_floorplan_modal` runs while semantic FloorPlan mode is
+active.  It consumes non-navigation keyboard events to prevent accidental
+tool shortcuts (W, G, Tab, …) from firing while the user edits a floor plan.
+
+:class:`FLOORPLAN_OT_toggle_mode` is bound to **Shift+Q** via
+:func:`register_floorplan_mode_keymap`.  When mode is *off* the keymap fires
+the toggle operator which enables the mode and invokes the modal.  When mode
+is *on* the modal intercepts Shift+Q and disables the mode.
+"""
 # FloorPlan Mode — modal event controller + mode toggle operator
 #
 # FLOORPLAN_OT_floorplan_modal runs while semantic FloorPlan mode is active.
@@ -59,7 +70,13 @@ def _mouse_region_type(context, event):
 
 
 class FLOORPLAN_OT_floorplan_modal(bpy.types.Operator):
-    bl_idname = "floorplan.floorplan_modal"
+    """Long-running modal operator that guards the FloorPlan editing session.
+
+    Consumes non-navigation events while FloorPlan mode is active so that
+    Blender's default tool shortcuts do not interfere.  Navigation events
+    (MMB, scroll, numpad) are passed through unchanged.  Shift+Q exits the
+    mode and cancels the modal.
+    """
     bl_label = "FloorPlan Mode"
     bl_description = "Run semantic FloorPlan editing mode (Shift+Q to exit)"
 
@@ -237,6 +254,7 @@ class FLOORPLAN_OT_floorplan_modal(bpy.types.Operator):
 
 
 class FLOORPLAN_OT_toggle_mode(bpy.types.Operator):
+    """Toggle semantic FloorPlan mode on or off (bound to Shift+Q)."""
     bl_idname = "floorplan.toggle_mode"
     bl_label = "Toggle FloorPlan Mode"
     bl_description = "Enable or disable semantic FloorPlan mode for the active floor plan object"

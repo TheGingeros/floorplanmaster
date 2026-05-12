@@ -1,17 +1,21 @@
 # pyright: reportMissingImports=false
+"""GPU overlay — viewport labels for rooms, walls, doors and windows.
+
+Runs as a persistent POST_PIXEL layer via overlay_manager (one per scene).
+Each element type has an independent toggle; a master switch gates all of them.
+
+Projection: 3D world positions → 2D screen pixels via
+``bpy_extras.view3d_utils.location_3d_to_region_2d``.  Returns ``None`` when a
+point is behind the camera; those labels are silently skipped.
+
+Extension points (future overlays such as dimensions):
+
+* Add new per-type colour / size constants at the top of this file.
+* Add a new ``_draw_<type>_labels()`` helper with the same
+  ``(context, sg, rg, mapper, region, rv3d, settings)`` signature.
+* Call it from ``draw_labels()`` under a new ``show_<type>_labels`` guard.
+"""
 # GPU overlay — viewport labels for rooms, walls, doors and windows.
-# Runs as a persistent POST_PIXEL layer via overlay_manager (one per scene).
-# Each element type has an independent toggle; a master switch gates all of them.
-#
-# Projection: 3D world positions → 2D screen pixels via
-# bpy_extras.view3d_utils.location_3d_to_region_2d.  Returns None when a
-# point is behind the camera; those labels are silently skipped.
-#
-# Extension points (future overlays such as dimensions):
-#   - Add new per-type colour / size constants at the top of this file.
-#   - Add a new _draw_<type>_labels() helper with the same (context, sg, rg,
-#     mapper, region, rv3d, settings) signature.
-#   - Call it from draw_labels() under a new show_<type>_labels guard.
 
 import math
 import blf

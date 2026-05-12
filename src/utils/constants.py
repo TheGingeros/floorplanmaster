@@ -1,3 +1,11 @@
+"""
+Shared numeric constants, default values, and validation limits for FloorPlanMaster.
+
+All physical quantities are in SI units (metres, square metres) unless noted.
+Enumerations are plain string literals so they can be used both inside and
+outside of Blender (no bpy dependency).
+"""
+
 # Wall parameter limits
 MIN_THICKNESS = 0.05   # meters
 MAX_THICKNESS = 1.0

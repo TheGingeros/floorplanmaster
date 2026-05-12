@@ -1,3 +1,18 @@
+"""Geometry Nodes tree builder for FloorPlanMaster.
+
+Creates a GN modifier that reads the 2D base mesh (wall quad faces and room
+faces with named attributes) and generates 3D wall geometry.
+
+Strategy — quad polygon + extrude:
+
+* Phase 1 of Layer 3 sync computes the actual 2D wall-outline polygon for
+  each wall (4 vertices with corner intersections resolved per junction) and
+  stores it as a mesh face with ``is_wall=1``.  Room centreline faces have
+  ``is_wall=0``.
+* The GN tree separates the two sets, extrudes wall faces by their per-face
+  ``wall_height`` named attribute, and joins the result with the room floor
+  faces.  No instancing, no trimming math inside GN.
+"""
 # Geometry Nodes tree builder for FloorPlanMaster.
 # Creates a GN modifier that reads the 2D base mesh (wall quad faces + room
 # faces with named attributes) and generates 3D wall geometry.
@@ -19,7 +34,17 @@ _TREE_VERSION = 10
 
 
 def ensure_gn_modifier(obj):
-    mod = obj.modifiers.get(MODIFIER_NAME)
+    """Ensure the ``FPM_Geometry`` modifier is present on *obj* and uses the current tree.
+
+    Creates the modifier if it is absent, then assigns :func:`get_or_create_tree`
+    as its node group.
+
+    Args:
+        obj (bpy.types.Object): The FloorPlan mesh object.
+
+    Returns:
+        bpy.types.NodesModifier: The configured modifier.
+    """
     if mod is None:
         mod = obj.modifiers.new(name=MODIFIER_NAME, type='NODES')
     tree = get_or_create_tree()
@@ -28,7 +53,11 @@ def ensure_gn_modifier(obj):
 
 
 def get_or_create_tree():
-    tree = bpy.data.node_groups.get(TREE_NAME)
+    """Return the shared GN node group, rebuilding it if the version stamp is stale.
+
+    Returns:
+        bpy.types.GeometryNodeTree: The current ``FloorPlanMaster_WallGen`` tree.
+    """
     if tree is not None:
         if _needs_rebuild(tree):
             return rebuild_tree()
@@ -41,7 +70,11 @@ def _needs_rebuild(tree):
 
 
 def rebuild_tree():
-    old = bpy.data.node_groups.get(TREE_NAME)
+    """Remove the existing tree and build a fresh one from scratch.
+
+    Returns:
+        bpy.types.GeometryNodeTree: The newly created node tree.
+    """
     if old:
         bpy.data.node_groups.remove(old)
     return _build_tree()

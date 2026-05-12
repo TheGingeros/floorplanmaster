@@ -1,3 +1,10 @@
+"""FP2 — Add Opening operator.
+
+Adds a door or window opening to the currently selected wall.  The redo
+panel (F9 / bottom-left) allows the user to adjust the type and parameters.
+All values are clamped via ``check()`` so the UI never displays raw
+validation errors.
+"""
 # FP2 — Add Opening operator
 # Adds a door or window opening to the currently selected wall.
 # The redo panel (F9 / bottom-left) allows the user to adjust type and parameters.
@@ -38,6 +45,12 @@ _last_params = {
 
 
 class FLOORPLAN_OT_add_opening(bpy.types.Operator):
+    """Modal operator for adding a door or window opening to the selected wall.
+
+    Invoked from the N-panel 'Add Opening' button.  The redo panel lets the
+    user tweak all parameters post-execute.  ``check()`` clamps every value
+    before the validator sees it so the user never encounters a raw error.
+    """
     bl_idname = "floorplan.add_opening"
     bl_label = "Add Opening"
     bl_description = "Add a door or window opening to the selected wall"

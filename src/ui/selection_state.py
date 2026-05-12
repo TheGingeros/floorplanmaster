@@ -1,3 +1,19 @@
+"""Module-level singleton tracking which floor-plan element is currently selected.
+
+Pure Python, no ``bpy`` — safe to import without Blender (pytest).
+
+Usage::
+
+    from .selection_state import _selection
+    _selection.select_wall(uuid, context, object_name=obj.name)
+    _selection.select_room(uuid, context, object_name=obj.name)
+    _selection.select_opening(uuid)       # keeps current object context
+    _selection.deselect_all(context)      # clears everything
+
+Overlay layers and panel ``poll()`` functions read ``.object_name`` together
+with ``.wall_id`` / ``.room_id`` / ``.opening_id`` to scope selection to a
+single object at a time.
+"""
 # Selection state — module-level singleton tracking which element is selected.
 # Pure Python, no bpy — safe to import without Blender (pytest).
 #
@@ -13,6 +29,12 @@
 
 
 class SelectionState:
+    """Mutable singleton holding the current element selection.
+
+    Only one wall, one room, and one opening can be selected at a time.  All
+    three are scoped to a single Blender object identified by
+    :attr:`object_name`.
+    """
     def __init__(self):
         self.object_name = ""
         self.wall_id = ""

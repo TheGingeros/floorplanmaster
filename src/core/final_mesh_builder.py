@@ -1,3 +1,15 @@
+"""
+FP4 — Final mesh builder (modifier-independent export geometry).
+
+Rebuilds export-ready 3D geometry directly from Layer 1 and Layer 2 data,
+bypassing the Geometry Nodes modifier.  The result is a manifold, UV-ready
+mesh with proper wall sides, top caps, floor faces, junction fills, and
+opening cutouts implemented via face-index exclusion rather than boolean
+operations.
+
+Requires Blender (``bmesh``) — not importable in unit tests without Blender.
+"""
+
 # FP4 final mesh builder (graph-driven, modifier-independent).
 # Rebuilds export-ready geometry directly from Layer 1 + Layer 2 data.
 
@@ -103,8 +115,20 @@ def _inside_any_opening(t, z, openings):
 
 
 def _wall_interior_sides(sg, rg, junctions_by_id):
-    # Map wall_id -> set of interior sides: {'L'}, {'R'}, or {'L', 'R'}.
-    # Side is evaluated against each wall's canonical start->end direction.
+    """Return a mapping from wall ID to the set of interior sides (``'L'``, ``'R'``, or both).
+
+    A side is considered interior if a room centroid lies on that side of the
+    wall's canonical start→end direction vector.  Exterior walls have only one
+    interior side; walls shared between two rooms have both.
+
+    Args:
+        sg (StructuralGraph): Layer 1 graph.
+        rg (RoomGraph): Layer 2 graph.
+        junctions_by_id (dict): ``{id: Junction}`` lookup.
+
+    Returns:
+        dict[str, set]: ``{wall_id: {'L'}, {'R'}, or {'L', 'R'}}``.
+    """
     sides = {}
     for room in rg.get_all_rooms():
         cx, cy = room.centroid
@@ -145,8 +169,19 @@ def _wall_interior_sides(sg, rg, junctions_by_id):
 
 
 def _build_junction_fill(bm, vcache, junction, sg, junctions_by_id):
-    # Emit a prism that fills the junction gap for T and X joints.
-    # Bottom face is omitted (floor mesh covers Z=0); top cap seals the ceiling.
+    """Emit a top-cap polygon that fills the gap at a T or X junction.
+
+    The top face is added at the minimum height of all connected walls to
+    seal the ceiling gap without creating interior geometry inside the wall
+    solids.  The bottom face is omitted because the floor mesh covers Z=0.
+
+    Args:
+        bm: Active BMesh.
+        vcache (dict): Shared vertex cache ``{(x, y, z): BMVert}``.
+        junction: The junction to fill.
+        sg (StructuralGraph): Layer 1 graph.
+        junctions_by_id (dict): ``{id: Junction}`` lookup.
+    """
     corners = _junction_polygon_corners(junction, junctions_by_id, sg)
     if not corners:
         return
@@ -176,7 +211,23 @@ def _build_wall_geometry(
     interior_sides,
     include_outer_faces,
 ):
-    quad = _compute_wall_quad(wall, junctions_by_id, sg)
+    """Emit all faces for a single wall: side surfaces, top cap, end caps, and opening reveals.
+
+    Side surfaces are subdivided along T (wall-length) and Z (height) axes at
+    each opening boundary so that every panel either is or is not inside an
+    opening, allowing individual quads to be cleanly excluded.
+
+    Args:
+        bm: Active BMesh.
+        vcache (dict): Shared vertex cache.
+        wall: The :class:`~structural_graph.Wall` to build.
+        sg (StructuralGraph): Layer 1 graph.
+        junctions_by_id (dict): ``{id: Junction}`` lookup.
+        interior_sides (set): ``{'L'}``, ``{'R'}``, or ``{'L', 'R'}`` from
+            :func:`_wall_interior_sides`.
+        include_outer_faces (bool): When ``False``, only interior-facing side
+            surfaces, opening reveals, and floor-level geometry are emitted.
+    """
     if quad is None:
         return
 
@@ -377,6 +428,24 @@ def build_final_mesh_from_graph(
     include_ceiling=False,
     include_outer_faces=True,
 ):
+    """Build a clean static Blender mesh from graph data only.
+
+    Rebuilds all wall geometry, junction fills, room floor and ceiling faces
+    into a new BMesh, merges doubles, and returns the finished
+    :class:`bpy.types.Mesh`.  No GN modifier or sync is involved.
+
+    Args:
+        sg (StructuralGraph): Layer 1 graph.
+        rg (RoomGraph): Layer 2 graph.
+        mesh_name (str): Name for the new Blender mesh data-block.
+        include_ceiling (bool): When ``True``, ceiling faces facing inward are
+            added for each room.
+        include_outer_faces (bool): When ``False``, only interior-facing side
+            surfaces are emitted (useful for interior-only renders).
+
+    Returns:
+        bpy.types.Mesh: The finished, UV-ready mesh data-block.
+    """
     # Build a clean static mesh from graph data only.
     rg.sync_from_structural_graph()
     junctions_by_id = {j.id: j for j in sg.get_all_junctions()}

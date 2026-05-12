@@ -1,3 +1,10 @@
+"""FloorPlanMaster — Blender addon entry point.
+
+Registers all operators, UI panels, property groups, keymaps, and GPU
+overlays.  Maintains the per-object graph store
+``{obj.name: (StructuralGraph, RoomGraph, IdMapper)}`` which is the runtime
+cache for Layer 1 and Layer 2 data.
+"""
 bl_info = {
     "name": "FloorPlanMaster",
     "author": "wladaosk",
@@ -98,6 +105,11 @@ def _set_selected_outline_visible(visible):
 
 
 def get_graphs(obj):
+    """Return ``(StructuralGraph, RoomGraph)`` for a FloorPlanMaster object.
+
+    Reconstructs from persisted JSON if the object is not yet in the in-memory
+    cache.
+    """
     # Return (StructuralGraph, RoomGraph) for a FloorPlanMaster object.
     # Reconstructs from persisted JSON if not yet in the cache.
     if obj.name not in _graph_store:
@@ -107,6 +119,10 @@ def get_graphs(obj):
 
 
 def get_id_mapper(obj):
+    """Return the persistent :class:`~core.sync.IdMapper` for a FloorPlanMaster object.
+
+    Ensures the same UUID→integer assignments survive across sync calls.
+    """
     # Return the persistent IdMapper for a FloorPlanMaster object.
     # Ensures the same UUID->int assignments survive across sync calls.
     if obj.name not in _graph_store:
@@ -115,6 +131,19 @@ def get_id_mapper(obj):
 
 
 def reset_graphs_for_obj(obj):
+    """Rebuild Python graphs from the current mesh state and cache them.
+
+    Must be called at the start of any ``REGISTER|UNDO`` operator before
+    mutating graphs so that Blender's undo-restored mesh is always the source
+    of truth and re-execution after undo does not create duplicates.
+
+    Room detection runs immediately after reconstruction so the graph is
+    fully consistent without a subsequent :func:`~core.sync.sync_graph_to_mesh`
+    call (e.g. after addon reload or file load).
+
+    Returns:
+        tuple: ``(StructuralGraph, RoomGraph, IdMapper)``.
+    """
     # Rebuild Python graphs from the current mesh state and store them.
     # Must be called at the start of any operator with REGISTER|UNDO before
     # mutating graphs, so that Blender's undo-restored mesh is the source of
@@ -155,16 +184,22 @@ def clear_graph_store():
 
 
 def is_floorplan_obj(obj):
+    """Return ``True`` when *obj* is a local (non-linked) FloorPlanMaster mesh object."""
     return obj is not None and obj.library is None and bool(obj.get("is_floorplan"))
 
 
 def has_floorplan_obj(context):
+    """Return ``True`` when the current scene contains at least one FloorPlan object."""
     if context is None or getattr(context, 'scene', None) is None:
         return False
     return any(is_floorplan_obj(obj) for obj in context.scene.objects)
 
 
 def get_floorplan_obj_by_name(context, object_name):
+    """Look up a FloorPlan object by name within the current scene.
+
+    Returns ``None`` when the object does not exist or is not a FloorPlan object.
+    """
     if context is None or getattr(context, 'scene', None) is None or not object_name:
         return None
     obj = context.scene.objects.get(object_name)
@@ -174,6 +209,7 @@ def get_floorplan_obj_by_name(context, object_name):
 
 
 def get_selected_floorplan_obj(context):
+    """Return the active FloorPlan object only when it is also explicitly selected."""
     # Return active FloorPlan object only when it is also explicitly selected.
     obj = getattr(context, 'active_object', None)
     if is_floorplan_obj(obj) and obj.select_get():
@@ -182,6 +218,7 @@ def get_selected_floorplan_obj(context):
 
 
 def is_floorplan_obj_visible(context, obj):
+    """Return ``True`` when *obj* is a FloorPlan object and is currently visible."""
     if not is_floorplan_obj(obj):
         return False
     try:
@@ -194,6 +231,11 @@ def is_floorplan_obj_visible(context, obj):
 
 
 def find_floorplan_obj(context):
+    """Return the FloorPlan object that currently owns semantic mode.
+
+    Mode ownership is independent from the temporary Blender active selection.
+    Returns ``None`` when no object owns mode.
+    """
     # Return FloorPlan object that currently owns semantic mode.
     # Mode ownership is independent from temporary Blender active selection.
     if not _mode_object_name:
@@ -202,6 +244,7 @@ def find_floorplan_obj(context):
 
 
 def is_floorplan_mode_active(context):
+    """Return ``True`` when semantic FloorPlan mode is enabled and the owner object still exists."""
     # True when semantic mode is enabled and its owner object still exists.
     global _mode_object_name
     if not _mode_object_name:
@@ -215,6 +258,11 @@ def is_floorplan_mode_active(context):
 
 
 def set_floorplan_mode_active(context, enabled):
+    """Enable or disable semantic FloorPlan mode for the active+selected object.
+
+    Returns:
+        bool: ``True`` if mode is now active, ``False`` otherwise.
+    """
     # Enable/disable semantic mode for the active+selected FloorPlan object.
     global _mode_object_name
     if not enabled:
@@ -232,6 +280,11 @@ def set_floorplan_mode_active(context, enabled):
 
 
 def toggle_floorplan_mode(context):
+    """Toggle semantic FloorPlan mode for the active+selected object.
+
+    Returns:
+        bool: ``True`` if mode became active, ``False`` if it was disabled.
+    """
     # Toggle semantic mode for the active+selected FloorPlan object.
     global _mode_object_name
     obj = get_selected_floorplan_obj(context)

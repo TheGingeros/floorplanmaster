@@ -1,3 +1,13 @@
+"""
+Unit formatting helpers for UI display and GPU overlays.
+
+Internal model values remain in metres and square metres throughout the
+entire graph stack.  This module converts them to user-selected display
+units (M, CM, MM, FT, IN) only at the presentation layer.
+
+No bpy dependency — safe to import in unit tests without Blender.
+"""
+
 # Unit formatting helpers for UI/rendering.
 # Internal model values remain in meters and square meters.
 
@@ -70,6 +80,16 @@ def _area_suffix(unit):
 
 
 def format_length(meters, unit='M'):
+    """Format a length value for display in the given unit system.
+
+    Args:
+        meters (float): Length in metres.
+        unit (str): Target unit — one of ``'M'``, ``'CM'``, ``'MM'``, ``'FT'``, ``'IN'``.
+                    Defaults to ``'M'``.  Unknown values fall back to ``'M'``.
+
+    Returns:
+        str: Formatted string, e.g. ``'3.50 m'``, ``'137.80 in'``.
+    """
     unit = _normalize_unit(unit)
     value = meters * _length_scale(unit)
     precision = _length_precision(unit)
@@ -77,6 +97,16 @@ def format_length(meters, unit='M'):
 
 
 def format_area(square_meters, unit='M'):
+    """Format an area value for display in the given unit system.
+
+    Args:
+        square_meters (float): Area in square metres.
+        unit (str): Target unit — one of ``'M'``, ``'CM'``, ``'MM'``, ``'FT'``, ``'IN'``.
+                    Defaults to ``'M'``.  Unknown values fall back to ``'M'``.
+
+    Returns:
+        str: Formatted string, e.g. ``'12.50 m²'``, ``'134.55 ft²'``.
+    """
     unit = _normalize_unit(unit)
     scale = _length_scale(unit)
     value = square_meters * scale * scale

@@ -1,8 +1,11 @@
+"""Edit Mode guard for FloorPlan objects.
+
+Entering Edit Mode on a parametric FloorPlan object is destructive: the
+object must be detached from FloorPlan semantics first.  This module
+provides three operators that power the confirmation dialog Blender
+displays before the user can enter Edit Mode.
+"""
 # Edit Mode guard for FloorPlan objects.
-#
-# Entering Edit Mode on a parametric FloorPlan object is destructive:
-# the object is detached from FloorPlan semantics and converted to a
-# regular Blender mesh first.
 
 import bpy
 
@@ -10,6 +13,7 @@ from .finalize import detach_floorplan_object
 
 
 class FLOORPLAN_OT_edit_mode_detach_cancel(bpy.types.Operator):
+    """Cancel the detach confirmation dialog and keep the FloorPlan object intact."""
     bl_idname = "floorplan.edit_mode_detach_cancel"
     bl_label = "Cancel"
     bl_options = {'INTERNAL'}
@@ -19,6 +23,7 @@ class FLOORPLAN_OT_edit_mode_detach_cancel(bpy.types.Operator):
 
 
 class FLOORPLAN_OT_edit_mode_detach_bake(bpy.types.Operator):
+    """Invoke the Finalize operator to bake the mesh before entering Edit Mode."""
     bl_idname = "floorplan.edit_mode_detach_bake"
     bl_label = "Bake"
     bl_options = {'INTERNAL'}
@@ -34,6 +39,7 @@ class FLOORPLAN_OT_edit_mode_detach_bake(bpy.types.Operator):
 
 
 class FLOORPLAN_OT_edit_mode_detach_lose_data(bpy.types.Operator):
+    """Detach the FloorPlan object and enter Edit Mode, discarding all semantic data."""
     bl_idname = "floorplan.edit_mode_detach_lose_data"
     bl_label = "Lose Data"
     bl_options = {'REGISTER', 'UNDO'}

@@ -1,3 +1,8 @@
+"""GPU overlay — active FloorPlan object hint (POST_PIXEL).
+
+Shows a bottom-left text cue when a FloorPlan object is active but
+FloorPlan mode is not currently running.
+"""
 # GPU overlay — active FloorPlan object hint (POST_PIXEL).
 # Shows a bottom-left text cue when a FloorPlan object is active.
 

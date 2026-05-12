@@ -1,14 +1,20 @@
-# Layer 3 — Synchronisation bridge: Python graphs -> Blender mesh
-# Two-phase sync:
-#   Phase 1: topology — wall quad faces + room faces
-#   Phase 2: attributes — named attributes on mesh face domain
-#
-# Strategy (Option C): each wall is represented as a 2D quad polygon (the
-# actual wall outline computed from the centerline + half-thickness offsets,
-# with corner intersections resolved per junction).  GN reads is_wall (INT,
-# FACE) and wall_height (FLOAT, FACE) and simply extrudes each wall face by
-# its height.  This produces geometrically correct joints at any angle without
-# any instancing, trimming or shift logic.
+"""
+Layer 3 — Synchronisation bridge: Python graphs → Blender mesh.
+
+Converts the data model held in :class:`~structural_graph.StructuralGraph`
+(Layer 1) and :class:`~room_graph.RoomGraph` (Layer 2) into a Blender mesh
+with named face-domain attributes that the Geometry Nodes modifier reads for
+3D extrusion.
+
+Two-phase sync strategy:
+  - **Phase 1 (topology)**: wall outline quads, junction fill polygons, and
+    opening cutter boxes are written as mesh faces.
+  - **Phase 2 (attributes)**: named attributes (``is_wall``, ``wall_id``,
+    ``wall_height``, ``is_opening``, ``room_id``, …) are stamped onto
+    every face so GN can separate and process each geometry type.
+
+Requires Blender (``bmesh``) — not importable in unit tests without Blender.
+"""
 
 import json
 import math
@@ -27,12 +33,19 @@ from .junction_solver import (
 
 # UUID string -> stable integer ID for GPU-friendly named attributes.
 class IdMapper:
+    """Map UUID strings to stable integer IDs for GPU-friendly named attributes.
+
+    Blender named attributes work best with small integer values; this class
+    assigns a unique sequential integer to each UUID on first access and
+    provides reverse-lookup from integer back to UUID.
+    """
     def __init__(self):
         self._map = {}
         self._reverse = {}
         self._next = 1
 
     def get(self, uuid_str):
+        """Return the integer ID for *uuid_str*, allocating a new one if needed."""
         if uuid_str not in self._map:
             int_id = self._next
             self._map[uuid_str] = int_id
@@ -41,6 +54,7 @@ class IdMapper:
         return self._map[uuid_str]
 
     def lookup_uuid(self, int_id):
+        """Return the UUID string for an integer ID, or ``None`` if not found."""
         return self._reverse.get(int_id)
 
     def clear(self):
@@ -206,6 +220,17 @@ def _compute_room_inner_polygon(room, sg, junctions_by_id):
 
 # Main sync class operating on one Blender object.
 class AttributeSync:
+    """Orchestrate the two-phase sync from Python graphs to a Blender mesh object.
+
+    Phase 1 (:meth:`_phase1_topology`) rebuilds the full mesh topology using
+    BMesh: one quad face per wall, one polygon per junction fill, a 6-face box
+    per opening cutter, and one polygon per room floor.
+
+    Phase 2 (:meth:`_phase2_attributes`) stamps named face-domain attributes
+    (``is_wall``, ``wall_id``, ``wall_height``, ``is_opening``, ``room_id``,
+    ``room_area``, ``room_perimeter``, ``wall_thickness``) so the Geometry
+    Nodes modifier can process each face type independently.
+    """
 
     def __init__(self, obj, sg, rg, id_mapper=None):
         self.obj = obj
@@ -214,6 +239,7 @@ class AttributeSync:
         self.id_mapper = id_mapper if id_mapper is not None else IdMapper()
 
     def full_sync(self):
+        """Run both sync phases in sequence."""
         self._phase1_topology()
         self._phase2_attributes()
 
@@ -423,7 +449,11 @@ class AttributeSync:
 
     @staticmethod
     def _ensure_mesh_attr(mesh, name, attr_type, domain):
-        # Always remove and recreate to avoid stale data from prior syncs
+        """Remove any existing attribute of the given name and create a fresh one.
+
+        Recreating the attribute prevents stale values at shifted face indices
+        from leaking through when the mesh topology changes between syncs.
+        """
         # (bm.to_mesh() does not clear named attributes added via
         # mesh.attributes API, so old values at shifted face indices could
         # leak through).
@@ -435,6 +465,19 @@ class AttributeSync:
 
 # Convenience function called from operators after any L1/L2 change.
 def sync_graph_to_mesh(obj, sg, rg, id_mapper=None):
+    """Full sync: rebuild topology and attributes for *obj* from *sg* and *rg*.
+
+    Also pushes any room-name edits stored in object custom properties into
+    the RoomGraph before syncing, and persists the updated graph state
+    and face-index maps back onto the object.
+
+    Args:
+        obj: Blender mesh object tagged with ``is_floorplan``.
+        sg (StructuralGraph): Layer 1 graph.
+        rg (RoomGraph): Layer 2 graph.
+        id_mapper (IdMapper | None): Existing mapper to preserve integer IDs,
+            or ``None`` to create a fresh one.
+    """
     # Push any room name edits from object custom properties before sync.
     for room in rg.get_all_rooms():
         key = f"room_name_{room.id}"
@@ -470,7 +513,28 @@ def sync_graph_to_mesh_local(
     dirty_wall_ids=None,
     fallback_full_sync=True,
 ):
-    # Incremental sync for wall property edits that do not change topology.
+    """Incremental attribute-only sync for wall property edits that do not change topology.
+
+    Fast path (attribute-only, no BMesh rebuild):
+        Triggered when only wall *height* changed.  Reads the cached face-index
+        maps from ``obj["_floorplan_face_maps"]`` and writes updated
+        ``wall_height`` values directly on ``mesh.attributes``.  O(dirty walls).
+
+    Slow path (full sync fallback):
+        Triggered when *thickness* changed (quad geometry must be rebuilt),
+        when no face-index cache is present, or when any dirty wall is missing
+        from the cache.
+
+    Args:
+        obj: Blender mesh object tagged with ``is_floorplan``.
+        sg (StructuralGraph): Layer 1 graph.
+        rg (RoomGraph): Layer 2 graph.
+        id_mapper (IdMapper | None): Existing mapper.
+        dirty_wall_ids (list[str] | None): UUIDs of walls whose attributes
+            changed.  ``None`` forces a full sync.
+        fallback_full_sync (bool): If ``True``, perform a full sync when the
+            fast path cannot be used.  Defaults to ``True``.
+    """
     #
     # Fast path (attribute-only, no bmesh rebuild):
     #   Triggered when only wall HEIGHT changed for the dirty walls.
@@ -624,6 +688,17 @@ def _read_face_maps(obj):
 
 
 def reconstruct_graphs_from_mesh(obj):
+    """Reconstruct :class:`StructuralGraph`, :class:`RoomGraph`, and :class:`IdMapper` from JSON stored on *obj*.
+
+    The JSON is written by :func:`sync_graph_to_mesh` and survives Blender's
+    undo / file-load cycles.  Returns empty graphs if no data is found.
+
+    Args:
+        obj: Blender mesh object.
+
+    Returns:
+        tuple[StructuralGraph, RoomGraph | None, IdMapper]: Reconstructed objects.
+    """
     raw = obj.get("_floorplan_graphs")
     if not raw:
         return StructuralGraph(), None, IdMapper()
@@ -670,7 +745,11 @@ def reconstruct_graphs_from_mesh(obj):
 
 
 def persist_room_names(obj, rg):
-    # Persist room names keyed by canonical cycle key (tuple of junction IDs).
+    """Persist room names keyed by canonical cycle key onto the Blender object.
+
+    Cycle keys are stable across undo and addon reload because junction IDs
+    are preserved in the ``_floorplan_graphs`` JSON property.
+    """
     # Cycle keys are stable across undo/reload because junction IDs are
     # preserved in the _floorplan_graphs JSON property.
     names = {}
@@ -681,7 +760,10 @@ def persist_room_names(obj, rg):
 
 
 def restore_room_names(obj, rg):
-    # Apply persisted room names after rg.sync_from_structural_graph() has run.
+    """Apply persisted room names to *rg* after :meth:`~RoomGraph.sync_from_structural_graph` has run.
+
+    Matches rooms by stable cycle key so names survive undo and addon reload.
+    """
     # Matches rooms by stable cycle key so names survive undo and addon reload.
     raw = obj.get("_floorplan_room_names")
     if not raw:

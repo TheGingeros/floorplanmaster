@@ -1,3 +1,29 @@
+"""GPU overlay manager — single persistent POST_VIEW + POST_PIXEL handler pair.
+
+Rather than each feature registering its own ``draw_handler_add``/``remove``
+pair, all GPU overlays go through this module.  The manager holds one handler
+per space and dispatches to registered layer callables in insertion order.
+
+Layer contract:
+
+* ``fn(context)`` — receives ``bpy.context`` at draw time (never a stale
+  snapshot).
+* ``space='3D'`` — ``POST_VIEW``  (world-space geometry)
+* ``space='2D'`` — ``POST_PIXEL`` (screen-space UI)
+
+Lifecycle::
+
+    overlay_manager.register()     # called once in addon register()
+    overlay_manager.unregister()   # called once in addon unregister()
+
+    overlay_manager.register_layer(fn, space)    # add a layer (idempotent)
+    overlay_manager.unregister_layer(fn, space)  # remove (no-op if absent)
+
+Persistent layers (selection highlights) are registered right after
+:func:`register` in the addon entry point.  Transient layers (modal tool
+overlays such as the Pencil Tool) are registered in their operator
+``invoke()`` and unregistered in their ``_finish()``.
+"""
 # GPU overlay manager — single persistent POST_VIEW + POST_PIXEL handler pair.
 #
 # Rather than each feature registering its own draw_handler_add/remove pair,

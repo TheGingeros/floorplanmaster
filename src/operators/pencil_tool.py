@@ -1,3 +1,15 @@
+"""FP1 — Pencil Tool (modal operator).
+
+State machine: ``WAITING`` → ``DRAWING`` → ``WAITING`` (loop).
+
+The operator intercepts LMB to place junctions and draw walls.  A snapping
+pass tests whether the cursor is within 15 px of an existing junction and
+redirects to it when true.  A GPU overlay draws the preview wall quad while
+in ``DRAWING`` state.
+
+References: ``04_features_fp1.md``, ``05_ui_ux_toolbar.md``,
+``05_ui_ux_shortcuts.md``.
+"""
 # FP1 — Pencil Tool (modal operator)
 # State machine: WAITING -> DRAWING -> WAITING (loop)
 # Snapping: junction snap (must-have, 15px tolerance)
@@ -133,6 +145,12 @@ def _get_existing_pencil_obj(context):
 
 
 class FLOORPLAN_OT_pencil_tool(bpy.types.Operator):
+    """Modal operator implementing the wall-drawing pencil tool (FP1).
+
+    LMB places a junction; a second LMB adds a wall between the previous
+    and current junction.  RMB cancels the current line.  Enter confirms
+    the chain and returns to ``WAITING``.  ESC aborts the entire session.
+    """
     bl_idname = "floorplan.pencil_tool"
     bl_label = "FloorPlan Pencil Tool"
     bl_description = "Draw walls by placing junctions. LMB place, RMB cancel line, Enter confirm, ESC abort"

@@ -1,3 +1,14 @@
+"""
+Layer 1 — Structural Graph (topology skeleton).
+
+Manages a planar 2D graph of :class:`Junction` nodes and :class:`Wall` edges.
+Provides CRUD operations with validation, cycle detection for room discovery,
+and geometry queries used by the higher layers.
+
+No bpy dependency — safe to import in unit tests without Blender.
+Uses NetworkX for topology algorithms (cycle detection, planar embedding).
+"""
+
 import uuid
 
 import networkx as nx
@@ -34,6 +45,14 @@ from .validators import (
 # Junction — node in the structural graph
 # Representing position of one vertex, two verteces make up one wall
 class Junction:
+    """A node in the structural graph representing a wall endpoint or corner.
+
+    Two junctions connected by a :class:`Wall` edge form a single wall segment.
+
+    Attributes:
+        id (str): Unique UUID string identifier.
+        position (tuple[float, float]): 2D position ``(x, y)`` in metres.
+    """
     def __init__(self, position, junction_id=None):
         self.id = junction_id or str(uuid.uuid4()) # assign given ID, if None, create a new one
         self.position = tuple(position)  # (x, y)
@@ -44,6 +63,19 @@ class Junction:
 
 # Wall — edge in the structural graph
 class Wall:
+    """An edge in the structural graph representing a wall segment between two junctions.
+
+    Attributes:
+        id (str): Unique UUID string identifier.
+        junction_start (str): ID of the start :class:`Junction`.
+        junction_end (str): ID of the end :class:`Junction`.
+        thickness (float): Wall thickness in metres.
+        height (float): Wall height in metres.
+        connection_group (int): Join-policy group (Option B groundwork).
+        join_priority (int): Miter priority within the connection group (0–999).
+        junction_order (int): Tie-break order used by the junction solver.
+        openings (list[Opening]): Doors and windows attached to this wall.
+    """
     def __init__(
         self,
         junction_start_id,
@@ -72,6 +104,20 @@ class Wall:
 
 # Opening — door or window on a wall
 class Opening:
+    """A door or window cut-out attached to a :class:`Wall`.
+
+    Position is expressed as a normalised fraction along the wall centreline
+    (0.0 = start junction, 1.0 = end junction).
+
+    Attributes:
+        id (str): Unique UUID string identifier.
+        wall_id (str): ID of the parent :class:`Wall`.
+        opening_type (str): ``'DOOR'`` or ``'WINDOW'``.
+        position (float): Normalised centre position along the wall [0.0, 1.0].
+        width (float): Opening width in metres.
+        height (float): Opening height in metres.
+        sill_height (float): Distance from floor to bottom of the opening (metres).
+    """
     def __init__(
         self,
         wall_id,
@@ -96,8 +142,14 @@ class Opening:
 
 # StructuralGraph — Layer 1
 class StructuralGraph:
-    # Planar 2D graph of junctions and walls.
-    # No bpy dependency. Uses NetworkX for topology algorithms.
+    """Layer 1 — Planar 2D graph of junctions and walls.
+
+    Provides CRUD for :class:`Junction` and :class:`Wall` objects with
+    validation at every mutation boundary.  Detects minimal face cycles for
+    room discovery (used by :class:`~floorplanmaster.core.room_graph.RoomGraph`).
+
+    No bpy dependency.  Uses NetworkX for topology algorithms.
+    """
 
     def __init__(self):
         self._graph = nx.Graph()
@@ -143,6 +195,20 @@ class StructuralGraph:
 
     # Junction CRUD
     def add_junction(self, position, junction_id=None):
+        """Add a new junction at *position* and return it.
+
+        Args:
+            position: ``(x, y)`` tuple in metres.
+            junction_id (str | None): Explicit UUID to assign, or ``None`` to
+                generate a new one.
+
+        Returns:
+            Junction: The newly created junction.
+
+        Raises:
+            ValidationError: Code ``E_JUNCTION_DUPLICATE`` if a junction already
+                exists at that position.
+        """
         pk = self._pos_key(position)
         if pk in self._pos_index:
             raise ValidationError(
@@ -157,7 +223,11 @@ class StructuralGraph:
         return j
 
     def remove_junction(self, junction_id):
-        # Remove the junction and all walls connected to it.
+        """Remove the junction and all walls connected to it.
+
+        Args:
+            junction_id (str): ID of the junction to remove.  No-op if not found.
+        """
         j = self._junctions.get(junction_id)
         if j is None:
             return
@@ -175,13 +245,23 @@ class StructuralGraph:
         self._topology_dirty = True
 
     def get_junction(self, junction_id):
+        """Return the :class:`Junction` with the given ID, or ``None``."""
         return self._junctions.get(junction_id)
 
     def get_all_junctions(self):
+        """Return a list of all junctions in the graph."""
         return list(self._junctions.values())
 
     def find_junctions_near(self, position, radius):
-        # Return junctions within *radius* of *position*, sorted by distance.
+        """Return junctions within *radius* metres of *position*, sorted by distance.
+
+        Args:
+            position: ``(x, y)`` query point in metres.
+            radius (float): Search radius in metres.
+
+        Returns:
+            list[tuple[Junction, float]]: ``(junction, distance)`` pairs, closest first.
+        """
         results = []
         for j in self._junctions.values():
             d = point_distance(position, j.position)
@@ -222,12 +302,25 @@ class StructuralGraph:
         self._topology_dirty = True
 
     def move_junction_xy(self, junction_id, x, y):
+        """Move a junction to an absolute (x, y) position; used by wall-position UI sliders."""
         # Absolute XY endpoint edit used by wall position UI sliders.
         self.move_junction(junction_id, (float(x), float(y)))
 
     def slide_wall_normal(self, wall_id, target_mid_x, target_mid_y):
-        # Parallel-slide the wall along its normal to the target midpoint.
-        # Tangential component is ignored by design.
+        """Translate a wall parallel to itself so its midpoint reaches (*target_mid_x*, *target_mid_y*).
+
+        Only the normal component of the requested delta is applied; the
+        tangential component is discarded so the wall cannot be stretched by
+        the drag gesture.
+
+        Args:
+            wall_id (str): ID of the wall to move.
+            target_mid_x (float): Desired midpoint X in metres.
+            target_mid_y (float): Desired midpoint Y in metres.
+
+        Raises:
+            ValidationError: If the resulting position violates planarity.
+        """
         w = self._walls.get(wall_id)
         if w is None:
             return
@@ -290,6 +383,26 @@ class StructuralGraph:
         junction_order=DEFAULT_JUNCTION_ORDER,
         wall_id=None,
     ):
+        """Add a wall between two existing junctions and return it.
+
+        Args:
+            junction_start_id (str): ID of the start junction.
+            junction_end_id (str): ID of the end junction.
+            thickness (float): Wall thickness in metres.
+            height (float): Wall height in metres.
+            connection_group (int): Join-policy group identifier.
+            join_priority (int): Miter priority within the connection group.
+            junction_order (int): Tie-break order for the junction solver.
+            wall_id (str | None): Explicit UUID to assign, or ``None``.
+
+        Returns:
+            Wall: The newly created wall.
+
+        Raises:
+            ValueError: If either junction does not exist.
+            ValidationError: If the wall would be a self-loop, a duplicate, or
+                violate thickness/height limits or planarity.
+        """
         if junction_start_id == junction_end_id:
             raise ValidationError(E_WALL_SELF_LOOP, "Start and end junction are the same")
 
@@ -326,6 +439,7 @@ class StructuralGraph:
         return w
 
     def remove_wall(self, wall_id):
+        """Remove a wall by ID.  No-op if the wall does not exist."""
         w = self._walls.get(wall_id)
         if w is None:
             return
@@ -336,18 +450,22 @@ class StructuralGraph:
         self._topology_dirty = True
 
     def get_wall(self, wall_id):
+        """Return the :class:`Wall` with the given ID, or ``None``."""
         return self._walls.get(wall_id)
 
     def get_all_walls(self):
+        """Return a list of all walls in the graph."""
         return list(self._walls.values())
 
     def get_walls_for_junction(self, junction_id):
+        """Return all walls that have *junction_id* as either endpoint."""
         return [
             w for w in self._walls.values()
             if w.junction_start == junction_id or w.junction_end == junction_id
         ]
 
     def get_wall_between(self, jid_a, jid_b):
+        """Return the wall connecting *jid_a* and *jid_b*, or ``None``."""
         # Return the wall connecting two junctions, or None.
         ek = self._edge_key(jid_a, jid_b)
         data = self._graph.edges.get(ek)
@@ -356,6 +474,15 @@ class StructuralGraph:
         return self._walls.get(data.get("wall_id"))
 
     def update_wall(self, wall_id, **kwargs):
+        """Update mutable attributes of a wall.
+
+        Supported keyword arguments: ``thickness``, ``height``,
+        ``connection_group``, ``join_priority``, ``junction_order``.
+        Unknown keys are silently ignored.
+
+        Raises:
+            ValidationError: If the new thickness or height is out of range.
+        """
         w = self._walls.get(wall_id)
         if w is None:
             return
@@ -383,6 +510,25 @@ class StructuralGraph:
         sill_height=0.0,
         opening_id=None,
     ):
+        """Add a door or window opening to a wall and return the new :class:`Opening`.
+
+        Args:
+            wall_id (str): ID of the parent wall.
+            opening_type (str): ``'DOOR'`` or ``'WINDOW'``.
+            position (float): Normalised centre position along the wall [0.0, 1.0].
+            width (float): Opening width in metres.
+            height (float): Opening height in metres.
+            sill_height (float): Distance from floor to the bottom of the opening.
+            opening_id (str | None): Explicit UUID to assign, or ``None``.
+
+        Returns:
+            Opening: The newly created opening.
+
+        Raises:
+            ValueError: If the wall does not exist.
+            ValidationError: If the opening dimensions, sill height, or placement
+                are invalid.
+        """
         w = self._walls.get(wall_id)
         if w is None:
             raise ValueError(f"Wall {wall_id} does not exist")
@@ -427,6 +573,7 @@ class StructuralGraph:
         return op
 
     def remove_opening(self, opening_id):
+        """Remove an opening by ID.  Returns ``True`` if found, ``False`` otherwise."""
         for w in self._walls.values():
             for i, op in enumerate(w.openings):
                 if op.id == opening_id:
@@ -435,6 +582,7 @@ class StructuralGraph:
         return False
 
     def get_opening(self, opening_id):
+        """Return the :class:`Opening` with the given ID, or ``None``."""
         for w in self._walls.values():
             for op in w.openings:
                 if op.id == opening_id:
@@ -442,12 +590,26 @@ class StructuralGraph:
         return None
 
     def get_openings_for_wall(self, wall_id):
+        """Return all openings on a wall, sorted by position then ID."""
         w = self._walls.get(wall_id)
         if w is None:
             return []
         return sorted(w.openings, key=lambda op: (op.position, op.id))
 
     def get_opening_free_spans(self, wall_id, exclude_opening_id=None):
+        """Return free placement spans on a wall as normalised fractions.
+
+        Delegates to :func:`~floorplanmaster.core.validators.get_opening_free_spans`
+        after resolving the miter insets for both junction endpoints.
+
+        Args:
+            wall_id (str): Target wall ID.
+            exclude_opening_id (str | None): Opening to exclude from the
+                occupied-span calculation (useful when repositioning).
+
+        Returns:
+            list[tuple[float, float]]: Free spans as normalised fractions.
+        """
         w = self._walls.get(wall_id)
         if w is None:
             return []
@@ -463,6 +625,16 @@ class StructuralGraph:
         )
 
     def get_opening_center_intervals(self, wall_id, width, exclude_opening_id=None):
+        """Return valid centre-position intervals for an opening of *width* on a wall.
+
+        Args:
+            wall_id (str): Target wall ID.
+            width (float): Opening width in metres.
+            exclude_opening_id (str | None): Opening to exclude.
+
+        Returns:
+            list[tuple[float, float]]: Centre-position intervals as normalised fractions.
+        """
         w = self._walls.get(wall_id)
         if w is None:
             return []
@@ -479,6 +651,7 @@ class StructuralGraph:
         )
 
     def can_fit_opening(self, wall_id, width, exclude_opening_id=None):
+        """Return ``True`` if an opening of *width* can be placed on the wall."""
         w = self._walls.get(wall_id)
         if w is None:
             return False
@@ -495,6 +668,7 @@ class StructuralGraph:
         )
 
     def clamp_opening_position(self, wall_id, width, position, exclude_opening_id=None):
+        """Return the nearest valid position for an opening of *width*, or ``None``."""
         w = self._walls.get(wall_id)
         if w is None:
             return None
@@ -512,6 +686,7 @@ class StructuralGraph:
         )
 
     def max_opening_width(self, wall_id, exclude_opening_id=None):
+        """Return the largest opening width that fits anywhere on the wall."""
         w = self._walls.get(wall_id)
         if w is None:
             return 0.0
@@ -527,6 +702,7 @@ class StructuralGraph:
         )
 
     def max_opening_width_at_position(self, wall_id, position, exclude_opening_id=None):
+        """Return the maximum opening width centred at *position* that fits without collision."""
         w = self._walls.get(wall_id)
         if w is None:
             return 0.0
@@ -543,6 +719,15 @@ class StructuralGraph:
         )
 
     def update_opening(self, opening_id, **kwargs):
+        """Update mutable attributes of an opening.
+
+        Supported keyword arguments: ``width``, ``height``, ``sill_height``,
+        ``position``, ``opening_type``.
+
+        Raises:
+            ValidationError: If any updated value is out of range or the new
+                placement overlaps an existing opening.
+        """
         op = self.get_opening(opening_id)
         if op is None:
             return
@@ -593,6 +778,7 @@ class StructuralGraph:
 
     # Geometry queries
     def wall_length(self, wall_id):
+        """Return the Euclidean length of a wall in metres."""
         w = self._walls.get(wall_id)
         if w is None:
             return 0.0
@@ -601,16 +787,22 @@ class StructuralGraph:
         return edge_length(p1, p2)
 
     def junction_inset(self, junction_id, wall_id):
-        # Conservative inset along wall_id at junction_id caused by connecting walls.
-        # Returns max(neighbor.thickness / 2) for all walls sharing that junction.
-        # Returns 0.0 for free endpoints (no connecting walls).
-        # Used to restrict opening positions to the visible (non-overlapping) wall surface.
+        """Return the conservative miter inset along *wall_id* at *junction_id*.
+
+        The inset equals the maximum ``thickness / 2`` of all walls connected at
+        the junction except *wall_id* itself.  Used to restrict opening positions
+        to the visible (non-overlapping) wall surface.
+
+        Returns:
+            float: Inset distance in metres.  0.0 for free endpoints.
+        """
         neighbors = [w for w in self.get_walls_for_junction(junction_id) if w.id != wall_id]
         if not neighbors:
             return 0.0
         return max(w.thickness / 2.0 for w in neighbors)
 
     def wall_angle(self, wall_id):
+        """Return the angle of a wall in radians (counter-clockwise from +X)."""
         w = self._walls.get(wall_id)
         if w is None:
             return 0.0
@@ -620,7 +812,12 @@ class StructuralGraph:
 
     # Topology analysis
     def _prune_leaves(self, g):
-        # Iteratively remove degree-0 and degree-1 nodes until stable.
+        """Return a copy of *g* with all degree-0 and degree-1 nodes removed iteratively.
+
+        Dangling wall endpoints (degree-1 nodes) are excluded from cycle
+        detection because they cannot be part of any closed room boundary.
+        The result is cached; the cache is invalidated by ``_topology_dirty``.
+        """
         # Dangling endpoints (open wall segments) are degree-1; they have no
         # role in any closed cycle and their presence confuses the planar
         # embedding — NetworkX may route them "inside" an existing face,
@@ -643,7 +840,16 @@ class StructuralGraph:
         return pruned
 
     def detect_minimal_cycles(self):
-        # Detect all minimal (face) cycles in the planar graph.
+        """Detect all minimal face cycles in the planar structural graph.
+
+        Uses the minimum cycle basis (MCB) algorithm via NetworkX.  Leaf
+        (dangling wall) nodes are pruned before the search so that open
+        wall segments do not interfere with closed room boundaries.
+
+        Returns:
+            list[list[str]]: Each inner list is an ordered sequence of
+            junction IDs forming one minimal cycle.
+        """
         # Uses minimum_cycle_basis (MCB) — an algebraic approach that returns
         # exactly the inner face cycles without any outer-boundary face.
         # This avoids the combinatorial planar embedding path which can
@@ -662,6 +868,7 @@ class StructuralGraph:
         return self._detect_cycles_fallback(pruned)
 
     def _detect_cycles_planar(self, graph):
+        """Enumerate all face cycles using a planar embedding traversal."""
         # Use the planar embedding traverse_face() to enumerate all faces.
         is_planar, embedding = nx.check_planarity(graph)
         if not is_planar:
@@ -692,6 +899,7 @@ class StructuralGraph:
         return faces
 
     def _detect_cycles_fallback(self, graph):
+        """Return ordered cycles via ``nx.minimum_cycle_basis`` (fallback path)."""
         # Fallback for disconnected or non-planar graphs.
         try:
             basis = nx.minimum_cycle_basis(graph)
@@ -706,6 +914,7 @@ class StructuralGraph:
         return ordered_cycles
 
     def _order_cycle(self, node_set, graph=None):
+        """Return nodes of a cycle set in traversal (edge-following) order."""
         # Given a set of nodes forming a cycle, return them in traversal order.
         if graph is None:
             graph = self._graph
@@ -717,18 +926,22 @@ class StructuralGraph:
             return list(node_set)
 
     def is_planar(self):
+        """Return ``True`` if the current graph is planar."""
         if self._graph.number_of_nodes() < 3:
             return True
         is_planar, _ = nx.check_planarity(self._graph)
         return is_planar
 
     def get_cycle_vertices(self, cycle):
+        """Return ordered ``(x, y)`` positions for a list of junction IDs."""
         # Return ordered (x,y) positions for a cycle (list of junction IDs).
         return [self._junctions[jid].position for jid in cycle if jid in self._junctions]
 
     # Bulk queries
     def junction_count(self):
+        """Return the total number of junctions in the graph."""
         return len(self._junctions)
 
     def wall_count(self):
+        """Return the total number of walls in the graph."""
         return len(self._walls)

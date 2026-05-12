@@ -1,3 +1,10 @@
+"""FP2 — Insert Room operator.
+
+Inserts a rectangular room centred on the 3D cursor with user-specified
+width, depth, wall height, and wall thickness.  Existing junctions at
+corner positions are reused so the new room can share walls with an
+existing floor plan layout.
+"""
 # FP2 — Insert Room operator
 # Inserts a rectangular room at the 3D cursor position.
 # References: 04_features_fp2.md (Vložení pravoúhlé místnosti z parametrů),
@@ -12,6 +19,7 @@ from .pencil_tool import _get_floorplan_obj
 
 
 class FLOORPLAN_OT_insert_room(bpy.types.Operator):
+    """Insert a rectangular room centred on the 3D cursor."""
     bl_idname = "floorplan.insert_room"
     bl_label = "Insert Room"
     bl_description = "Insert a rectangular room at the 3D cursor position"

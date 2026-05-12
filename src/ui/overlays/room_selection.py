@@ -1,3 +1,9 @@
+"""GPU overlay — room selection highlight.
+
+Draws a semi-transparent orange floor fill and orange wireframe OBB lines
+for each boundary wall of the currently selected room.
+Registered as a persistent POST_VIEW layer via :mod:`~ui.overlay_manager`.
+"""
 # GPU overlay — room selection highlight.
 # Draws a semi-transparent orange floor fill and orange wireframe OBB lines
 # for each boundary wall of the currently selected room.
