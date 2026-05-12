@@ -235,9 +235,17 @@
   //     it
   //   }
   // }
-  show ref: it => ref-box(it)
+  show ref: it => context {
+    // Bibliography entry refs (rendered internally by cite) have element == none.
+    // All real document refs (figures, headings, tables, etc.) have element != none.
+    if it.element != none {
+      ref-box(it)
+    } else {
+      it
+    }
+  }
   show link: it => ref-box(it)
-  show cite: it => ref-box(it)
+  show cite: it => ref-box-v2(it)
 
   let text-lang = if lang == "english" {
     "en"
