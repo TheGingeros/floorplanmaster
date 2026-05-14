@@ -636,10 +636,10 @@
     // }
     pagebreak()
 
-    outline(
-      target: figure.where(kind: raw),
-      title: lol-label
-    )
+    // outline(
+    //   target: figure.where(kind: raw),
+    //   title: lol-label
+    // )
     v(1.5em) // TODO
     outline(
       target: figure.where(kind: table),
@@ -894,6 +894,6 @@
 
   set text(size: font_size)
   pagebreak()
-  heading[Contents of the attachment]
+  heading[Obsah příloh]
   include "attachment.typ"
 }
