@@ -76,7 +76,7 @@
   keywords-ENG: "Blender add-on, parametric modeling, floor plan, architectural visualization, Geometry Nodes, graph data model, spatial layout, Python API",
   thesis-type: "bachelor",
   lang: "czech",
-  twosided: false,
+  twosided: true,
 )
 
 #let err-color = red.lighten(60%)
