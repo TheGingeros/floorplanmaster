@@ -71,7 +71,8 @@ def junction_polygon_corners(junction, junctions_by_id, sg):
 
 		pt = _line_intersect(p1, (cur[2], cur[3]), p2, (nxt[2], nxt[3]))
 		if pt is None:
-			pt = p1
+			corners.append(p1)
+			continue
 		corners.append(pt)
 
 	unique = []
@@ -121,11 +122,6 @@ def corner_at_junction(junction, target_wall, is_start, ux, uy, nx, ny, ht,
 
 	pt = _line_intersect(p_this, d_this, p_adj, d_adj)
 	if pt is None:
-		return raw
-
-	t = (pt[0] - raw[0]) * wall_dir[0] + (pt[1] - raw[1]) * wall_dir[1]
-	miter_limit = 2.0 * max(ht, adj_e[6])
-	if abs(t) > miter_limit:
 		return raw
 	return pt
 
