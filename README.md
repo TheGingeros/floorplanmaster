@@ -11,5 +11,5 @@ Made by Oskar Wladar (Ginger3D)
 ### V0.1 - Alpha release
 Plugin has basic functionality and represents the basic core functions. Important tasks can be done with this version.
 
-[] Support latest stable version of Blender
+- [] Support latest stable version of Blender
 
